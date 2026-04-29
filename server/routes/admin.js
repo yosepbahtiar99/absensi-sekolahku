@@ -4,7 +4,8 @@ const {
   getDashboardSummary, getAllActivities,
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
-  getLessons, createLesson, updateLesson, deleteLesson
+  getLessons, createLesson, updateLesson, deleteLesson,
+  getSchedules, createOrUpdateSchedule, deleteSchedule
 } = require('../controllers/adminController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
@@ -31,5 +32,10 @@ router.get('/lessons', getLessons);
 router.post('/lessons', createLesson);
 router.put('/lessons/:id', updateLesson);
 router.delete('/lessons/:id', deleteLesson);
+
+// Jadwal
+router.get('/schedules', getSchedules);
+router.post('/schedules', createOrUpdateSchedule);
+router.delete('/schedules/:id', deleteSchedule);
 
 module.exports = router;

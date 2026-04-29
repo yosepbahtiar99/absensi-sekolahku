@@ -177,10 +177,84 @@ const deleteLesson = async (req, res) => {
   }
 };
 
+// --- SCHEDULE CRUD & LOGIC ---
+const getSchedules = async (req, res) => {
+  try {
+    const schedules = await Schedule.findAll({
+      include: [
+        { model: User, as: 'teacher', attributes: ['id', 'name'] },
+        { model: Class, attributes: ['id', 'name'] },
+        { model: Lesson, attributes: ['id', 'name'] }
+      ],
+      order: [['startTime', 'ASC']]
+    });
+    res.json(schedules);
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal mengambil data jadwal' });
+  }
+};
+
+const createOrUpdateSchedule = async (req, res) => {
+  try {
+    const { id, day, startTime, endTime, teacherId, classId, lessonId } = req.body;
+
+    // 1. Validasi Overlap Guru
+    const teacherConflict = await Schedule.findOne({
+      where: {
+        day,
+        teacherId,
+        id: { [Op.ne]: id || 0 },
+        [Op.or]: [
+          { startTime: { [Op.between]: [startTime, endTime] } },
+          { endTime: { [Op.between]: [startTime, endTime] } },
+          { [Op.and]: [{ startTime: { [Op.lte]: startTime } }, { endTime: { [Op.gte]: endTime } }] }
+        ]
+      }
+    });
+    if (teacherConflict) return res.status(400).json({ message: 'Guru sudah ada jadwal lain di jam tersebut' });
+
+    // 2. Validasi Overlap Kelas
+    const classConflict = await Schedule.findOne({
+      where: {
+        day,
+        classId,
+        id: { [Op.ne]: id || 0 },
+        [Op.or]: [
+          { startTime: { [Op.between]: [startTime, endTime] } },
+          { endTime: { [Op.between]: [startTime, endTime] } },
+          { [Op.and]: [{ startTime: { [Op.lte]: startTime } }, { endTime: { [Op.gte]: endTime } }] }
+        ]
+      }
+    });
+    if (classConflict) return res.status(400).json({ message: 'Kelas sudah ada pelajaran lain di jam tersebut' });
+
+    if (id) {
+      await Schedule.update({ day, startTime, endTime, teacherId, classId, lessonId }, { where: { id } });
+      res.json({ message: 'Jadwal berhasil diupdate' });
+    } else {
+      const newSchedule = await Schedule.create({ day, startTime, endTime, teacherId, classId, lessonId });
+      res.json(newSchedule);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal simpan jadwal' });
+  }
+};
+
+const deleteSchedule = async (req, res) => {
+  try {
+    await Schedule.destroy({ where: { id: req.params.id } });
+    res.json({ message: 'Jadwal berhasil dihapus' });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal hapus jadwal' });
+  }
+};
+
 module.exports = { 
   getDashboardSummary, 
   getAllActivities,
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
-  getLessons, createLesson, updateLesson, deleteLesson
+  getLessons, createLesson, updateLesson, deleteLesson,
+  getSchedules, createOrUpdateSchedule, deleteSchedule
 };

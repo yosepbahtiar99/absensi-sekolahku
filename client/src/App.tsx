@@ -7,6 +7,7 @@ import AdminActivities from './pages/AdminActivities';
 import MasterGuru from './pages/MasterGuru';
 import MasterKelas from './pages/MasterKelas';
 import MasterPelajaran from './pages/MasterPelajaran';
+import MasterSchedule from './pages/MasterSchedule';
 import { useAuthStore } from './store/authStore';
 
 // Protected Route Component
@@ -78,6 +79,14 @@ function App() {
           element={
             <ProtectedRoute role="admin">
               <MasterKelas />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/schedule" 
+          element={
+            <ProtectedRoute role="admin">
+              <MasterSchedule />
             </ProtectedRoute>
           } 
         />
