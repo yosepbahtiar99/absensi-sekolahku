@@ -20,4 +20,9 @@
 ## Features
 - [ ] Implement Approval workflow for Admin
 - [ ] Master Data Management (Guru, Kelas, Pelajaran, Schedule)
+    - [ ] Tambahkan jumlah jam pelajaran di Master Pelajaran (kuota/alokasi jam per guru)
+- [ ] Schedule Management Improvements
+    - [ ] View per kelas di flow Assign Master Schedule (indikator terassign/belum) -> **Perlu Diskusi**
+- [ ] Core Optimizations
+    - [ ] Implementasi Pagination (Server side & Client side)
 - [ ] Report Generation (Export to Excel/PDF)
