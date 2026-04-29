@@ -7,11 +7,13 @@ import { useGurus } from '../../master-data/guru/hooks/useGuruData';
 import { useClasses } from '../../master-data/kelas/hooks/useKelasData';
 import { useLessons } from '../../master-data/lesson/hooks/useLessonData';
 import { adminService } from '../services/admin.service';
+import { DataTable } from '../../../shared/components/DataTable';
 
 const AdminActivities = () => {
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
   
   // Applied Filters
@@ -31,7 +33,7 @@ const AdminActivities = () => {
   const [tempEndDate, setTempEndDate] = useState('');
 
   const { data: response, isLoading } = useAdminActivities({ 
-    search, page, limit: 10, teacherId, classId, lessonId, status, startDate, endDate 
+    search, page, limit, teacherId, classId, lessonId, status, startDate, endDate 
   });
 
   const { data: guruRes } = useGurus({ limit: 100 });
@@ -209,113 +211,99 @@ const AdminActivities = () => {
                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
             </div>
-            <div className="text-sm font-bold text-slate-400 px-4">
-              Total: {meta?.total || 0} Record
-            </div>
           </div>
 
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50">
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Guru</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Pelajaran / Kelas</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Waktu Absensi</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Visual</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <Loader2 size={32} className="text-primary animate-spin" />
-                      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Loading Records...</p>
+          <DataTable 
+            data={activities}
+            isLoading={isLoading}
+            emptyMessage="Belum ada aktivitas tercatat."
+            className="border-none shadow-none rounded-none"
+            meta={meta}
+            onPageChange={setPage}
+            onLimitChange={(newLimit) => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+            columns={[
+              {
+                header: 'Guru',
+                accessor: (act: any) => (
+                  <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-cyan-700 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-primary/10">
+                      {act.User?.name?.charAt(0) || '?'}
                     </div>
-                  </td>
-                </tr>
-              ) : activities?.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-8 py-20 text-center">
-                    <p className="text-slate-400 font-medium">Belum ada aktivitas tercatat.</p>
-                  </td>
-                </tr>
-              ) : (
-                activities?.map((act) => (
-                  <tr key={act.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-cyan-700 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-primary/10">
-                          {act.User.name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-black text-slate-800 text-sm leading-tight">{act.User.name}</p>
-                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">NIP: {act.id + 1000}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="bg-slate-50 px-4 py-2 rounded-xl inline-block border border-slate-100">
-                        <div className="text-sm font-black text-slate-800">{act.Schedule.Lesson.name}</div>
-                        <div className="text-[11px] font-bold text-primary uppercase tracking-wider">{act.Schedule.Class.name}</div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <Clock size={16} className="text-primary/60" />
-                        <span className="text-sm font-bold tabular-nums">
-                          {new Date(act.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                        act.status === 'masuk' 
-                          ? 'bg-green-100 text-green-600 border border-green-200' 
-                          : 'bg-amber-100 text-amber-600 border border-amber-200'
-                      }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ${act.status === 'masuk' ? 'bg-green-600' : 'bg-amber-600'}`}></div>
-                        {act.status}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex gap-2">
-                        <a 
-                          href={`http://localhost:3001/uploads/${act.photoSelfie}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all shadow-sm"
-                          title="Lihat Selfie"
-                        >
-                          <User size={18} />
-                        </a>
-                        <a 
-                          href={`http://localhost:3001/uploads/${act.photoClass}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all shadow-sm"
-                          title="Lihat Foto Kelas"
-                        >
-                          <BookOpen size={18} />
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-
-          {meta && meta.totalPages > 1 && (
-            <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
-              <Pagination 
-                currentPage={page} 
-                totalPages={meta.totalPages} 
-                onPageChange={setPage} 
-              />
-            </div>
-          )}
+                    <div>
+                      <p className="font-black text-slate-800 text-sm leading-tight">{act.User?.name || 'Unknown'}</p>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: {act.id}</p>
+                    </div>
+                  </div>
+                )
+              },
+              {
+                header: 'Pelajaran / Kelas',
+                accessor: (act: any) => (
+                  <div className="bg-slate-50 px-4 py-2 rounded-xl inline-block border border-slate-100">
+                    <div className="text-sm font-black text-slate-800">{act.Schedule?.Lesson?.name || '-'}</div>
+                    <div className="text-[11px] font-bold text-primary uppercase tracking-wider">{act.Schedule?.Class?.name || '-'}</div>
+                  </div>
+                )
+              },
+              {
+                header: 'Waktu Absensi',
+                accessor: (act: any) => (
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Clock size={16} className="text-primary/60" />
+                    <span className="text-sm font-bold tabular-nums">
+                      {act.timestamp ? new Date(act.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                    </span>
+                  </div>
+                )
+              },
+              {
+                header: 'Status',
+                accessor: (act: any) => (
+                  <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                    act.status === 'masuk' 
+                      ? 'bg-green-100 text-green-600 border border-green-200' 
+                      : 'bg-amber-100 text-amber-600 border border-amber-200'
+                  }`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${act.status === 'masuk' ? 'bg-green-600' : 'bg-amber-600'}`}></div>
+                    {act.status}
+                  </span>
+                )
+              },
+              {
+                header: 'Visual',
+                accessor: (act: any) => (
+                  <div className="flex gap-2">
+                    <a 
+                      href={`http://localhost:3001/uploads/${act.photoSelfie}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 hover:border-primary transition-colors shadow-sm"
+                    >
+                      <img src={`http://localhost:3001/uploads/${act.photoSelfie}`} className="w-full h-full object-cover" alt="Selfie" />
+                    </a>
+                    <a 
+                      href={`http://localhost:3001/uploads/${act.photoClass}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 hover:border-primary transition-colors shadow-sm"
+                    >
+                      <img src={`http://localhost:3001/uploads/${act.photoClass}`} className="w-full h-full object-cover" alt="Class" />
+                    </a>
+                  </div>
+                )
+              }
+            ]}
+          />
         </div>
+
+        {meta && meta.totalPages > 1 && (
+          <div className="mt-10 flex justify-center">
+            {/* Removed internal pagination here because it's now in DataTable */}
+          </div>
+        )}
       </main>
     </div>
   );

@@ -15,8 +15,9 @@ const MasterGuru = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const { data: response, isLoading } = useGurus({ page, limit: 10, search: searchTerm });
+  const { data: response, isLoading } = useGurus({ page, limit, search: searchTerm });
   const gurus = response?.data || [];
   const meta = response?.meta;
   const createMutation = useCreateGuru();
@@ -135,9 +136,6 @@ const MasterGuru = () => {
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 />
               </div>
-              <div className="text-sm font-bold text-slate-400 px-4">
-                Total: {meta?.total || 0} Guru
-              </div>
             </div>
 
             <DataTable 
@@ -146,17 +144,13 @@ const MasterGuru = () => {
               isLoading={isLoading}
               emptyMessage="Tidak ada data guru."
               className="border-none shadow-none rounded-none"
+              meta={meta}
+              onPageChange={setPage}
+              onLimitChange={(newLimit) => {
+                setLimit(newLimit);
+                setPage(1);
+              }}
             />
-
-            {meta && meta.totalPages > 1 && (
-              <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
-                <Pagination 
-                  currentPage={page} 
-                  totalPages={meta.totalPages} 
-                  onPageChange={setPage} 
-                />
-              </div>
-            )}
           </div>
         </div>
       </main>

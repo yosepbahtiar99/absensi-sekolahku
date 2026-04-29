@@ -13,10 +13,11 @@ const MasterKelas = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedKelas, setSelectedKelas] = useState<IKelas | undefined>(undefined);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
-  const { data: response, isLoading } = useClasses({ page, limit: 10, search: searchTerm });
+  const { data: response, isLoading } = useClasses({ page, limit, search: searchTerm });
   const classes = response?.data || [];
   const meta = response?.meta;
   const createMutation = useCreateClass();
@@ -133,9 +134,6 @@ const MasterKelas = () => {
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 />
               </div>
-              <div className="text-sm font-bold text-slate-400 px-4">
-                Total: {meta?.total || 0} Kelas
-              </div>
             </div>
 
             <DataTable 
@@ -144,17 +142,13 @@ const MasterKelas = () => {
               isLoading={isLoading}
               emptyMessage="Belum ada data kelas."
               className="border-none shadow-none rounded-none"
+              meta={meta}
+              onPageChange={setPage}
+              onLimitChange={(newLimit) => {
+                setLimit(newLimit);
+                setPage(1);
+              }}
             />
-
-            {meta && meta.totalPages > 1 && (
-              <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
-                <Pagination 
-                  currentPage={page} 
-                  totalPages={meta.totalPages} 
-                  onPageChange={setPage} 
-                />
-              </div>
-            )}
           </div>
         </div>
       </main>
