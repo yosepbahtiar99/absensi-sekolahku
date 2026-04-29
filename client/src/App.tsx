@@ -2,6 +2,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginPage from './pages/LoginPage';
 import GuruHome from './pages/GuruHome';
 import AttendancePage from './pages/AttendancePage';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminActivities from './pages/AdminActivities';
+import MasterGuru from './pages/MasterGuru';
+import MasterKelas from './pages/MasterKelas';
+import MasterPelajaran from './pages/MasterPelajaran';
 import { useAuthStore } from './store/authStore';
 
 // Protected Route Component
@@ -48,7 +53,39 @@ function App() {
           path="/admin" 
           element={
             <ProtectedRoute role="admin">
-              <div className="p-8 text-center"><h1>Dashboard Admin (Coming Soon)</h1></div>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/activities" 
+          element={
+            <ProtectedRoute role="admin">
+              <AdminActivities />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/guru" 
+          element={
+            <ProtectedRoute role="admin">
+              <MasterGuru />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/kelas" 
+          element={
+            <ProtectedRoute role="admin">
+              <MasterKelas />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/pelajaran" 
+          element={
+            <ProtectedRoute role="admin">
+              <MasterPelajaran />
             </ProtectedRoute>
           } 
         />

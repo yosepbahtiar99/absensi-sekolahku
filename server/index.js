@@ -20,10 +20,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const authRoutes = require('./routes/auth');
 const teacherRoutes = require('./routes/teacher');
 const uploadRoutes = require('./routes/upload');
+const adminRoutes = require('./routes/admin');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
