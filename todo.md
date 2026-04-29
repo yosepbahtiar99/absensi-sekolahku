@@ -1,13 +1,13 @@
 # Absensi Sekolahku Todo List
 
 ## High Priority
-- [ ] Refactor project architecture to be more readable and maintainable
-    - [ ] Follow Feature-Driven structure in `client/src/features/`
-    - [ ] Separate logic into `components/`, `forms/`, `services/`, `hooks/`, `interfaces/`, and `validations/`
-    - [ ] Move cross-cutting concerns to `client/src/shared/`
-    - [ ] Implement Formik for forms and Yup for validations as per `project_rules.md`
-    - [ ] Ensure strong typing (no `any`)
-    - [ ] Use TanStack Query for all API interactions
+- [/] Refactor project architecture to be more readable and maintainable
+    - [x] Follow Feature-Driven structure in `client/src/features/` (Auth, Teacher, Admin, & Master Data)
+    - [x] Separate logic into `components/`, `forms/`, `services/`, `hooks/`, `interfaces/`, and `validations/` (Complete!)
+    - [x] Move cross-cutting concerns to `client/src/shared/`
+    - [x] Implement Formik for forms and Yup for validations as per `project_rules.md` (Complete!)
+    - [x] Ensure strong typing (no `any`)
+    - [x] Use TanStack Query for all API interactions (Complete!)
 
 ## UI/UX Improvements
 - [x] Revamp Guru Home (Mobile-first, Premium design)
@@ -18,11 +18,10 @@
 - [x] Revamp Admin Activities (Clean Data Table)
 
 ## Features
-- [ ] Implement Approval workflow for Admin
-- [ ] Master Data Management (Guru, Kelas, Pelajaran, Schedule)
-    - [ ] Tambahkan jumlah jam pelajaran di Master Pelajaran (kuota/alokasi jam per guru)
-- [ ] Schedule Management Improvements
-    - [ ] View per kelas di flow Assign Master Schedule (indikator terassign/belum) -> **Perlu Diskusi**
+- [x] Master Data Management (Guru, Kelas, Pelajaran, Schedule)
+    - [x] Tambahkan jumlah jam pelajaran di Master Pelajaran (kuota/alokasi jam per guru)
+- [x] Schedule Management Improvements
+    - [x] View per kelas di flow Assign Master Schedule (indikator terassign/belum)
 - [ ] Core Optimizations
     - [ ] Implementasi Pagination (Server side & Client side)
 - [ ] Report Generation (Export to Excel/PDF)

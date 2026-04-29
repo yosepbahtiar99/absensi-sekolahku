@@ -36,6 +36,7 @@ const Class = sequelize.define('Class', {
 
 const Lesson = sequelize.define('Lesson', {
   name: { type: DataTypes.STRING, allowNull: false },
+  hours: { type: DataTypes.INTEGER, defaultValue: 0 },
 });
 
 const Schedule = sequelize.define('Schedule', {

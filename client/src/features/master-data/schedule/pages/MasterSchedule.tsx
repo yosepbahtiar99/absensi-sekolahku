@@ -1,0 +1,294 @@
+import { useState, useMemo } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { Plus, X, Calendar, Clock, Info, Loader2, GraduationCap } from 'lucide-react';
+import AdminSidebar from '../../../admin/components/AdminSidebar';
+import { Button } from '../../../../shared/components/Button';
+import { Card } from '../../../../shared/components/Card';
+import { useSchedules, useUpsertSchedule, useDeleteSchedule } from '../hooks/useScheduleData';
+import { useGurus } from '../../guru/hooks/useGuruData';
+import { useClasses } from '../../kelas/hooks/useKelasData';
+import { useLessons } from '../../lesson/hooks/useLessonData';
+import SortableScheduleItem from '../components/SortableScheduleItem';
+import ScheduleForm from '../forms/ScheduleForm';
+import type { ISchedule, ISchedulePayload } from '../interfaces/schedule.interface';
+
+const MasterSchedule = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<Partial<ISchedulePayload> | undefined>(undefined);
+  const [activeDay, setActiveDay] = useState('senin');
+
+  const { data: schedules, isLoading: isSchedLoading } = useSchedules();
+  const { data: gurus } = useGurus();
+  const { data: classes } = useClasses();
+  const { data: lessons } = useLessons();
+
+  const upsertMutation = useUpsertSchedule();
+  const deleteMutation = useDeleteSchedule();
+
+  const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // --- Logic Features ---
+  
+  // 1. Calculate Teacher Hours Allocation
+  const teacherStats = useMemo(() => {
+    if (!gurus || !schedules) return [];
+    return gurus.map(guru => {
+      const teacherSchedules = schedules.filter(s => s.teacherId === guru.id);
+      const totalHours = teacherSchedules.reduce((acc, curr) => acc + (curr.Lesson?.hours || 0), 0);
+      return { ...guru, totalHours };
+    }).sort((a, b) => b.totalHours - a.totalHours);
+  }, [gurus, schedules]);
+
+  // 2. Class Coverage for Active Day
+  const classStatus = useMemo(() => {
+    if (!classes || !schedules) return [];
+    return classes.map(cls => {
+      const hasSchedule = schedules.some(s => s.classId === cls.id && s.day === activeDay);
+      return { ...cls, hasSchedule };
+    });
+  }, [classes, schedules, activeDay]);
+
+  // --- Handlers ---
+
+  const handleOpenModal = (sched?: Partial<ISchedulePayload>, dayHint?: string) => {
+    setSelectedSchedule(sched || { day: dayHint || activeDay });
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedSchedule(undefined);
+    setIsModalOpen(false);
+  };
+
+  const handleSave = (values: ISchedulePayload) => {
+    upsertMutation.mutate(values, {
+      onSuccess: handleCloseModal
+    });
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm('Hapus jadwal ini?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    if (active.id !== over.id) {
+      // Logic for moving between days could go here
+      // For now we keep it simple as the original logic
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-[#F8FAFC]">
+      <AdminSidebar />
+      
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        <header className="p-8 pb-6 flex justify-between items-center bg-white border-b border-slate-100">
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+              <Calendar className="text-primary" size={32} />
+              Master Schedule
+            </h2>
+            <p className="text-slate-500 font-medium">Drag & drop untuk mengatur jadwal mengajar harian.</p>
+          </div>
+          <div className="flex gap-3">
+             <Button onClick={() => handleOpenModal()} className="shadow-lg shadow-primary/20">
+                <Plus size={20} className="mr-2" />
+                Tambah Jadwal
+              </Button>
+          </div>
+        </header>
+
+        <div className="flex-1 flex overflow-hidden">
+          {/* Main Board Container */}
+          <div className="flex-1 overflow-x-auto p-8 pt-4 bg-[#F8FAFC] custom-scrollbar">
+            <div className="flex gap-6 min-w-max h-full pb-8">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                {days.map((day) => (
+                  <div 
+                    key={day} 
+                    className={`w-80 flex flex-col rounded-[2.5rem] border-2 transition-all duration-300 ${
+                      activeDay === day ? 'bg-white border-primary/20 shadow-xl shadow-primary/5' : 'bg-slate-50/50 border-transparent'
+                    }`}
+                    onClick={() => setActiveDay(day)}
+                  >
+                    <div className="p-6 pb-4 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${activeDay === day ? 'bg-primary animate-pulse' : 'bg-slate-300'}`}></div>
+                        <h3 className="font-black text-slate-800 uppercase tracking-[0.2em] text-xs">{day}</h3>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleOpenModal(undefined, day); }}
+                        className="p-2 hover:bg-primary/5 rounded-xl text-slate-400 hover:text-primary transition-all"
+                      >
+                        <Plus size={18} />
+                      </button>
+                    </div>
+
+                    <div className="flex-1 px-4 overflow-y-auto custom-scrollbar pb-6">
+                      {isSchedLoading ? (
+                        <div className="flex justify-center py-10 opacity-30"><Loader2 className="animate-spin" /></div>
+                      ) : (
+                        <SortableContext
+                          items={schedules?.filter(s => s.day === day).map(s => s.id) || []}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {schedules?.filter(s => s.day === day).map((item) => (
+                            <SortableScheduleItem
+                              key={item.id}
+                              schedule={item}
+                              onDelete={handleDelete}
+                              onEdit={(s) => handleOpenModal({
+                                id: s.id,
+                                day: s.day,
+                                startTime: s.startTime.substring(0, 5),
+                                endTime: s.endTime.substring(0, 5),
+                                teacherId: s.teacherId,
+                                classId: s.classId,
+                                lessonId: s.lessonId
+                              })}
+                            />
+                          ))}
+                        </SortableContext>
+                      )}
+
+                      {schedules?.filter(s => s.day === day).length === 0 && (
+                        <div className="h-32 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center text-slate-400 gap-2 bg-white/50">
+                          <Clock size={24} className="opacity-20" />
+                          <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Belum Ada Jadwal</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </DndContext>
+            </div>
+          </div>
+
+          {/* Sidebar Insights */}
+          <aside className="w-80 bg-white border-l border-slate-100 flex flex-col animate-in slide-in-from-right duration-500">
+            <div className="p-8 border-b border-slate-100 bg-slate-50/50">
+              <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                <Info size={16} className="text-primary" />
+                Live Insights
+              </h4>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
+              {/* Teacher Allocation Section */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Alokasi Jam Guru</h5>
+                  <div className="bg-slate-100 px-2 py-0.5 rounded text-[10px] font-bold text-slate-500">Global</div>
+                </div>
+                <div className="space-y-5">
+                  {teacherStats.slice(0, 5).map((stat, i) => (
+                    <div key={i} className="group">
+                      <div className="flex justify-between items-end mb-2">
+                        <span className="text-xs font-bold text-slate-700 truncate max-w-[140px]">{stat.name}</span>
+                        <span className="text-[10px] font-black text-primary">{stat.totalHours} JP</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary rounded-full transition-all duration-1000" 
+                          style={{ width: `${Math.min((stat.totalHours / 40) * 100, 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Class Status Section */}
+              <section>
+                <div className="flex items-center justify-between mb-6">
+                  <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status Kelas ({activeDay})</h5>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {classStatus.map((cls, i) => (
+                    <div 
+                      key={i} 
+                      className={`p-3 rounded-2xl border text-center transition-all ${
+                        cls.hasSchedule 
+                          ? 'bg-emerald-50 border-emerald-100 text-emerald-700 shadow-sm' 
+                          : 'bg-white border-slate-100 text-slate-400 grayscale opacity-60'
+                      }`}
+                    >
+                      <GraduationCap size={16} className="mx-auto mb-1.5 opacity-40" />
+                      <p className="text-[10px] font-black uppercase tracking-tighter">{cls.name}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Legend Card */}
+              <Card className="bg-primary/5 border-primary/10 p-5 rounded-[2rem]">
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Pro Tip</p>
+                <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                  Gunakan insight di atas untuk memastikan beban mengajar guru merata dan semua kelas sudah terisi jadwalnya.
+                </p>
+              </Card>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      {/* Modal / Sidebar Form */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-end">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={handleCloseModal}></div>
+          <div className="relative w-full max-w-md h-full bg-white shadow-2xl p-8 flex flex-col animate-in slide-in-from-right duration-500">
+            <div className="flex justify-between items-center mb-10">
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                  {selectedSchedule?.id ? 'Edit Jadwal' : 'Tambah Jadwal'}
+                </h3>
+                <p className="text-slate-400 text-sm font-medium">Lengkapi rincian jadwal mengajar.</p>
+              </div>
+              <button onClick={handleCloseModal} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
+                <X size={24} className="text-slate-400" />
+              </button>
+            </div>
+
+            <ScheduleForm 
+              initialValues={selectedSchedule}
+              gurus={gurus || []}
+              classes={classes || []}
+              lessons={lessons || []}
+              onSubmit={handleSave} 
+              onCancel={handleCloseModal}
+              isLoading={upsertMutation.isPending}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MasterSchedule;

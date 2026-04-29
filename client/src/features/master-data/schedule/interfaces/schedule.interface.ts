@@ -1,0 +1,26 @@
+import type { IGuru } from '../../guru/interfaces/guru.interface';
+import type { IKelas } from '../../kelas/interfaces/kelas.interface';
+import type { IPelajaran } from '../../lesson/interfaces/lesson.interface';
+
+export interface ISchedule {
+  id: number;
+  classId: number;
+  lessonId: number;
+  teacherId: number;
+  day: string;
+  startTime: string;
+  endTime: string;
+  Class: IKelas;
+  Lesson: IPelajaran;
+  Teacher: IGuru;
+}
+
+export interface ISchedulePayload {
+  id?: number;
+  classId: number;
+  lessonId: number;
+  teacherId: number;
+  day: string;
+  startTime: string;
+  endTime: string;
+}

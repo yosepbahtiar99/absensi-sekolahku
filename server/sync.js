@@ -30,7 +30,7 @@ async function syncDB() {
     });
 
     // Buat Data Master Contoh
-    const mapel = await Lesson.create({ name: 'Bahasa Indonesia' });
+    const mapel = await Lesson.create({ name: 'Bahasa Indonesia', hours: 4 });
     const kelasA = await Class.create({ name: 'Kelas VII A' });
     const kelasB = await Class.create({ name: 'Kelas VIII B' });
 

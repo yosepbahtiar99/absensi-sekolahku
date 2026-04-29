@@ -1,14 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import GuruHome from './pages/GuruHome';
-import AttendancePage from './pages/AttendancePage';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminActivities from './pages/AdminActivities';
-import MasterGuru from './pages/MasterGuru';
-import MasterKelas from './pages/MasterKelas';
-import MasterPelajaran from './pages/MasterPelajaran';
-import MasterSchedule from './pages/MasterSchedule';
-import { useAuthStore } from './store/authStore';
+import LoginPage from './features/auth/pages/LoginPage';
+import GuruHome from './features/teacher-attendance/pages/GuruHome';
+import AttendancePage from './features/teacher-attendance/pages/AttendancePage';
+import AdminDashboard from './features/admin/pages/AdminDashboard';
+import AdminActivities from './features/admin/pages/AdminActivities';
+import MasterGuru from './features/master-data/guru/pages/MasterGuru';
+import MasterKelas from './features/master-data/kelas/pages/MasterKelas';
+import MasterPelajaran from './features/master-data/lesson/pages/MasterPelajaran';
+import MasterSchedule from './features/master-data/schedule/pages/MasterSchedule';
+import { useAuthStore } from './shared/store/authStore';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, role }: { children: React.ReactNode, role?: string }) => {

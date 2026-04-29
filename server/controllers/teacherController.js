@@ -76,4 +76,21 @@ const submitAttendance = async (req, res) => {
   }
 };
 
-module.exports = { getMySchedule, submitAttendance };
+const getScheduleDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const schedule = await Schedule.findByPk(id, {
+      include: [
+        { model: Class, attributes: ['name'] },
+        { model: Lesson, attributes: ['name'] }
+      ]
+    });
+    if (!schedule) return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
+    res.json(schedule);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal mengambil detail jadwal' });
+  }
+};
+
+module.exports = { getMySchedule, submitAttendance, getScheduleDetail };
