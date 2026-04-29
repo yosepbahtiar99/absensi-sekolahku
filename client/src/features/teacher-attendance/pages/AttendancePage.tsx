@@ -19,32 +19,67 @@ const AttendancePage = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
 
-  const startCamera = async () => {
-    try {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      const newStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: activeCamera === 'selfie' ? 'user' : 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
+  const stopCamera = (s: MediaStream | null) => {
+    console.log("Stopping camera stream...", s?.id);
+    if (s) {
+      s.getTracks().forEach(track => {
+        console.log("Stopping track:", track.label);
+        track.stop();
+        track.enabled = false;
       });
-      setStream(newStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = newStream;
-      }
-    } catch (err) {
-      console.error("Camera error:", err);
-      alert("Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.");
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setStream(null);
   };
 
   useEffect(() => {
+    let currentStream: MediaStream | null = null;
+    let isCancelled = false;
+
+    const startCamera = async () => {
+      try {
+        console.log("Initializing camera...", activeCamera);
+        // Stop previous stream if any
+        if (stream) stopCamera(stream);
+
+        const newStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: activeCamera === 'selfie' ? 'user' : 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          } 
+        });
+        
+        if (isCancelled) {
+          console.log("Effect cancelled, stopping new stream immediately:", newStream.id);
+          stopCamera(newStream);
+          return;
+        }
+
+        console.log("Camera started successfully:", newStream.id);
+        newStream.getTracks().forEach(t => console.log("Track active:", t.label));
+
+        currentStream = newStream;
+        setStream(newStream);
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = newStream;
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          console.error("Camera error:", err);
+          alert("Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.");
+        }
+      }
+    };
+
     startCamera();
+
     return () => {
-      if (stream) stream.getTracks().forEach(track => track.stop());
+      isCancelled = true;
+      stopCamera(currentStream);
     };
   }, [activeCamera]);
 
@@ -107,6 +142,7 @@ const AttendancePage = () => {
 
     mutate(formData, {
       onSuccess: () => {
+        stopCamera(stream);
         navigate('/home');
       },
     });
@@ -119,7 +155,10 @@ const AttendancePage = () => {
       {/* Header Overlay */}
       <div className="absolute top-0 left-0 w-full p-8 z-30 flex justify-between items-start pointer-events-none">
         <button 
-          onClick={() => navigate('/home')} 
+          onClick={() => {
+            stopCamera(stream);
+            navigate('/home');
+          }} 
           className="w-12 h-12 rounded-full bg-black/20 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white pointer-events-auto transition-transform active:scale-90"
         >
           <X size={24} />
