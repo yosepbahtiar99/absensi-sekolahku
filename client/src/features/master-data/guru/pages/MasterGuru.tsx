@@ -7,12 +7,17 @@ import { Button } from '../../../../shared/components/Button';
 import GuruForm from '../forms/GuruForm';
 import type { IGuru } from '../interfaces/guru.interface';
 
+import { Pagination } from '../../../../shared/components/Pagination';
+
 const MasterGuru = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedGuru, setSelectedGuru] = useState<IGuru | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
 
-  const { data: gurus, isLoading } = useGurus();
+  const { data: response, isLoading } = useGurus({ page, limit: 10 });
+  const gurus = response?.data || [];
+  const meta = response?.meta;
   const createMutation = useCreateGuru();
   const updateMutation = useUpdateGuru();
   const deleteMutation = useDeleteGuru();
@@ -158,6 +163,16 @@ const MasterGuru = () => {
                 </tbody>
               </table>
             </div>
+
+            {meta && meta.totalPages > 1 && (
+              <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
+                <Pagination 
+                  currentPage={page} 
+                  totalPages={meta.totalPages} 
+                  onPageChange={setPage} 
+                />
+              </div>
+            )}
           </Card>
         </div>
       </main>

@@ -22,6 +22,13 @@
     - [x] Tambahkan jumlah jam pelajaran di Master Pelajaran (kuota/alokasi jam per guru)
 - [x] Schedule Management Improvements
     - [x] View per kelas di flow Assign Master Schedule (indikator terassign/belum)
-- [ ] Core Optimizations
-    - [ ] Implementasi Pagination (Server side & Client side)
-- [ ] Report Generation (Export to Excel/PDF)
+- [x] Core Optimizations
+    - [x] Server-side Pagination implementation (Express + Sequelize)
+    - [x] Client-side Pagination integration (TanStack Query + UI Pagination)
+    - [x] Specific Pagination Targets:
+        - [x] Admin Activities (High Volume)
+        - [x] Master Guru
+        - [x] Master Kelas & Pelajaran
+- [x] Report Generation (Export to Excel/PDF)
+    - [x] Advanced Filtering (Guru, Pelajaran, Kelas, Date Range, Status)
+    - [x] Export to Excel with custom styling

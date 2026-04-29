@@ -7,11 +7,16 @@ import { Button } from '../../../../shared/components/Button';
 import LessonForm from '../forms/LessonForm';
 import type { IPelajaran } from '../interfaces/lesson.interface';
 
+import { Pagination } from '../../../../shared/components/Pagination';
+
 const MasterPelajaran = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<IPelajaran | undefined>(undefined);
+  const [page, setPage] = useState(1);
 
-  const { data: lessons, isLoading } = useLessons();
+  const { data: response, isLoading } = useLessons({ page, limit: 12 });
+  const lessons = response?.data || [];
+  const meta = response?.meta;
   const createMutation = useCreateLesson();
   const updateMutation = useUpdateLesson();
   const deleteMutation = useDeleteLesson();
@@ -106,6 +111,16 @@ const MasterPelajaran = () => {
             ))
           )}
         </div>
+
+        {meta && meta.totalPages > 1 && (
+          <div className="mt-10 flex justify-center">
+            <Pagination 
+              currentPage={page} 
+              totalPages={meta.totalPages} 
+              onPageChange={setPage} 
+            />
+          </div>
+        )}
       </main>
 
       {/* Modal / Sidebar Form */}

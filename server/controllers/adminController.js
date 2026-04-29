@@ -1,6 +1,7 @@
 const { User, Class, Lesson, Schedule, Activity } = require('../models');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const ExcelJS = require('exceljs');
 
 const getDashboardSummary = async (req, res) => {
   try {
@@ -40,20 +41,64 @@ const getDashboardSummary = async (req, res) => {
 
 const getAllActivities = async (req, res) => {
   try {
-    const activities = await Activity.findAll({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    const { search, teacherId, classId, lessonId, startDate, endDate, status } = req.query;
+
+    const where = {};
+    if (teacherId) where.userId = teacherId;
+    if (status) where.status = status;
+    
+    if (startDate || endDate) {
+      where.timestamp = {};
+      if (startDate) where.timestamp[Op.gte] = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.timestamp[Op.lte] = end;
+      }
+    }
+
+    if (search) {
+      where[Op.or] = [
+        { '$User.name$': { [Op.like]: `%${search}%` } },
+        { '$Schedule.Lesson.name$': { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const scheduleWhere = {};
+    if (lessonId) scheduleWhere.lessonId = lessonId;
+    if (classId) scheduleWhere.classId = classId;
+
+    const { count, rows } = await Activity.findAndCountAll({
+      where,
       include: [
         { model: User, attributes: ['name'] },
         { 
           model: Schedule, 
+          where: Object.keys(scheduleWhere).length ? scheduleWhere : null,
           include: [
             { model: Class, attributes: ['name'] },
             { model: Lesson, attributes: ['name'] }
           ]
         }
       ],
-      order: [['timestamp', 'DESC']]
+      limit,
+      offset,
+      order: [['timestamp', 'DESC']],
+      distinct: true
     });
-    res.json(activities);
+
+    res.json({
+      data: rows,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Gagal mengambil data aktivitas' });
@@ -63,8 +108,27 @@ const getAllActivities = async (req, res) => {
 // --- GURU CRUD ---
 const getGurus = async (req, res) => {
   try {
-    const gurus = await User.findAll({ where: { role: 'guru' }, attributes: { exclude: ['password'] } });
-    res.json(gurus);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await User.findAndCountAll({ 
+      where: { role: 'guru' }, 
+      attributes: { exclude: ['password'] },
+      limit,
+      offset,
+      order: [['name', 'ASC']]
+    });
+
+    res.json({
+      data: rows,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Gagal mengambil data guru' });
   }
@@ -106,8 +170,25 @@ const deleteGuru = async (req, res) => {
 // --- CLASS CRUD ---
 const getClasses = async (req, res) => {
   try {
-    const classes = await Class.findAll();
-    res.json(classes);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Class.findAndCountAll({
+      limit,
+      offset,
+      order: [['name', 'ASC']]
+    });
+
+    res.json({
+      data: rows,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Gagal mengambil data kelas' });
   }
@@ -143,8 +224,25 @@ const deleteClass = async (req, res) => {
 // --- LESSON CRUD ---
 const getLessons = async (req, res) => {
   try {
-    const lessons = await Lesson.findAll();
-    res.json(lessons);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Lesson.findAndCountAll({
+      limit,
+      offset,
+      order: [['name', 'ASC']]
+    });
+
+    res.json({
+      data: rows,
+      meta: {
+        total: count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Gagal mengambil data pelajaran' });
   }
@@ -250,11 +348,95 @@ const deleteSchedule = async (req, res) => {
   }
 };
 
+const exportReport = async (req, res) => {
+  try {
+    const { teacherId, lessonId, classId, startDate, endDate, status } = req.query;
+
+    const where = {};
+    if (teacherId) where.userId = teacherId;
+    if (status) where.status = status;
+    
+    if (startDate || endDate) {
+      where.timestamp = {};
+      if (startDate) where.timestamp[Op.gte] = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.timestamp[Op.lte] = end;
+      }
+    }
+
+    const scheduleWhere = {};
+    if (lessonId) scheduleWhere.lessonId = lessonId;
+    if (classId) scheduleWhere.classId = classId;
+
+    const activities = await Activity.findAll({
+      where,
+      include: [
+        { model: User, attributes: ['name'] },
+        { 
+          model: Schedule,
+          where: Object.keys(scheduleWhere).length ? scheduleWhere : null,
+          include: [
+            { model: Class, attributes: ['name'] },
+            { model: Lesson, attributes: ['name'] }
+          ]
+        }
+      ],
+      order: [['timestamp', 'DESC']]
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Laporan Absensi');
+
+    worksheet.columns = [
+      { header: 'No', key: 'no', width: 5 },
+      { header: 'Tanggal', key: 'date', width: 15 },
+      { header: 'Waktu', key: 'time', width: 10 },
+      { header: 'Nama Guru', key: 'teacher', width: 25 },
+      { header: 'Mata Pelajaran', key: 'lesson', width: 25 },
+      { header: 'Kelas', key: 'class', width: 15 },
+      { header: 'Status', key: 'status', width: 10 },
+    ];
+
+    // Style header
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF0891B2' } // Primary Cyan-600
+    };
+    worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+
+    activities.forEach((act, index) => {
+      worksheet.addRow({
+        no: index + 1,
+        date: new Date(act.timestamp).toLocaleDateString('id-ID'),
+        time: new Date(act.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        teacher: act.User.name,
+        lesson: act.Schedule.Lesson.name,
+        class: act.Schedule.Class.name,
+        status: act.status.toUpperCase(),
+      });
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Laporan_Absensi.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal ekspor laporan' });
+  }
+};
+
 module.exports = { 
   getDashboardSummary, 
   getAllActivities,
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
   getLessons, createLesson, updateLesson, deleteLesson,
-  getSchedules, createOrUpdateSchedule, deleteSchedule
+  getSchedules, createOrUpdateSchedule, deleteSchedule,
+  exportReport
 };

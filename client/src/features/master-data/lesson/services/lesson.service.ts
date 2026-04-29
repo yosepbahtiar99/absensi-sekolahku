@@ -1,9 +1,10 @@
 import api from '../../../../shared/lib/axios';
 import type { IPelajaran, IPelajaranPayload } from '../interfaces/lesson.interface';
+import type { IPaginatedResponse } from '../../../admin/services/admin.service';
 
 export const lessonService = {
-  getAll: async (): Promise<IPelajaran[]> => {
-    const response = await api.get<IPelajaran[]>('/admin/lessons');
+  getAll: async (params?: { page?: number; limit?: number }): Promise<IPaginatedResponse<IPelajaran>> => {
+    const response = await api.get<IPaginatedResponse<IPelajaran>>('/admin/lessons', { params });
     return response.data;
   },
 

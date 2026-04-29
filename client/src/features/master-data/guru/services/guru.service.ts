@@ -1,9 +1,10 @@
 import api from '../../../../shared/lib/axios';
 import type { IGuru, IGuruPayload } from '../interfaces/guru.interface';
+import type { IPaginatedResponse } from '../../../admin/services/admin.service';
 
 export const guruService = {
-  getAll: async (): Promise<IGuru[]> => {
-    const response = await api.get<IGuru[]>('/admin/gurus');
+  getAll: async (params?: { page?: number; limit?: number }): Promise<IPaginatedResponse<IGuru>> => {
+    const response = await api.get<IPaginatedResponse<IGuru>>('/admin/gurus', { params });
     return response.data;
   },
 

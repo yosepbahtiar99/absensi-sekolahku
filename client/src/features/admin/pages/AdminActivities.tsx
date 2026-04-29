@@ -2,10 +2,43 @@ import React, { useState } from 'react';
 import { useAdminActivities } from '../hooks/useAdminData';
 import { Search, Clock, Filter, FileSpreadsheet, User, BookOpen, Loader2 } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
+import { Pagination } from '../../../shared/components/Pagination';
+import { useGurus } from '../../master-data/guru/hooks/useGuruData';
+import { useClasses } from '../../master-data/kelas/hooks/useKelasData';
+import { useLessons } from '../../master-data/lesson/hooks/useLessonData';
+import { adminService } from '../services/admin.service';
 
 const AdminActivities = () => {
   const [search, setSearch] = useState('');
-  const { data: activities, isLoading } = useAdminActivities({ search });
+  const [page, setPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Advanced Filters
+  const [teacherId, setTeacherId] = useState('');
+  const [classId, setClassId] = useState('');
+  const [lessonId, setLessonId] = useState('');
+  const [status, setStatus] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const { data: response, isLoading } = useAdminActivities({ 
+    search, page, limit: 10, teacherId, classId, lessonId, status, startDate, endDate 
+  });
+
+  const { data: guruRes } = useGurus({ limit: 100 });
+  const { data: kelasRes } = useClasses({ limit: 100 });
+  const { data: lessonRes } = useLessons({ limit: 100 });
+
+  const activities = response?.data || [];
+  const meta = response?.meta;
+
+  const handleExport = async () => {
+    try {
+      await adminService.exportReport({ teacherId, classId, lessonId, status, startDate, endDate });
+    } catch (error) {
+      console.error('Export failed', error);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -18,16 +51,104 @@ const AdminActivities = () => {
             <p className="text-slate-500 font-medium">Monitoring kehadiran guru secara real-time.</p>
           </div>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 bg-white border border-slate-100 px-5 py-3 rounded-2xl text-slate-600 font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm active:scale-95 ${
+                showFilters ? 'bg-primary text-white' : 'bg-white border border-slate-100 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
               <Filter size={18} />
               Filter
             </button>
-            <button className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold hover:bg-cyan-700 transition-all shadow-lg shadow-primary/20 active:scale-95">
+            <button 
+              onClick={handleExport}
+              className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 active:scale-95"
+            >
               <FileSpreadsheet size={18} />
               Export Report
             </button>
           </div>
         </header>
+
+        {showFilters && (
+          <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm mb-8 animate-in slide-in-from-top-4 duration-300">
+            <div className="grid grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Guru</label>
+                <select 
+                  value={teacherId} 
+                  onChange={(e) => setTeacherId(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                >
+                  <option value="">Semua Guru</option>
+                  {guruRes?.data.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Pelajaran</label>
+                <select 
+                  value={lessonId} 
+                  onChange={(e) => setLessonId(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                >
+                  <option value="">Semua Pelajaran</option>
+                  {lessonRes?.data.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Kelas</label>
+                <select 
+                  value={classId} 
+                  onChange={(e) => setClassId(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                >
+                  <option value="">Semua Kelas</option>
+                  {kelasRes?.data.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Start Date</label>
+                <input 
+                  type="date" 
+                  value={startDate} 
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">End Date</label>
+                <input 
+                  type="date" 
+                  value={endDate} 
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Status</label>
+                <select 
+                  value={status} 
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                >
+                  <option value="">Semua Status</option>
+                  <option value="masuk">Masuk</option>
+                  <option value="telat">Telat</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button 
+                onClick={() => {
+                  setTeacherId(''); setClassId(''); setLessonId(''); setStatus(''); setStartDate(''); setEndDate('');
+                }}
+                className="text-xs font-bold text-slate-400 hover:text-primary transition-all"
+              >
+                Reset Filters
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="p-6 border-b border-slate-50 flex items-center justify-between">
@@ -37,12 +158,15 @@ const AdminActivities = () => {
                 type="text" 
                 placeholder="Cari guru atau mata pelajaran..." 
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1); // Reset to page 1 on search
+                }}
                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
             </div>
             <div className="text-sm font-bold text-slate-400 px-4">
-              Total: {activities?.length || 0} Record
+              Total: {meta?.total || 0} Record
             </div>
           </div>
 
@@ -137,6 +261,16 @@ const AdminActivities = () => {
               )}
             </tbody>
           </table>
+
+          {meta && meta.totalPages > 1 && (
+            <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
+              <Pagination 
+                currentPage={page} 
+                totalPages={meta.totalPages} 
+                onPageChange={setPage} 
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>

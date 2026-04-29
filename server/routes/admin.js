@@ -5,7 +5,8 @@ const {
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
   getLessons, createLesson, updateLesson, deleteLesson,
-  getSchedules, createOrUpdateSchedule, deleteSchedule
+  getSchedules, createOrUpdateSchedule, deleteSchedule,
+  exportReport
 } = require('../controllers/adminController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
@@ -14,6 +15,7 @@ router.use(verifyToken, isAdmin);
 
 router.get('/summary', getDashboardSummary);
 router.get('/activities', getAllActivities);
+router.get('/export-report', exportReport);
 
 // Guru
 router.get('/gurus', getGurus);

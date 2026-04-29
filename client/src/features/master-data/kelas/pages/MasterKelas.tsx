@@ -7,11 +7,16 @@ import { Button } from '../../../../shared/components/Button';
 import KelasForm from '../forms/KelasForm';
 import type { IKelas } from '../interfaces/kelas.interface';
 
+import { Pagination } from '../../../../shared/components/Pagination';
+
 const MasterKelas = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedKelas, setSelectedKelas] = useState<IKelas | undefined>(undefined);
+  const [page, setPage] = useState(1);
 
-  const { data: classes, isLoading } = useClasses();
+  const { data: response, isLoading } = useClasses({ page, limit: 12 });
+  const classes = response?.data || [];
+  const meta = response?.meta;
   const createMutation = useCreateClass();
   const updateMutation = useUpdateClass();
   const deleteMutation = useDeleteClass();
@@ -100,6 +105,16 @@ const MasterKelas = () => {
             ))
           )}
         </div>
+
+        {meta && meta.totalPages > 1 && (
+          <div className="mt-10 flex justify-center">
+            <Pagination 
+              currentPage={page} 
+              totalPages={meta.totalPages} 
+              onPageChange={setPage} 
+            />
+          </div>
+        )}
       </main>
 
       {/* Modal / Sidebar Form */}
