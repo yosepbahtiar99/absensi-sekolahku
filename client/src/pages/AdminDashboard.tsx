@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
-import { Users, GraduationCap, BookOpen, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, Clock, AlertTriangle, CheckCircle, TrendingUp, Calendar, ArrowRight } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
 
 interface Summary {
@@ -12,7 +12,7 @@ interface Summary {
 }
 
 const AdminDashboard = () => {
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,70 +33,109 @@ const AdminDashboard = () => {
   }, [token]);
 
   const stats = [
-    { label: 'Total Guru', value: summary?.totalGuru || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Total Kelas', value: summary?.totalKelas || 0, icon: GraduationCap, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Total Pelajaran', value: summary?.totalPelajaran || 0, icon: BookOpen, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Total Guru', value: summary?.totalGuru || 0, icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Total Kelas', value: summary?.totalKelas || 0, icon: GraduationCap, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { label: 'Total Pelajaran', value: summary?.totalPelajaran || 0, icon: BookOpen, color: 'text-orange-600', bg: 'bg-orange-100' },
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex min-h-screen bg-[#F8FAFC]">
       <AdminSidebar />
       
-      <main className="flex-1 p-8">
-        <header className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-800">Ringkasan Dashboard</h2>
-          <p className="text-slate-500">Pantau status kehadiran sekolah hari ini.</p>
+      <main className="flex-1 p-10 overflow-y-auto">
+        <header className="mb-10 flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Dashboard Overview</h2>
+            <p className="text-slate-500 font-medium">Selamat datang kembali, <span className="text-primary font-bold">{user?.name}</span></p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 text-sm font-bold text-slate-600">
+              <Calendar size={18} className="text-primary" />
+              {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </div>
+          </div>
         </header>
 
         {loading ? (
-          <div>Memuat data...</div>
+          <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Menyiapkan Data...</p>
+          </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {stats.map((stat, i) => (
-                <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-                  <div className={`${stat.bg} ${stat.color} p-4 rounded-xl`}>
-                    <stat.icon size={24} />
+                <div key={i} className="group bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 flex flex-col gap-6 transition-all hover:shadow-[0_20px_50px_rgba(8,145,178,0.05)] hover:-translate-y-1">
+                  <div className="flex justify-between items-start">
+                    <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl group-hover:scale-110 transition-transform`}>
+                      <stat.icon size={28} />
+                    </div>
+                    <div className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                      <TrendingUp size={12} />
+                      +12%
+                    </div>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500 font-medium">{stat.label}</p>
-                    <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                    <p className="text-sm text-slate-400 font-bold uppercase tracking-[0.1em] mb-1">{stat.label}</p>
+                    <p className="text-4xl font-black text-slate-900 tabular-nums">{stat.value}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Today's Detail */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  <Clock size={20} className="text-blue-600" />
-                  Kehadiran Hari Ini
-                </h3>
-                <div className="flex gap-4">
-                  <div className="flex-1 bg-green-50 p-4 rounded-xl border border-green-100">
-                    <div className="flex items-center gap-2 text-green-700 mb-1">
-                      <CheckCircle size={16} />
-                      <span className="text-sm font-bold uppercase tracking-wider">Hadir</span>
+            {/* Today's Detail - Bento Style */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100">
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
+                    <Clock size={24} className="text-primary" />
+                    Kehadiran Guru Hari Ini
+                  </h3>
+                  <button className="text-primary font-bold text-sm hover:underline">Lihat Detail</button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-[2.5rem] text-white shadow-lg shadow-green-500/20 relative overflow-hidden group">
+                    <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-2 opacity-80">
+                        <CheckCircle size={20} />
+                        <span className="text-xs font-black uppercase tracking-[0.2em]">Hadir Tepat Waktu</span>
+                      </div>
+                      <p className="text-5xl font-black">{summary?.todayStats.hadir}</p>
+                      <p className="mt-4 text-sm font-medium text-green-100">Guru sudah melakukan absensi</p>
                     </div>
-                    <p className="text-3xl font-black text-green-800">{summary?.todayStats.hadir}</p>
                   </div>
-                  <div className="flex-1 bg-amber-50 p-4 rounded-xl border border-amber-100">
-                    <div className="flex items-center gap-2 text-amber-700 mb-1">
-                      <AlertTriangle size={16} />
-                      <span className="text-sm font-bold uppercase tracking-wider">Telat</span>
+
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-8 rounded-[2.5rem] text-white shadow-lg shadow-amber-500/20 relative overflow-hidden group">
+                    <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-2 opacity-80">
+                        <AlertTriangle size={20} />
+                        <span className="text-xs font-black uppercase tracking-[0.2em]">Terlambat</span>
+                      </div>
+                      <p className="text-5xl font-black">{summary?.todayStats.telat}</p>
+                      <p className="mt-4 text-sm font-medium text-amber-100">Guru melewati batas waktu</p>
                     </div>
-                    <p className="text-3xl font-black text-amber-800">{summary?.todayStats.telat}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-blue-600 p-6 rounded-2xl shadow-lg text-white flex flex-col justify-center">
-                <h3 className="text-xl font-bold mb-2">Siap Atur Jadwal?</h3>
-                <p className="text-blue-100 text-sm mb-6">Kelola pembagian guru dan pelajaran ke kelas-kelas dengan fitur Drag & Drop.</p>
-                <button className="bg-white text-blue-600 px-6 py-2 rounded-xl font-bold self-start hover:bg-blue-50 transition-colors">
-                  Buka Pengaturan Jadwal
+              <div className="bg-primary p-10 rounded-[3rem] shadow-2xl shadow-primary/20 text-white flex flex-col relative overflow-hidden group">
+                <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
+                <div className="relative z-10 flex-1">
+                  <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-xl border border-white/20">
+                    <Calendar size={32} />
+                  </div>
+                  <h3 className="text-2xl font-black mb-4 leading-tight">Optimalkan Jadwal Belajar</h3>
+                  <p className="text-cyan-100 text-sm font-medium leading-relaxed mb-10 opacity-80">
+                    Gunakan fitur Drag & Drop untuk mengatur pembagian guru dan mata pelajaran ke setiap kelas secara efisien.
+                  </p>
+                </div>
+                <button className="relative z-10 bg-white text-primary px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-cyan-50 transition-all active:scale-95 shadow-xl group/btn">
+                  <span>Atur Jadwal</span>
+                  <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>

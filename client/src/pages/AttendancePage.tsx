@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Camera, RefreshCw, Check, ArrowRight, X } from 'lucide-react';
+import { Camera, RefreshCw, Check, ArrowRight, X, Image as ImageIcon, Sparkles, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
@@ -26,18 +26,25 @@ const AttendancePage = () => {
   useEffect(() => {
     startCamera();
     return () => stopCamera();
-  }, []);
+  }, [step]);
 
   const startCamera = async () => {
+    setIsCameraReady(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: step === 'selfie' ? 'user' : 'environment' },
+        video: { 
+          facingMode: step === 'selfie' ? 'user' : 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
         audio: false,
       });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setIsCameraReady(true);
+        videoRef.current.onloadedmetadata = () => {
+          setIsCameraReady(true);
+        };
       }
     } catch (err) {
       console.error('Error akses kamera:', err);
@@ -76,16 +83,24 @@ const AttendancePage = () => {
         // Reset transform
         context.setTransform(1, 0, 0, 1, 0, 0);
 
-        // Add Timestamp Watermark
+        // Professional Watermark
+        const timestamp = new Date().toLocaleString('id-ID', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        
+        context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        context.fillRect(0, canvas.height - 60, canvas.width, 60);
+        
         context.fillStyle = 'white';
-        context.strokeStyle = 'black';
-        context.lineWidth = 2;
-        context.font = 'bold 20px Arial';
-        const timestamp = new Date().toLocaleString('id-ID');
-        context.strokeText(timestamp, 20, canvas.height - 30);
-        context.fillText(timestamp, 20, canvas.height - 30);
+        context.font = 'bold 24px DM Sans, Arial';
+        context.fillText(`ABSENSI SEKOLAHKU | ${timestamp}`, 30, canvas.height - 22);
 
-        const dataUrl = canvas.toDataURL('image/jpeg');
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         setPhotos((prev) => ({ ...prev, [step]: dataUrl }));
         stopCamera();
       }
@@ -93,17 +108,14 @@ const AttendancePage = () => {
   };
 
   const handleNext = () => {
-    stopCamera();
     if (step === 'selfie') {
       setStep('class');
-      setTimeout(() => startCamera(), 100);
     } else {
       submitAll();
     }
   };
 
   const retake = () => {
-    stopCamera();
     setPhotos((prev) => ({ ...prev, [step]: null }));
     startCamera();
   };
@@ -136,7 +148,6 @@ const AttendancePage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      alert('Absensi Berhasil!');
       navigate('/home');
     } catch (err) {
       console.error(err);
@@ -159,80 +170,123 @@ const AttendancePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-[#0A0F11] flex flex-col font-sans overflow-hidden">
       {/* Header */}
-      <div className="p-4 flex justify-between items-center text-white">
-        <button onClick={() => navigate('/home')}><X size={24} /></button>
+      <div className="p-6 flex justify-between items-center z-20">
+        <button 
+          onClick={() => navigate('/home')}
+          className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10 text-white active:scale-90 transition-all"
+        >
+          <X size={20} />
+        </button>
         <div className="text-center">
-          <h1 className="font-bold text-sm uppercase tracking-widest">
-            Absen: {step === 'selfie' ? 'Foto Selfie' : 'Foto Kelas'}
-          </h1>
-          <p className="text-[10px] text-slate-400">{scheduleInfo?.lesson} - {scheduleInfo?.class}</p>
+          <div className="flex items-center justify-center gap-2 mb-0.5">
+            <Sparkles size={14} className="text-primary" />
+            <h1 className="font-black text-xs uppercase tracking-[0.2em] text-white">
+              Langkah {step === 'selfie' ? '1' : '2'} dari 2
+            </h1>
+          </div>
+          <p className="text-sm font-bold text-slate-400">{step === 'selfie' ? 'Ambil Foto Selfie' : 'Ambil Foto Kelas'}</p>
         </div>
-        <div className="w-6"></div>
+        <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10 text-white">
+          <ImageIcon size={20} />
+        </div>
       </div>
 
-      {/* Camera Preview / Result */}
-      <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-slate-900">
+      {/* Camera Viewport */}
+      <div className="flex-1 relative mx-4 mb-6 rounded-[3rem] overflow-hidden bg-slate-900 shadow-2xl shadow-black">
         {!photos[step] ? (
-          <>
+          <div className="w-full h-full relative">
             <video
               ref={videoRef}
               autoPlay
               playsInline
-              className={`w-full h-full object-cover ${step === 'selfie' ? 'scale-x-[-1]' : ''}`}
+              className={`w-full h-full object-cover transition-opacity duration-700 ${isCameraReady ? 'opacity-100' : 'opacity-0'} ${step === 'selfie' ? 'scale-x-[-1]' : ''}`}
             />
-            {!isCameraReady && <div className="absolute text-white text-sm">Menyiapkan Kamera...</div>}
-          </>
+            {!isCameraReady && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                <Loader2 size={40} className="text-primary animate-spin" />
+                <p className="text-slate-400 text-sm font-medium">Inisialisasi Kamera...</p>
+              </div>
+            )}
+            
+            {/* Camera Overlay Guide */}
+            <div className="absolute inset-0 border-[2px] border-white/20 rounded-[3rem] pointer-events-none"></div>
+            
+            {/* Guide Text */}
+            {isCameraReady && (
+              <div className="absolute bottom-10 left-0 right-0 text-center px-10">
+                <p className="text-white text-xs font-bold bg-black/40 backdrop-blur-md inline-block px-6 py-3 rounded-2xl border border-white/10">
+                  {step === 'selfie' ? 'Posisikan wajah Anda di tengah layar' : 'Pastikan seluruh area kelas terlihat'}
+                </p>
+              </div>
+            )}
+          </div>
         ) : (
-          <img src={photos[step]!} className="w-full h-full object-cover" alt="Captured" />
-        )}
-        
-        {/* Helper text */}
-        {!photos[step] && (
-          <div className="absolute bottom-10 left-0 right-0 text-center">
-            <p className="text-white text-xs bg-black bg-opacity-50 inline-block px-4 py-2 rounded-full">
-              {step === 'selfie' ? 'Pastikan wajah terlihat jelas' : 'Pastikan suasana kelas terlihat'}
-            </p>
+          <div className="w-full h-full relative animate-in fade-in zoom-in duration-500">
+            <img src={photos[step]!} className="w-full h-full object-cover" alt="Captured" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div className="absolute top-6 right-6">
+              <div className="bg-green-500 text-white p-2 rounded-full shadow-lg">
+                <Check size={24} />
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Controls */}
-      <div className="bg-black p-8 flex justify-around items-center">
-        {photos[step] ? (
-          <>
-            <button 
-              onClick={retake}
-              className="flex flex-col items-center text-white gap-2"
-            >
-              <div className="w-14 h-14 rounded-full border-2 border-white flex items-center justify-center">
-                <RefreshCw size={24} />
-              </div>
-              <span className="text-[10px] font-bold">ULANG</span>
-            </button>
-            <button 
-              onClick={handleNext}
-              disabled={loading}
-              className="flex flex-col items-center text-blue-500 gap-2"
-            >
-              <div className="w-20 h-20 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-900/40">
-                {loading ? <RefreshCw size={32} className="animate-spin" /> : step === 'selfie' ? <ArrowRight size={32} /> : <Check size={32} />}
-              </div>
-              <span className="text-xs font-bold text-white mt-1 uppercase">
-                {step === 'selfie' ? 'LANJUT' : 'KIRIM'}
-              </span>
-            </button>
-            <div className="w-14"></div>
-          </>
-        ) : (
-          <button 
-            onClick={capturePhoto}
-            className="w-20 h-20 rounded-full border-4 border-white p-1"
-          >
-            <div className="w-full h-full rounded-full bg-white active:bg-slate-300 transition-colors"></div>
-          </button>
-        )}
+      {/* Bottom Controls */}
+      <div className="bg-gradient-to-t from-black to-transparent pt-4 pb-12 px-10">
+        <div className="flex justify-between items-center max-w-sm mx-auto">
+          {photos[step] ? (
+            <>
+              <button 
+                onClick={retake}
+                className="flex flex-col items-center gap-3 group"
+              >
+                <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white group-active:scale-90 transition-all">
+                  <RefreshCw size={24} />
+                </div>
+                <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Ulangi</span>
+              </button>
+
+              <button 
+                onClick={handleNext}
+                disabled={loading}
+                className="flex flex-col items-center gap-3 group"
+              >
+                <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white shadow-[0_0_50px_rgba(8,145,178,0.4)] group-active:scale-95 transition-all">
+                  {loading ? (
+                    <Loader2 size={40} className="animate-spin" />
+                  ) : step === 'selfie' ? (
+                    <ArrowRight size={40} />
+                  ) : (
+                    <Check size={40} />
+                  )}
+                </div>
+                <span className="text-xs font-black tracking-[0.2em] text-white uppercase">
+                  {loading ? 'Mengirim' : step === 'selfie' ? 'Selanjutnya' : 'Selesaikan'}
+                </span>
+              </button>
+
+              <div className="w-16"></div>
+            </>
+          ) : (
+            <div className="w-full flex justify-center">
+              <button 
+                onClick={capturePhoto}
+                disabled={!isCameraReady}
+                className="group relative"
+              >
+                <div className="w-24 h-24 rounded-full border-4 border-white/30 flex items-center justify-center p-1.5 transition-transform group-active:scale-90">
+                  <div className="w-full h-full rounded-full bg-white shadow-xl"></div>
+                </div>
+                {/* Visual Ring */}
+                <div className="absolute -inset-2 border border-primary/50 rounded-full animate-ping opacity-20"></div>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
