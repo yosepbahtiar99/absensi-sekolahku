@@ -1,10 +1,9 @@
-import React from 'react';
 import { Formik, Form } from 'formik';
 import { loginSchema } from '../validations/login.schema';
 import { useAuthMutation } from '../hooks/useAuthMutation';
 import { Button } from '../../../shared/components/Button';
 import { Input } from '../../../shared/components/Input';
-import { Card, CardContent } from '../../../shared/components/Card';
+import { Card } from '../../../shared/components/Card';
 import { LogIn, User, Lock, Loader2, School } from 'lucide-react';
 
 const LoginPage = () => {

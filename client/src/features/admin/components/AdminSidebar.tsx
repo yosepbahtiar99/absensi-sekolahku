@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, BookOpen, GraduationCap, Calendar, CheckSquare, LogOut, School, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';

@@ -111,9 +111,18 @@ const getGurus = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
+    const search = req.query.search || '';
+
+    const where = { role: 'guru' };
+    if (search) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { username: { [Op.like]: `%${search}%` } }
+      ];
+    }
 
     const { count, rows } = await User.findAndCountAll({ 
-      where: { role: 'guru' }, 
+      where, 
       attributes: { exclude: ['password'] },
       limit,
       offset,
@@ -173,8 +182,15 @@ const getClasses = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
+    const search = req.query.search || '';
+
+    const where = {};
+    if (search) {
+      where.name = { [Op.like]: `%${search}%` };
+    }
 
     const { count, rows } = await Class.findAndCountAll({
+      where,
       limit,
       offset,
       order: [['name', 'ASC']]
@@ -227,8 +243,15 @@ const getLessons = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
+    const search = req.query.search || '';
+
+    const where = {};
+    if (search) {
+      where.name = { [Op.like]: `%${search}%` };
+    }
 
     const { count, rows } = await Lesson.findAndCountAll({
+      where,
       limit,
       offset,
       order: [['name', 'ASC']]

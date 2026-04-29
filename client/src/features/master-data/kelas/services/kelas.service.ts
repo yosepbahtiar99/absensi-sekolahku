@@ -3,7 +3,7 @@ import type { IKelas, IKelasPayload } from '../interfaces/kelas.interface';
 import type { IPaginatedResponse } from '../../../admin/services/admin.service';
 
 export const kelasService = {
-  getAll: async (params?: { page?: number; limit?: number }): Promise<IPaginatedResponse<IKelas>> => {
+  getAll: async (params?: { page?: number; limit?: number; search?: string }): Promise<IPaginatedResponse<IKelas>> => {
     const response = await api.get<IPaginatedResponse<IKelas>>('/admin/classes', { params });
     return response.data;
   },

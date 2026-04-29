@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLessons, useCreateLesson, useUpdateLesson, useDeleteLesson } from '../hooks/useLessonData';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
-import { Plus, Edit2, Trash2, X, Loader2, BookOpen } from 'lucide-react';
-import { Card } from '../../../../shared/components/Card';
+import { Plus, Edit2, Trash2, BookOpen, Search, X } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
+import { Pagination } from '../../../../shared/components/Pagination';
 import LessonForm from '../forms/LessonForm';
 import type { IPelajaran } from '../interfaces/lesson.interface';
 
-import { Pagination } from '../../../../shared/components/Pagination';
+import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
 const MasterPelajaran = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<IPelajaran | undefined>(undefined);
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
-  const { data: response, isLoading } = useLessons({ page, limit: 12 });
+  const { data: response, isLoading } = useLessons({ page, limit: 10, search: searchTerm });
   const lessons = response?.data || [];
   const meta = response?.meta;
   const createMutation = useCreateLesson();
@@ -49,6 +51,56 @@ const MasterPelajaran = () => {
     }
   };
 
+  const columns: Column<IPelajaran>[] = [
+    {
+      header: 'Mata Pelajaran',
+      accessor: (lesson) => (
+        <div className="flex items-center gap-4">
+          <div className="bg-orange-100 text-orange-600 p-3 rounded-xl">
+            <BookOpen size={20} />
+          </div>
+          <div>
+            <p className="font-black text-slate-800 text-sm leading-tight">{lesson.name}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: PEL-{lesson.id + 500}</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'Alokasi Waktu',
+      accessor: (lesson) => (
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-black text-primary">{lesson.hours}</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase">Jam / Minggu</span>
+        </div>
+      )
+    },
+    {
+      header: 'Aksi',
+      headerClassName: 'text-right',
+      accessor: (lesson) => (
+        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            className="w-10 h-10 p-0 rounded-xl"
+            onClick={() => handleOpenModal(lesson)}
+          >
+            <Edit2 size={16} className="text-slate-600" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-10 h-10 p-0 rounded-xl hover:bg-red-50 hover:border-red-100 hover:text-red-500"
+            onClick={() => handleDelete(lesson.id)}
+          >
+            <Trash2 size={16} />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <AdminSidebar />
@@ -65,62 +117,49 @@ const MasterPelajaran = () => {
           </Button>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          {isLoading ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
-              <Loader2 size={40} className="text-primary animate-spin" />
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Memuat data pelajaran...</p>
+        <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Cari pelajaran... (Tekan Enter)" 
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setSearchTerm(searchInput);
+                      setPage(1);
+                    }
+                  }}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                />
+              </div>
+              <div className="text-sm font-bold text-slate-400 px-4">
+                Total: {meta?.total || 0} Pelajaran
+              </div>
             </div>
-          ) : lessons?.length === 0 ? (
-            <div className="col-span-full bg-white p-20 rounded-[3rem] text-center border border-slate-100">
-              <p className="text-slate-400 font-medium">Belum ada data mata pelajaran.</p>
-            </div>
-          ) : (
-            lessons?.map((lesson) => (
-              <Card key={lesson.id} className="group p-8 rounded-[2.5rem] border-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(8,145,178,0.05)] transition-all hover:-translate-y-1">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="bg-orange-100 text-orange-600 p-4 rounded-[1.5rem] group-hover:scale-110 transition-transform">
-                    <BookOpen size={28} />
-                  </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleOpenModal(lesson)}
-                      className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(lesson.id)}
-                      className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Mata Pelajaran</p>
-                    <h3 className="text-2xl font-black text-slate-800">{lesson.name}</h3>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Jam/Minggu</p>
-                    <p className="text-xl font-black text-primary">{lesson.hours} JP</p>
-                  </div>
-                </div>
-              </Card>
-            ))
-          )}
-        </div>
 
-        {meta && meta.totalPages > 1 && (
-          <div className="mt-10 flex justify-center">
-            <Pagination 
-              currentPage={page} 
-              totalPages={meta.totalPages} 
-              onPageChange={setPage} 
+            <DataTable 
+              columns={columns} 
+              data={lessons} 
+              isLoading={isLoading}
+              emptyMessage="Belum ada data mata pelajaran."
+              className="border-none shadow-none rounded-none"
             />
+
+            {meta && meta.totalPages > 1 && (
+              <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
+                <Pagination 
+                  currentPage={page} 
+                  totalPages={meta.totalPages} 
+                  onPageChange={setPage} 
+                />
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
 
       {/* Modal / Sidebar Form */}

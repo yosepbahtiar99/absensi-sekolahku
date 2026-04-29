@@ -8,7 +8,7 @@ export const useAdminSummary = () => {
   });
 };
 
-export const useAdminActivities = (params?: { page?: number; limit?: number; search?: string }) => {
+export const useAdminActivities = (params?: { page?: number; limit?: number; search?: string; teacherId?: string; classId?: string; lessonId?: string; startDate?: string; endDate?: string; status?: string }) => {
   return useQuery({
     queryKey: ['admin-activities', params],
     queryFn: () => adminService.getActivities(params),

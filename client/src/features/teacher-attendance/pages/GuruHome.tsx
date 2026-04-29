@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useTodaySchedules } from '../hooks/useAttendanceData';
 import ScheduleCard from '../components/ScheduleCard';

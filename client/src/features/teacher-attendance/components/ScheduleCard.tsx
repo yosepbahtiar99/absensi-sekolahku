@@ -1,6 +1,5 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, MapPin, CheckCircle, Camera, ArrowRight } from 'lucide-react';
+import { Clock, CheckCircle, Camera, ArrowRight } from 'lucide-react';
 import { cn } from '../../../shared/lib/utils';
 import { Card } from '../../../shared/components/Card';
 import { Button } from '../../../shared/components/Button';

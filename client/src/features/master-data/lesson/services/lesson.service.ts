@@ -3,7 +3,7 @@ import type { IPelajaran, IPelajaranPayload } from '../interfaces/lesson.interfa
 import type { IPaginatedResponse } from '../../../admin/services/admin.service';
 
 export const lessonService = {
-  getAll: async (params?: { page?: number; limit?: number }): Promise<IPaginatedResponse<IPelajaran>> => {
+  getAll: async (params?: { page?: number; limit?: number; search?: string }): Promise<IPaginatedResponse<IPelajaran>> => {
     const response = await api.get<IPaginatedResponse<IPelajaran>>('/admin/lessons', { params });
     return response.data;
   },

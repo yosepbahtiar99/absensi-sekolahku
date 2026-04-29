@@ -1,10 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Camera, RefreshCw, Check, ArrowRight, X, Image as ImageIcon, Sparkles, Loader2 } from 'lucide-react';
+import { useRef, useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { RefreshCw, Check, ArrowRight, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useScheduleDetail } from '../hooks/useAttendanceData';
 import { useSubmitAttendance } from '../hooks/useSubmitAttendance';
-import { Button } from '../../../shared/components/Button';
-import { Card } from '../../../shared/components/Card';
 import { cn } from '../../../shared/lib/utils';
 
 const AttendancePage = () => {

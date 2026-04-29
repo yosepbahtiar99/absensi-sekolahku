@@ -22,17 +22,22 @@ import { useClasses } from '../../kelas/hooks/useKelasData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
 import SortableScheduleItem from '../components/SortableScheduleItem';
 import ScheduleForm from '../forms/ScheduleForm';
-import type { ISchedule, ISchedulePayload } from '../interfaces/schedule.interface';
+import type { ISchedulePayload } from '../interfaces/schedule.interface';
 
 const MasterSchedule = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<Partial<ISchedulePayload> | undefined>(undefined);
   const [activeDay, setActiveDay] = useState('senin');
 
-  const { data: schedules, isLoading: isSchedLoading } = useSchedules();
-  const { data: gurus } = useGurus();
-  const { data: classes } = useClasses();
-  const { data: lessons } = useLessons();
+  const { data: schedData, isLoading: isSchedLoading } = useSchedules();
+  const { data: guruRes } = useGurus({ limit: 100 });
+  const { data: kelasRes } = useClasses({ limit: 100 });
+  const { data: lessonRes } = useLessons({ limit: 100 });
+
+  const schedules = schedData; // Schedules is not paginated yet in server, but hook was updated? Wait.
+  const gurus = guruRes?.data || [];
+  const classes = kelasRes?.data || [];
+  const lessons = lessonRes?.data || [];
 
   const upsertMutation = useUpsertSchedule();
   const deleteMutation = useDeleteSchedule();

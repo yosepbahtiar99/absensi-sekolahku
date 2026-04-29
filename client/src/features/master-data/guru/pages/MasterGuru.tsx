@@ -1,21 +1,22 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useGurus, useCreateGuru, useUpdateGuru, useDeleteGuru } from '../hooks/useGuruData';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
-import { Plus, Edit2, Trash2, Search, X, Loader2, UserPlus, Users } from 'lucide-react';
-import { Card } from '../../../../shared/components/Card';
+import { Plus, Edit2, Trash2, Search, X, UserPlus } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
+import { Pagination } from '../../../../shared/components/Pagination';
 import GuruForm from '../forms/GuruForm';
 import type { IGuru } from '../interfaces/guru.interface';
 
-import { Pagination } from '../../../../shared/components/Pagination';
+import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
 const MasterGuru = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedGuru, setSelectedGuru] = useState<IGuru | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
 
-  const { data: response, isLoading } = useGurus({ page, limit: 10 });
+  const { data: response, isLoading } = useGurus({ page, limit: 10, search: searchTerm });
   const gurus = response?.data || [];
   const meta = response?.meta;
   const createMutation = useCreateGuru();
@@ -50,10 +51,54 @@ const MasterGuru = () => {
     }
   };
 
-  const filteredGurus = gurus?.filter(guru => 
-    guru.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    guru.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const columns: Column<IGuru>[] = [
+    {
+      header: 'Data Guru',
+      accessor: (guru) => (
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-[1.25rem] bg-gradient-to-br from-primary/10 to-cyan-500/5 text-primary flex items-center justify-center font-black text-sm border border-primary/5">
+            {guru.name.charAt(0)}
+          </div>
+          <div>
+            <p className="font-black text-slate-800 text-sm leading-tight">{guru.name}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: GUR-{guru.id + 1000}</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'Username',
+      accessor: (guru) => (
+        <div className="bg-slate-50 px-4 py-2 rounded-xl inline-block border border-slate-100 font-mono text-xs font-bold text-slate-600">
+          @{guru.username}
+        </div>
+      )
+    },
+    {
+      header: 'Aksi',
+      headerClassName: 'text-right',
+      accessor: (guru) => (
+        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            className="w-10 h-10 p-0 rounded-xl"
+            onClick={() => handleOpenModal(guru)}
+          >
+            <Edit2 size={16} className="text-slate-600" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-10 h-10 p-0 rounded-xl hover:bg-red-50 hover:border-red-100 hover:text-red-500"
+            onClick={() => handleDelete(guru.id)}
+          >
+            <Trash2 size={16} />
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -71,98 +116,37 @@ const MasterGuru = () => {
           </Button>
         </header>
 
-        {/* Content Bento */}
         <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <Card className="p-0 border-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden">
-            <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white">
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Cari guru berdasarkan nama atau username..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  placeholder="Cari guru... (Tekan Enter)" 
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setSearchTerm(searchInput);
+                      setPage(1);
+                    }
+                  }}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 />
               </div>
-              <div className="flex items-center gap-3 px-4">
-                <div className="bg-slate-50 p-2 rounded-xl text-slate-400"><Users size={20} /></div>
-                <div className="text-sm font-black text-slate-800 uppercase tracking-widest">
-                  Total Guru: {gurus?.length || 0}
-                </div>
+              <div className="text-sm font-bold text-slate-400 px-4">
+                Total: {meta?.total || 0} Guru
               </div>
             </div>
 
-            <div className="overflow-x-auto bg-white">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-slate-50/50">
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Data Guru</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Username</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan={3} className="px-8 py-20 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <Loader2 size={32} className="text-primary animate-spin" />
-                          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Memuat data guru...</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : filteredGurus?.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="px-8 py-20 text-center text-slate-400 font-medium">
-                        Tidak ada data guru yang ditemukan.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredGurus?.map((guru) => (
-                      <tr key={guru.id} className="hover:bg-slate-50/50 transition-colors group">
-                        <td className="px-8 py-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-[1.25rem] bg-gradient-to-br from-primary/10 to-cyan-500/5 text-primary flex items-center justify-center font-black text-sm border border-primary/5">
-                              {guru.name.charAt(0)}
-                            </div>
-                            <div>
-                              <p className="font-black text-slate-800 text-sm leading-tight">{guru.name}</p>
-                              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: GUR-{guru.id + 1000}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-8 py-6">
-                          <div className="bg-slate-50 px-4 py-2 rounded-xl inline-block border border-slate-100 font-mono text-xs font-bold text-slate-600">
-                            @{guru.username}
-                          </div>
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button 
-                              variant="secondary" 
-                              size="sm" 
-                              className="w-10 h-10 p-0 rounded-xl"
-                              onClick={() => handleOpenModal(guru)}
-                            >
-                              <Edit2 size={16} className="text-slate-600" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-10 h-10 p-0 rounded-xl hover:bg-red-50 hover:border-red-100 hover:text-red-500"
-                              onClick={() => handleDelete(guru.id)}
-                            >
-                              <Trash2 size={16} />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <DataTable 
+              columns={columns} 
+              data={gurus} 
+              isLoading={isLoading}
+              emptyMessage="Tidak ada data guru."
+              className="border-none shadow-none rounded-none"
+            />
 
             {meta && meta.totalPages > 1 && (
               <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
@@ -173,7 +157,7 @@ const MasterGuru = () => {
                 />
               </div>
             )}
-          </Card>
+          </div>
         </div>
       </main>
 

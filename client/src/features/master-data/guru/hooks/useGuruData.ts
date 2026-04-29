@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { guruService } from '../services/guru.service';
 import type { IGuruPayload } from '../interfaces/guru.interface';
 
-export const useGurus = (params?: { page?: number; limit?: number }) => {
+export const useGurus = (params?: { page?: number; limit?: number; search?: string }) => {
   return useQuery({
     queryKey: ['master-gurus', params],
     queryFn: () => guruService.getAll(params),

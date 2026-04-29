@@ -1,9 +1,8 @@
-import React from 'react';
 import { Formik, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { Button } from '../../../../shared/components/Button';
 import { Input } from '../../../../shared/components/Input';
-import type { ISchedule, ISchedulePayload } from '../interfaces/schedule.interface';
+import type { ISchedulePayload } from '../interfaces/schedule.interface';
 import type { IGuru } from '../../guru/interfaces/guru.interface';
 import type { IKelas } from '../../kelas/interfaces/kelas.interface';
 import type { IPelajaran } from '../../lesson/interfaces/lesson.interface';

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { lessonService } from '../services/lesson.service';
 import type { IPelajaranPayload } from '../interfaces/lesson.interface';
 
-export const useLessons = (params?: { page?: number; limit?: number }) => {
+export const useLessons = (params?: { page?: number; limit?: number; search?: string }) => {
   return useQuery({
     queryKey: ['master-lessons', params],
     queryFn: () => lessonService.getAll(params),

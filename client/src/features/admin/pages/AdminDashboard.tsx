@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useAdminSummary } from '../hooks/useAdminData';
 import { Users, GraduationCap, BookOpen, Clock, AlertTriangle, CheckCircle, TrendingUp, Calendar, ArrowRight, Loader2 } from 'lucide-react';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAdminActivities } from '../hooks/useAdminData';
 import { Search, Clock, Filter, FileSpreadsheet, User, BookOpen, Loader2 } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
@@ -10,16 +10,25 @@ import { adminService } from '../services/admin.service';
 
 const AdminActivities = () => {
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   
-  // Advanced Filters
+  // Applied Filters
   const [teacherId, setTeacherId] = useState('');
   const [classId, setClassId] = useState('');
   const [lessonId, setLessonId] = useState('');
   const [status, setStatus] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // Staging Filters (UI states)
+  const [tempTeacherId, setTempTeacherId] = useState('');
+  const [tempClassId, setTempClassId] = useState('');
+  const [tempLessonId, setTempLessonId] = useState('');
+  const [tempStatus, setTempStatus] = useState('');
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
 
   const { data: response, isLoading } = useAdminActivities({ 
     search, page, limit: 10, teacherId, classId, lessonId, status, startDate, endDate 
@@ -31,6 +40,33 @@ const AdminActivities = () => {
 
   const activities = response?.data || [];
   const meta = response?.meta;
+
+  const handleApplyFilters = () => {
+    setTeacherId(tempTeacherId);
+    setClassId(tempClassId);
+    setLessonId(tempLessonId);
+    setStatus(tempStatus);
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
+    setPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setTempTeacherId('');
+    setTempClassId('');
+    setTempLessonId('');
+    setTempStatus('');
+    setTempStartDate('');
+    setTempEndDate('');
+    
+    setTeacherId('');
+    setClassId('');
+    setLessonId('');
+    setStatus('');
+    setStartDate('');
+    setEndDate('');
+    setPage(1);
+  };
 
   const handleExport = async () => {
     try {
@@ -76,8 +112,8 @@ const AdminActivities = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Guru</label>
                 <select 
-                  value={teacherId} 
-                  onChange={(e) => setTeacherId(e.target.value)}
+                  value={tempTeacherId} 
+                  onChange={(e) => setTempTeacherId(e.target.value)}
                   className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 >
                   <option value="">Semua Guru</option>
@@ -87,8 +123,8 @@ const AdminActivities = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Pelajaran</label>
                 <select 
-                  value={lessonId} 
-                  onChange={(e) => setLessonId(e.target.value)}
+                  value={tempLessonId} 
+                  onChange={(e) => setTempLessonId(e.target.value)}
                   className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 >
                   <option value="">Semua Pelajaran</option>
@@ -98,8 +134,8 @@ const AdminActivities = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Kelas</label>
                 <select 
-                  value={classId} 
-                  onChange={(e) => setClassId(e.target.value)}
+                  value={tempClassId} 
+                  onChange={(e) => setTempClassId(e.target.value)}
                   className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 >
                   <option value="">Semua Kelas</option>
@@ -110,8 +146,8 @@ const AdminActivities = () => {
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Start Date</label>
                 <input 
                   type="date" 
-                  value={startDate} 
-                  onChange={(e) => setStartDate(e.target.value)}
+                  value={tempStartDate} 
+                  onChange={(e) => setTempStartDate(e.target.value)}
                   className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 />
               </div>
@@ -119,16 +155,16 @@ const AdminActivities = () => {
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">End Date</label>
                 <input 
                   type="date" 
-                  value={endDate} 
-                  onChange={(e) => setEndDate(e.target.value)}
+                  value={tempEndDate} 
+                  onChange={(e) => setTempEndDate(e.target.value)}
                   className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Status</label>
                 <select 
-                  value={status} 
-                  onChange={(e) => setStatus(e.target.value)}
+                  value={tempStatus} 
+                  onChange={(e) => setTempStatus(e.target.value)}
                   className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 >
                   <option value="">Semua Status</option>
@@ -137,14 +173,19 @@ const AdminActivities = () => {
                 </select>
               </div>
             </div>
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-end items-center gap-6">
               <button 
-                onClick={() => {
-                  setTeacherId(''); setClassId(''); setLessonId(''); setStatus(''); setStartDate(''); setEndDate('');
-                }}
-                className="text-xs font-bold text-slate-400 hover:text-primary transition-all"
+                onClick={handleResetFilters}
+                className="text-xs font-bold text-slate-400 hover:text-red-500 transition-all uppercase tracking-widest"
               >
                 Reset Filters
+              </button>
+              <button 
+                onClick={handleApplyFilters}
+                className="bg-primary text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 flex items-center gap-2"
+              >
+                <Search size={16} />
+                Terapkan Filter
               </button>
             </div>
           </div>
@@ -156,11 +197,14 @@ const AdminActivities = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input 
                 type="text" 
-                placeholder="Cari guru atau mata pelajaran..." 
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1); // Reset to page 1 on search
+                placeholder="Cari guru atau mata pelajaran... (Tekan Enter)" 
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setSearch(searchInput);
+                    setPage(1);
+                  }
                 }}
                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />

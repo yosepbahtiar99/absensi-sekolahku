@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useClasses, useCreateClass, useUpdateClass, useDeleteClass } from '../hooks/useKelasData';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
-import { Plus, Edit2, Trash2, X, Loader2, GraduationCap } from 'lucide-react';
-import { Card } from '../../../../shared/components/Card';
+import { Plus, Edit2, Trash2, GraduationCap, Search, X } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
+import { Pagination } from '../../../../shared/components/Pagination';
 import KelasForm from '../forms/KelasForm';
 import type { IKelas } from '../interfaces/kelas.interface';
 
-import { Pagination } from '../../../../shared/components/Pagination';
+import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
 const MasterKelas = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedKelas, setSelectedKelas] = useState<IKelas | undefined>(undefined);
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
-  const { data: response, isLoading } = useClasses({ page, limit: 12 });
+  const { data: response, isLoading } = useClasses({ page, limit: 10, search: searchTerm });
   const classes = response?.data || [];
   const meta = response?.meta;
   const createMutation = useCreateClass();
@@ -49,6 +51,53 @@ const MasterKelas = () => {
     }
   };
 
+  const columns: Column<IKelas>[] = [
+    {
+      header: 'Nama Kelas',
+      accessor: (kelas) => (
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 text-primary p-3 rounded-xl">
+            <GraduationCap size={20} />
+          </div>
+          <div>
+            <p className="font-black text-slate-800 text-sm leading-tight">{kelas.name}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: KLS-{kelas.id + 100}</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'Total Siswa',
+      accessor: () => (
+        <span className="text-sm font-bold text-slate-500">-</span>
+      )
+    },
+    {
+      header: 'Aksi',
+      headerClassName: 'text-right',
+      accessor: (kelas) => (
+        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            className="w-10 h-10 p-0 rounded-xl"
+            onClick={() => handleOpenModal(kelas)}
+          >
+            <Edit2 size={16} className="text-slate-600" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-10 h-10 p-0 rounded-xl hover:bg-red-50 hover:border-red-100 hover:text-red-500"
+            onClick={() => handleDelete(kelas.id)}
+          >
+            <Trash2 size={16} />
+          </Button>
+        </div>
+      )
+    }
+  ];
+
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <AdminSidebar />
@@ -65,56 +114,49 @@ const MasterKelas = () => {
           </Button>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          {isLoading ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-20 gap-4">
-              <Loader2 size={40} className="text-primary animate-spin" />
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Memuat data kelas...</p>
+        <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Cari kelas... (Tekan Enter)" 
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setSearchTerm(searchInput);
+                      setPage(1);
+                    }
+                  }}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                />
+              </div>
+              <div className="text-sm font-bold text-slate-400 px-4">
+                Total: {meta?.total || 0} Kelas
+              </div>
             </div>
-          ) : classes?.length === 0 ? (
-            <div className="col-span-full bg-white p-20 rounded-[3rem] text-center border border-slate-100">
-              <p className="text-slate-400 font-medium">Belum ada data kelas.</p>
-            </div>
-          ) : (
-            classes?.map((kelas) => (
-              <Card key={kelas.id} className="group p-8 rounded-[2.5rem] border-none shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(8,145,178,0.05)] transition-all hover:-translate-y-1">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="bg-primary/10 text-primary p-4 rounded-[1.5rem] group-hover:scale-110 transition-transform">
-                    <GraduationCap size={28} />
-                  </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleOpenModal(kelas)}
-                      className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(kelas.id)}
-                      className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Nama Kelas</p>
-                  <h3 className="text-2xl font-black text-slate-800">{kelas.name}</h3>
-                </div>
-              </Card>
-            ))
-          )}
-        </div>
 
-        {meta && meta.totalPages > 1 && (
-          <div className="mt-10 flex justify-center">
-            <Pagination 
-              currentPage={page} 
-              totalPages={meta.totalPages} 
-              onPageChange={setPage} 
+            <DataTable 
+              columns={columns} 
+              data={classes} 
+              isLoading={isLoading}
+              emptyMessage="Belum ada data kelas."
+              className="border-none shadow-none rounded-none"
             />
+
+            {meta && meta.totalPages > 1 && (
+              <div className="p-6 border-t border-slate-50 flex justify-center bg-slate-50/30">
+                <Pagination 
+                  currentPage={page} 
+                  totalPages={meta.totalPages} 
+                  onPageChange={setPage} 
+                />
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
 
       {/* Modal / Sidebar Form */}

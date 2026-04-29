@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { scheduleService } from '../services/schedule.service';
-import type { ISchedulePayload } from '../interfaces/schedule.interface';
 
 export const useSchedules = () => {
   return useQuery({
