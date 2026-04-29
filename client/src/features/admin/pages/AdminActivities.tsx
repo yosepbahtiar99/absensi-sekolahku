@@ -277,20 +277,20 @@ const AdminActivities = () => {
                 accessor: (act: any) => (
                   <div className="flex gap-2">
                     <a 
-                      href={`http://localhost:3001/uploads/${act.photoSelfie}`} 
+                      href={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoSelfie}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 hover:border-primary transition-colors shadow-sm"
                     >
-                      <img src={`http://localhost:3001/uploads/${act.photoSelfie}`} className="w-full h-full object-cover" alt="Selfie" />
+                      <img src={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoSelfie}`} className="w-full h-full object-cover" alt="Selfie" />
                     </a>
                     <a 
-                      href={`http://localhost:3001/uploads/${act.photoClass}`} 
+                      href={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoClass}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 hover:border-primary transition-colors shadow-sm"
                     >
-                      <img src={`http://localhost:3001/uploads/${act.photoClass}`} className="w-full h-full object-cover" alt="Class" />
+                      <img src={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoClass}`} className="w-full h-full object-cover" alt="Class" />
                     </a>
                   </div>
                 )
