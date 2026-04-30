@@ -8,7 +8,6 @@ import {
   CheckSquare, 
   LogOut, 
   School, 
-  ShieldCheck,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';

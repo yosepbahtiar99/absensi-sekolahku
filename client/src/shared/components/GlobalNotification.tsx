@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { useNotificationStore } from '../store/notificationStore';
 import { cn } from '../lib/utils';
