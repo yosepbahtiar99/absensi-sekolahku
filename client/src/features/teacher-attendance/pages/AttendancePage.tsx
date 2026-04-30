@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { RefreshCw, Check, ArrowRight, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useScheduleDetail } from '../hooks/useAttendanceData';
 import { useSubmitAttendance } from '../hooks/useSubmitAttendance';
+import { attendanceService } from '../services/attendance.service';
 import { cn } from '../../../shared/lib/utils';
 
 const AttendancePage = () => {
@@ -18,6 +19,7 @@ const AttendancePage = () => {
   const [activeCamera, setActiveCamera] = useState<'selfie' | 'class'>('selfie');
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const stopCamera = (s: MediaStream | null) => {
     console.log("Stopping camera stream...", s?.id);
@@ -102,7 +104,7 @@ const AttendancePage = () => {
         // Watermark Implementation
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-        ctx.font = "bold 24px DM Sans, sans-serif";
+        ctx.font = "bold 24px Satoshi, sans-serif";
         const dateStr = new Date().toLocaleString('id-ID');
         const watermark = `ABSENSI SEKOLAHKU | ${dateStr}`;
         ctx.shadowColor = "rgba(0,0,0,0.5)";
@@ -134,18 +136,39 @@ const AttendancePage = () => {
   const handleSubmit = async () => {
     if (!photoSelfie || !photoClass) return;
 
-    const formData = new FormData();
-    formData.append('scheduleId', scheduleId!);
-    formData.append('photoSelfie', dataURLtoFile(photoSelfie, 'selfie.jpg'));
-    formData.append('photoClass', dataURLtoFile(photoClass, 'class.jpg'));
-    formData.append('status', 'masuk');
+    setIsUploading(true);
+    try {
+      // 1. Upload Selfie
+      const selfieFile = dataURLtoFile(photoSelfie, 'selfie.jpg');
+      const selfieRes = await attendanceService.uploadPhoto(selfieFile);
 
-    mutate(formData, {
-      onSuccess: () => {
-        stopCamera(stream);
-        navigate('/home');
-      },
-    });
+      // 2. Upload Photo Class
+      const classFile = dataURLtoFile(photoClass, 'class.jpg');
+      const classRes = await attendanceService.uploadPhoto(classFile);
+
+      // 3. Submit Attendance with filenames
+      mutate({
+        scheduleId: scheduleId!,
+        photoSelfie: selfieRes.filename,
+        photoClass: classRes.filename,
+        status: 'masuk'
+      }, {
+        onSuccess: () => {
+          stopCamera(stream);
+          navigate('/home');
+        },
+        onError: (error: any) => {
+          console.error("Submission error:", error);
+          const message = error.response?.data?.message || "Gagal menyimpan absensi.";
+          alert(`Error: ${message}`);
+        }
+      });
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      alert("Gagal mengupload foto. Silakan coba lagi.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (isScheduleLoading) return null;
@@ -259,15 +282,15 @@ const AttendancePage = () => {
 
           <button 
             onClick={handleSubmit} 
-            disabled={!photoSelfie || !photoClass || isPending}
+            disabled={!photoSelfie || !photoClass || isPending || isUploading}
             className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300",
-              (!photoSelfie || !photoClass || isPending) 
+              (!photoSelfie || !photoClass || isPending || isUploading) 
                 ? "bg-white/5 text-white/20 cursor-not-allowed" 
                 : "bg-primary text-white shadow-lg shadow-primary/30 active:scale-90"
             )}
           >
-            {isPending ? <Loader2 size={24} className="animate-spin" /> : <ArrowRight size={28} />}
+            {(isPending || isUploading) ? <Loader2 size={24} className="animate-spin" /> : <ArrowRight size={28} />}
           </button>
         </div>
 

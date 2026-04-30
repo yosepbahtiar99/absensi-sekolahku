@@ -7,10 +7,24 @@ export const attendanceService = {
     return response.data;
   },
 
-  submitAttendance: async (payload: FormData): Promise<any> => {
-    const response = await api.post('/teacher/attendance', payload, {
+  uploadPhoto: async (file: File): Promise<{ filename: string; url: string }> => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    const response = await api.post('/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return response.data;
+  },
+
+  submitAttendance: async (payload: { 
+    scheduleId: string; 
+    photoSelfie: string; 
+    photoClass: string; 
+    status: string;
+    type?: string;
+    isCustom?: boolean;
+  }): Promise<any> => {
+    const response = await api.post('/teacher/attendance', payload);
     return response.data;
   },
 
