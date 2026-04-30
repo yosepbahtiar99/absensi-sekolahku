@@ -29,7 +29,15 @@ const getMySchedule = async (req, res) => {
       order: [['startTime', 'ASC']]
     });
 
-    res.json(schedules);
+    const result = schedules.map(s => {
+      const schedule = s.toJSON();
+      // Map Activities array to a single Attendance object to match frontend interface
+      schedule.Attendance = schedule.Activities && schedule.Activities.length > 0 ? schedule.Activities[0] : null;
+      delete schedule.Activities;
+      return schedule;
+    });
+
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Gagal mengambil jadwal' });
@@ -45,11 +53,41 @@ const submitAttendance = async (req, res) => {
     const schedule = await Schedule.findByPk(scheduleId);
     if (!schedule) return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
 
+    // Cek apakah sudah absen hari ini
+    const existingActivity = await Activity.findOne({
+      where: {
+        scheduleId,
+        userId,
+        timestamp: {
+          [Op.gte]: new Date().setHours(0,0,0,0),
+          [Op.lte]: new Date().setHours(23,59,59,999)
+        }
+      }
+    });
+
+    if (existingActivity) {
+      return res.status(400).json({ message: 'Anda sudah melakukan absensi untuk jadwal ini hari ini' });
+    }
+
     // Logika Telat (Toleransi 15 Menit)
     const now = new Date();
     const [sH, sM] = schedule.startTime.split(':').map(Number);
+    const [eH, eM] = schedule.endTime.split(':').map(Number);
+    
     const startTime = new Date();
     startTime.setHours(sH, sM, 0);
+    
+    const endTime = new Date();
+    endTime.setHours(eH, eM, 0);
+
+    // Validasi apakah jadwal sudah mulai atau sudah selesai
+    if (now < startTime) {
+      return res.status(400).json({ message: 'Jadwal belum dimulai bro!' });
+    }
+
+    if (now > endTime) {
+      return res.status(400).json({ message: 'Jadwal sudah berakhir bro!' });
+    }
 
     const diffInMinutes = (now.getTime() - startTime.getTime()) / (1000 * 60);
     

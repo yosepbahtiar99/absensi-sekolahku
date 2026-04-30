@@ -75,11 +75,17 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({ schedule, isCurrent }) => {
       ) : (
         <Button 
           onClick={() => navigate(`/attendance/${schedule.id}`)}
-          className="w-full"
+          className={cn(
+            "w-full transition-all duration-300",
+            !isCurrent && "opacity-50 grayscale cursor-not-allowed"
+          )}
           variant={isCurrent ? "default" : "secondary"}
+          disabled={!isCurrent}
         >
           <Camera size={18} className="mr-2" />
-          <span>Lakukan Absensi</span>
+          <span>
+            {!isCurrent ? "Belum Waktunya" : "Lakukan Absensi"}
+          </span>
           <ArrowRight size={16} className="ml-auto opacity-50 group-hover:translate-x-1 transition-transform" />
         </Button>
       )}
