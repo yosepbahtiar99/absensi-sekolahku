@@ -101,11 +101,11 @@ const MasterGuru = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <AdminSidebar />
       
-      <main className="flex-1 p-10 overflow-y-auto">
-        <header className="mb-10 flex justify-between items-end">
+      <main className="flex-1 flex flex-col overflow-hidden p-8">
+        <header className="mb-6 flex justify-between items-end">
           <div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight">Manajemen Guru</h2>
             <p className="text-slate-500 font-medium">Kelola data guru yang dapat mengakses aplikasi.</p>
@@ -116,8 +116,8 @@ const MasterGuru = () => {
           </Button>
         </header>
 
-        <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="flex-1 bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-50 flex items-center justify-between">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -142,7 +142,7 @@ const MasterGuru = () => {
               data={gurus} 
               isLoading={isLoading}
               emptyMessage="Tidak ada data guru."
-              className="border-none shadow-none rounded-none"
+              className="border-none shadow-none rounded-none flex-1 min-h-0"
               meta={meta}
               onPageChange={setPage}
               onLimitChange={(newLimit) => {

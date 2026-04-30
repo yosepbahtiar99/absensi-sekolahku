@@ -117,11 +117,11 @@ const MasterSchedule = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <AdminSidebar />
       
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="p-8 pb-6 flex justify-between items-center bg-white border-b border-slate-100">
+        <header className="p-8 pb-4 flex justify-between items-center bg-white border-b border-slate-100">
           <div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
               <Calendar className="text-primary" size={32} />

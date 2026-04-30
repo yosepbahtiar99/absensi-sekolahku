@@ -45,15 +45,15 @@ export function DataTable<T>({
 
   return (
     <div className={cn("overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-sm flex flex-col", className)}>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-slate-50/50">
+      <div className="flex-1 overflow-auto custom-scrollbar">
+        <table className="w-full text-left border-separate border-spacing-0">
+          <thead className="sticky top-0 z-10">
+            <tr className="bg-slate-50/90 backdrop-blur-md">
               {columns.map((column, index) => (
                 <th
                   key={index}
                   className={cn(
-                    "px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]",
+                    "px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100",
                     column.headerClassName
                   )}
                 >
@@ -91,7 +91,7 @@ export function DataTable<T>({
                   )}
                 >
                   {columns.map((column, colIndex) => (
-                    <td key={colIndex} className={cn("px-8 py-6", column.className)}>
+                    <td key={colIndex} className={cn("px-8 py-4", column.className)}>
                       {typeof column.accessor === 'function'
                         ? column.accessor(item, rowIndex)
                         : (item[column.accessor] as React.ReactNode)}

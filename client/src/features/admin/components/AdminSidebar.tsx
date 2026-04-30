@@ -32,7 +32,7 @@ const AdminSidebar = () => {
   return (
     <div 
       className={cn(
-        "bg-[#f1f5f9] min-h-screen text-slate-600 flex flex-col border-r border-slate-200 relative z-30 transition-all duration-300 ease-in-out shadow-[10px_0_30px_rgba(0,0,0,0.02)]",
+        "bg-[#f1f5f9] h-screen text-slate-600 flex flex-col border-r border-slate-200 relative z-30 transition-all duration-300 ease-in-out shadow-[10px_0_30px_rgba(0,0,0,0.02)]",
         isSidebarCollapsed ? "w-20" : "w-72"
       )}
     >

@@ -14,7 +14,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <AdminSidebar />
       
       <main className="flex-1 p-10 overflow-y-auto">
