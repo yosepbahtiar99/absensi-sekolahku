@@ -88,7 +88,7 @@ const MasterSchedule = () => {
     });
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (window.confirm('Hapus jadwal ini?')) {
       deleteMutation.mutate(id);
     }

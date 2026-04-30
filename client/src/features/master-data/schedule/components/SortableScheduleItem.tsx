@@ -7,7 +7,7 @@ import type { ISchedule } from '../interfaces/schedule.interface';
 
 interface SortableScheduleItemProps {
   schedule: ISchedule;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   onEdit: (schedule: ISchedule) => void;
 }
 

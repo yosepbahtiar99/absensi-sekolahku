@@ -3,7 +3,6 @@ import { useLessons, useCreateLesson, useUpdateLesson, useDeleteLesson } from '.
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Plus, Edit2, Trash2, BookOpen, Search, X } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
-import { Pagination } from '../../../../shared/components/Pagination';
 import LessonForm from '../forms/LessonForm';
 import type { IPelajaran } from '../interfaces/lesson.interface';
 
@@ -46,7 +45,7 @@ const MasterPelajaran = () => {
     }
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus mata pelajaran ini?')) {
       deleteMutation.mutate(id);
     }
@@ -62,7 +61,7 @@ const MasterPelajaran = () => {
           </div>
           <div>
             <p className="font-black text-slate-800 text-sm leading-tight">{lesson.name}</p>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: PEL-{lesson.id + 500}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: PEL-{lesson.id.slice(0, 8)}</p>
           </div>
         </div>
       )

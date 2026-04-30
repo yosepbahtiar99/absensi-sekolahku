@@ -16,10 +16,10 @@ export interface ISchedule {
 }
 
 export interface ISchedulePayload {
-  id?: number;
-  classId: number;
-  lessonId: number;
-  teacherId: number;
+  id?: string;
+  classId: string;
+  lessonId: string;
+  teacherId: string;
   day: string;
   startTime: string;
   endTime: string;

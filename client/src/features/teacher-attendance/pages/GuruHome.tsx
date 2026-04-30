@@ -2,24 +2,23 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useTodaySchedules } from '../hooks/useAttendanceData';
-import { 
-  Bell, User, LayoutGrid, Calendar, Loader2, Clock, 
-  LogOut, Settings, ChevronRight, ShieldCheck, MapPin, 
-  CheckCircle, Camera, ArrowRight, CalendarDays 
+import {
+  Bell, User, LayoutGrid, Calendar, Loader2, Clock,
+  LogOut, Settings, ChevronRight, MapPin,
+  CheckCircle, Camera, CalendarDays
 } from 'lucide-react';
-import { Button } from '../../../shared/components/Button';
 import { cn } from '../../../shared/lib/utils';
 
 const GuruHome = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  
+
   // Tab State
   const [activeTab, setActiveTab] = useState<'home' | 'schedule' | 'approval' | 'user'>('home');
-  
+
   // Main Data (Today)
   const { data: todaySchedules, isLoading: isTodayLoading } = useTodaySchedules();
-  
+
   // Schedule Tab State
   const [selectedDay, setSelectedDay] = useState<string>(
     ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'][new Date().getDay()]
@@ -82,12 +81,12 @@ const GuruHome = () => {
             const hasAbsen = !!item.Attendance;
 
             return (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className={cn(
                   "group relative overflow-hidden transition-all duration-500 rounded-[2rem] p-5 border",
-                  active && !hasAbsen 
-                    ? 'bg-white ring-2 ring-primary ring-offset-4 border-transparent shadow-2xl shadow-primary/10' 
+                  active && !hasAbsen
+                    ? 'bg-white ring-2 ring-primary ring-offset-4 border-transparent shadow-2xl shadow-primary/10'
                     : 'bg-white shadow-sm border-slate-100 hover:shadow-xl hover:-translate-y-1'
                 )}
               >
@@ -99,7 +98,7 @@ const GuruHome = () => {
                     </span>
                   </div>
                 )}
-                
+
                 <div className="flex items-center gap-5">
                   <div className={cn(
                     "flex flex-col items-center justify-center min-w-[70px] p-3 rounded-2xl transition-colors duration-300",
@@ -129,13 +128,13 @@ const GuruHome = () => {
                         <CheckCircle size={20} />
                       </div>
                     ) : (
-                      <button 
+                      <button
                         onClick={() => active && navigate(`/attendance/${item.id}`)}
                         disabled={!active}
                         className={cn(
                           "p-4 rounded-2xl transition-all flex items-center justify-center",
-                          active 
-                            ? "bg-primary text-white shadow-lg shadow-primary/30 active:scale-90 hover:scale-105" 
+                          active
+                            ? "bg-primary text-white shadow-lg shadow-primary/30 active:scale-90 hover:scale-105"
                             : "bg-slate-100 text-slate-400 opacity-50 cursor-not-allowed"
                         )}
                       >
@@ -161,8 +160,8 @@ const GuruHome = () => {
             onClick={() => setSelectedDay(day.key)}
             className={cn(
               "flex-1 py-3 rounded-[1.5rem] text-xs font-black uppercase tracking-widest transition-all",
-              selectedDay === day.key 
-                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" 
+              selectedDay === day.key
+                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
                 : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
             )}
           >
@@ -280,11 +279,11 @@ const GuruHome = () => {
       <div className="relative overflow-hidden bg-gradient-to-br from-primary to-cyan-700 text-white pt-12 pb-20 px-6 rounded-b-[3.5rem] shadow-2xl shadow-primary/20">
         <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-[-20%] left-[-10%] w-48 h-48 bg-cyan-400/20 rounded-full blur-2xl"></div>
-        
+
         <div className="flex justify-between items-start relative z-10">
           <div className="space-y-1">
-            <p className="text-cyan-100/80 text-xs font-bold tracking-[0.2em] uppercase">Dashboard Guru</p>
-            <h1 className="text-3xl font-black tracking-tight">Halo, {user?.name?.split(' ')[0]}!</h1>
+            <p className="text-cyan-100/80 text-xs font-bold tracking-[0.2em] uppercase">Guru</p>
+            <h1 className="text-3xl font-black tracking-tight">Halo, {user?.name}!</h1>
           </div>
           <button className="bg-white/15 p-3 rounded-2xl backdrop-blur-md border border-white/20 hover:bg-white/30 transition-all active:scale-90">
             <Bell size={24} />
@@ -346,7 +345,7 @@ const GuruHome = () => {
       {/* Floating Bottom Navigation */}
       <div className="fixed bottom-8 left-6 right-6 z-50">
         <nav className="bg-white/90 backdrop-blur-2xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-[2.5rem] p-2 flex justify-between items-center px-6">
-          <button 
+          <button
             onClick={() => setActiveTab('home')}
             className={cn(
               "flex flex-col items-center gap-1 transition-all duration-300",
@@ -361,8 +360,8 @@ const GuruHome = () => {
             </div>
             {activeTab !== 'home' && <span className="text-[8px] font-black uppercase tracking-widest">Home</span>}
           </button>
-          
-          <button 
+
+          <button
             onClick={() => setActiveTab('schedule')}
             className={cn(
               "flex flex-col items-center gap-1 transition-all duration-300",
@@ -378,7 +377,7 @@ const GuruHome = () => {
             {activeTab !== 'schedule' && <span className="text-[8px] font-black uppercase tracking-widest">Jadwal</span>}
           </button>
 
-          <button 
+          <button
             onClick={() => setActiveTab('approval')}
             className={cn(
               "flex flex-col items-center gap-1 transition-all duration-300",
@@ -394,7 +393,7 @@ const GuruHome = () => {
             {activeTab !== 'approval' && <span className="text-[8px] font-black uppercase tracking-widest">Approval</span>}
           </button>
 
-          <button 
+          <button
             onClick={() => setActiveTab('user')}
             className={cn(
               "flex flex-col items-center gap-1 transition-all duration-300",

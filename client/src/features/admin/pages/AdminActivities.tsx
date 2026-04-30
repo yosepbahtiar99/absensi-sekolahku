@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useAdminActivities } from '../hooks/useAdminData';
-import { Search, Clock, Filter, FileSpreadsheet, User, BookOpen, Loader2 } from 'lucide-react';
+import { Search, Clock, Filter, FileSpreadsheet } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
-import { Pagination } from '../../../shared/components/Pagination';
 import { useGurus } from '../../master-data/guru/hooks/useGuruData';
 import { useClasses } from '../../master-data/kelas/hooks/useKelasData';
 import { useLessons } from '../../master-data/lesson/hooks/useLessonData';

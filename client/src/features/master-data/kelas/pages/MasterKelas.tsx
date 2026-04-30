@@ -3,7 +3,6 @@ import { useClasses, useCreateClass, useUpdateClass, useDeleteClass } from '../h
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Plus, Edit2, Trash2, GraduationCap, Search, X } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
-import { Pagination } from '../../../../shared/components/Pagination';
 import KelasForm from '../forms/KelasForm';
 import type { IKelas } from '../interfaces/kelas.interface';
 
@@ -46,7 +45,7 @@ const MasterKelas = () => {
     }
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus kelas ini?')) {
       deleteMutation.mutate(id);
     }
@@ -62,7 +61,7 @@ const MasterKelas = () => {
           </div>
           <div>
             <p className="font-black text-slate-800 text-sm leading-tight">{kelas.name}</p>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: KLS-{kelas.id + 100}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: KLS-{kelas.id.slice(0, 8)}</p>
           </div>
         </div>
       )

@@ -3,7 +3,6 @@ import { useGurus, useCreateGuru, useUpdateGuru, useDeleteGuru } from '../hooks/
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Plus, Edit2, Trash2, Search, X, UserPlus } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
-import { Pagination } from '../../../../shared/components/Pagination';
 import GuruForm from '../forms/GuruForm';
 import type { IGuru } from '../interfaces/guru.interface';
 
@@ -46,7 +45,7 @@ const MasterGuru = () => {
     }
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus guru ini?')) {
       deleteMutation.mutate(id);
     }
@@ -62,7 +61,7 @@ const MasterGuru = () => {
           </div>
           <div>
             <p className="font-black text-slate-800 text-sm leading-tight">{guru.name}</p>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: GUR-{guru.id + 1000}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: GUR-{guru.id.slice(0, 8)}</p>
           </div>
         </div>
       )
