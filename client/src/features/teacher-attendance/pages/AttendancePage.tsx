@@ -12,6 +12,25 @@ const AttendancePage = () => {
   const { data: schedule, isLoading: isScheduleLoading } = useScheduleDetail(scheduleId!);
   const { mutate, isPending } = useSubmitAttendance();
 
+  // Route Guard: Mentalin balik ke home kalau jadwal nggak valid/udah absen
+  useEffect(() => {
+    if (!isScheduleLoading && schedule) {
+      const now = new Date();
+      const [startH, startM] = schedule.startTime.split(':').map(Number);
+      const [endH, endM] = schedule.endTime.split(':').map(Number);
+      
+      const start = new Date(); start.setHours(startH, startM, 0);
+      const end = new Date(); end.setHours(endH, endM, 0);
+      
+      const isCurrent = now >= start && now <= end;
+      const alreadyAttended = !!schedule.Attendance;
+
+      if (!isCurrent || alreadyAttended) {
+        navigate('/home', { replace: true });
+      }
+    }
+  }, [schedule, isScheduleLoading, navigate]);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [photoSelfie, setPhotoSelfie] = useState<string | null>(null);

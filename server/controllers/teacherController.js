@@ -117,13 +117,29 @@ const submitAttendance = async (req, res) => {
 const getScheduleDetail = async (req, res) => {
   try {
     const { id } = req.params;
-    const schedule = await Schedule.findByPk(id, {
+    const scheduleData = await Schedule.findByPk(id, {
       include: [
         { model: Class, attributes: ['name'] },
-        { model: Lesson, attributes: ['name'] }
+        { model: Lesson, attributes: ['name'] },
+        { 
+          model: Activity,
+          where: {
+            timestamp: {
+              [Op.gte]: new Date().setHours(0,0,0,0),
+              [Op.lte]: new Date().setHours(23,59,59,999)
+            }
+          },
+          required: false
+        }
       ]
     });
-    if (!schedule) return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
+
+    if (!scheduleData) return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
+
+    const schedule = scheduleData.toJSON();
+    schedule.Attendance = schedule.Activities && schedule.Activities.length > 0 ? schedule.Activities[0] : null;
+    delete schedule.Activities;
+
     res.json(schedule);
   } catch (error) {
     console.error(error);
