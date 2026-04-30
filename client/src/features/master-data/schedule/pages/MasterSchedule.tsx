@@ -23,6 +23,7 @@ import { useLessons } from '../../lesson/hooks/useLessonData';
 import SortableScheduleItem from '../components/SortableScheduleItem';
 import ScheduleForm from '../forms/ScheduleForm';
 import type { ISchedulePayload } from '../interfaces/schedule.interface';
+import { useNotificationStore } from '../../../../shared/store/notificationStore';
 
 const MasterSchedule = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,6 +72,7 @@ const MasterSchedule = () => {
   }, [classes, schedules, activeDay]);
 
   // --- Handlers ---
+  const { showNotification } = useNotificationStore();
 
   const handleOpenModal = (sched?: Partial<ISchedulePayload>, dayHint?: string) => {
     setSelectedSchedule(sched || { day: dayHint || activeDay });
@@ -84,13 +86,23 @@ const MasterSchedule = () => {
 
   const handleSave = (values: ISchedulePayload) => {
     upsertMutation.mutate(values, {
-      onSuccess: handleCloseModal
+      onSuccess: () => {
+        showNotification(values.id ? 'Jadwal berhasil diperbarui!' : 'Jadwal baru berhasil ditambahkan!', 'success');
+        handleCloseModal();
+      },
+      onError: (error: any) => {
+        const msg = error.response?.data?.message || 'Gagal menyimpan jadwal.';
+        showNotification(msg, 'error');
+      }
     });
   };
 
   const handleDelete = (id: string) => {
     if (window.confirm('Hapus jadwal ini?')) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(id, {
+        onSuccess: () => showNotification('Jadwal berhasil dihapus!', 'success'),
+        onError: () => showNotification('Gagal menghapus jadwal.', 'error')
+      });
     }
   };
 

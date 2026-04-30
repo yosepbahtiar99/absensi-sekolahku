@@ -15,21 +15,23 @@ const AdminActivities = () => {
   const [limit, setLimit] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
   
+  const today = new Date().toISOString().split('T')[0];
+  
   // Applied Filters
   const [teacherId, setTeacherId] = useState('');
   const [classId, setClassId] = useState('');
   const [lessonId, setLessonId] = useState('');
   const [status, setStatus] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
 
   // Staging Filters (UI states)
   const [tempTeacherId, setTempTeacherId] = useState('');
   const [tempClassId, setTempClassId] = useState('');
   const [tempLessonId, setTempLessonId] = useState('');
   const [tempStatus, setTempStatus] = useState('');
-  const [tempStartDate, setTempStartDate] = useState('');
-  const [tempEndDate, setTempEndDate] = useState('');
+  const [tempStartDate, setTempStartDate] = useState(today);
+  const [tempEndDate, setTempEndDate] = useState(today);
 
   const { data: response, isLoading } = useAdminActivities({ 
     search, page, limit, teacherId, classId, lessonId, status, startDate, endDate 
@@ -53,19 +55,20 @@ const AdminActivities = () => {
   };
 
   const handleResetFilters = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
     setTempTeacherId('');
     setTempClassId('');
     setTempLessonId('');
     setTempStatus('');
-    setTempStartDate('');
-    setTempEndDate('');
+    setTempStartDate(todayStr);
+    setTempEndDate(todayStr);
     
     setTeacherId('');
     setClassId('');
     setLessonId('');
     setStatus('');
-    setStartDate('');
-    setEndDate('');
+    setStartDate(todayStr);
+    setEndDate(todayStr);
     setPage(1);
   };
 
@@ -224,6 +227,15 @@ const AdminActivities = () => {
               setPage(1);
             }}
             columns={[
+              {
+                header: 'No',
+                accessor: (_, index) => (
+                  <span className="text-[11px] font-bold text-slate-400 tabular-nums">
+                    {(page - 1) * limit + index + 1}
+                  </span>
+                ),
+                className: "w-10 px-6"
+              },
               {
                 header: 'Guru',
                 accessor: (act: any) => (

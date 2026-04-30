@@ -21,9 +21,9 @@ const scheduleSchema = Yup.object().shape({
   day: Yup.string().required('Hari wajib dipilih'),
   startTime: Yup.string().required('Jam mulai wajib diisi'),
   endTime: Yup.string().required('Jam selesai wajib diisi'),
-  teacherId: Yup.number().required('Guru wajib dipilih'),
-  classId: Yup.number().required('Kelas wajib dipilih'),
-  lessonId: Yup.number().required('Pelajaran wajib dipilih'),
+  teacherId: Yup.string().required('Guru wajib dipilih').notOneOf(['0', ''], 'Guru wajib dipilih'),
+  classId: Yup.string().required('Kelas wajib dipilih').notOneOf(['0', ''], 'Kelas wajib dipilih'),
+  lessonId: Yup.string().required('Pelajaran wajib dipilih').notOneOf(['0', ''], 'Pelajaran wajib dipilih'),
 });
 
 const ScheduleForm: React.FC<ScheduleFormProps> = ({ 
@@ -37,9 +37,9 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
         day: initialValues?.day || 'senin',
         startTime: initialValues?.startTime || '07:00',
         endTime: initialValues?.endTime || '08:00',
-        teacherId: initialValues?.teacherId || 0,
-        classId: initialValues?.classId || 0,
-        lessonId: initialValues?.lessonId || 0,
+        teacherId: initialValues?.teacherId || '',
+        classId: initialValues?.classId || '',
+        lessonId: initialValues?.lessonId || '',
         id: initialValues?.id,
       } as ISchedulePayload}
       validationSchema={scheduleSchema}
@@ -69,7 +69,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               >
-                <option value={0}>Pilih Pelajaran</option>
+                <option value="">Pilih Pelajaran</option>
                 {lessons.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
               </select>
               <ErrorMessage name="lessonId" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
@@ -95,7 +95,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
               onChange={handleChange}
               className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             >
-              <option value={0}>Pilih Guru</option>
+              <option value="">Pilih Guru</option>
               {gurus.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
             <ErrorMessage name="teacherId" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
@@ -109,7 +109,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
               onChange={handleChange}
               className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             >
-              <option value={0}>Pilih Kelas</option>
+              <option value="">Pilih Kelas</option>
               {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <ErrorMessage name="classId" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />

@@ -4,7 +4,7 @@ import { Pagination } from './Pagination';
 
 export interface Column<T> {
   header: string;
-  accessor: keyof T | ((item: T) => React.ReactNode);
+  accessor: keyof T | ((item: T, index: number) => React.ReactNode);
   className?: string;
   headerClassName?: string;
 }
@@ -93,7 +93,7 @@ export function DataTable<T>({
                   {columns.map((column, colIndex) => (
                     <td key={colIndex} className={cn("px-8 py-6", column.className)}>
                       {typeof column.accessor === 'function'
-                        ? column.accessor(item)
+                        ? column.accessor(item, rowIndex)
                         : (item[column.accessor] as React.ReactNode)}
                     </td>
                   ))}

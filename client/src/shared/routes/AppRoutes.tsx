@@ -15,10 +15,13 @@ import MasterGuru from '../../features/master-data/guru/pages/MasterGuru';
 import MasterKelas from '../../features/master-data/kelas/pages/MasterKelas';
 import MasterPelajaran from '../../features/master-data/lesson/pages/MasterPelajaran';
 import MasterSchedule from '../../features/master-data/schedule/pages/MasterSchedule';
+import GlobalNotification from '../components/GlobalNotification';
 
 const AppRoutes = () => {
   return (
-    <Routes>
+    <>
+      <GlobalNotification />
+      <Routes>
       <Route path="/login" element={<LoginPage />} />
       
       {/* Guru Routes */}
@@ -97,6 +100,7 @@ const AppRoutes = () => {
       {/* Default Route */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
+    </>
   );
 };
 
