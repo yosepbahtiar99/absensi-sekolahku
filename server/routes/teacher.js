@@ -1,10 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { getMySchedule, submitAttendance, getScheduleDetail } = require('../controllers/teacherController');
+const { getMySchedule, submitAttendance, getScheduleDetail, getMyActivities, createApprovalRequest, getMyApprovalRequests } = require('../controllers/teacherController');
 const { verifyToken, isGuru } = require('../middleware/auth');
 
-router.get('/schedule', verifyToken, isGuru, getMySchedule);
-router.get('/schedule/:id', verifyToken, isGuru, getScheduleDetail);
-router.post('/attendance', verifyToken, isGuru, submitAttendance);
+router.use(verifyToken, isGuru);
+
+router.get('/schedule', getMySchedule);
+router.get('/schedule/:id', getScheduleDetail);
+router.post('/attendance', submitAttendance);
+router.get('/activities', getMyActivities);
+router.post('/requests', createApprovalRequest);
+router.get('/requests', getMyApprovalRequests);
 
 module.exports = router;

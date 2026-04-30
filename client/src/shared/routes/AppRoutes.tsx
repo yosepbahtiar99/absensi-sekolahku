@@ -7,10 +7,12 @@ import GuruLayout from '../../features/teacher-attendance/components/GuruLayout'
 import GuruDashboard from '../../features/teacher-attendance/pages/GuruDashboard';
 import GuruSchedule from '../../features/teacher-attendance/pages/GuruSchedule';
 import GuruApproval from '../../features/teacher-attendance/pages/GuruApproval';
+import CreateRequestPage from '../../features/teacher-attendance/pages/CreateRequestPage';
 import GuruProfile from '../../features/teacher-attendance/pages/GuruProfile';
 import AttendancePage from '../../features/teacher-attendance/pages/AttendancePage';
 import AdminDashboard from '../../features/admin/pages/AdminDashboard';
 import AdminActivities from '../../features/admin/pages/AdminActivities';
+import AdminApprovals from '../../features/admin/pages/AdminApprovals';
 import MasterGuru from '../../features/master-data/guru/pages/MasterGuru';
 import MasterKelas from '../../features/master-data/kelas/pages/MasterKelas';
 import MasterPelajaran from '../../features/master-data/lesson/pages/MasterPelajaran';
@@ -34,7 +36,8 @@ const AppRoutes = () => {
       >
         <Route path="/home" element={<GuruDashboard />} />
         <Route path="/schedule" element={<GuruSchedule />} />
-        <Route path="/approval" element={<GuruApproval />} />
+        <Route path="/approvals" element={<GuruApproval />} />
+        <Route path="/requests/create" element={<CreateRequestPage />} />
         <Route path="/profile" element={<GuruProfile />} />
       </Route>
 
@@ -61,6 +64,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute role="admin">
             <AdminActivities />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/approvals" 
+        element={
+          <ProtectedRoute role="admin">
+            <AdminApprovals />
           </ProtectedRoute>
         } 
       />

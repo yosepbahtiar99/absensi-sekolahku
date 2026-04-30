@@ -273,14 +273,21 @@ const AdminActivities = () => {
               {
                 header: 'Status',
                 accessor: (act: any) => (
-                  <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                    act.status === 'masuk' 
-                      ? 'bg-green-100 text-green-600 border border-green-200' 
-                      : 'bg-amber-100 text-amber-600 border border-amber-200'
-                  }`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${act.status === 'masuk' ? 'bg-green-600' : 'bg-amber-600'}`}></div>
-                    {act.status}
-                  </span>
+                  <div className="space-y-1">
+                    <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                      act.status === 'masuk' 
+                        ? 'bg-green-100 text-green-600 border border-green-200' 
+                        : 'bg-amber-100 text-amber-600 border border-amber-200'
+                    }`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${act.status === 'masuk' ? 'bg-green-600' : 'bg-amber-600'}`}></div>
+                      {act.status}
+                    </span>
+                    {act.description && (
+                      <p className="text-[10px] text-slate-400 font-medium italic max-w-[150px] truncate">
+                        "{act.description}"
+                      </p>
+                    )}
+                  </div>
                 )
               },
               {

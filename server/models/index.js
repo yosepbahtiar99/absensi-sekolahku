@@ -33,12 +33,36 @@ const Activity = sequelize.define('Activity', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
-  type: { type: DataTypes.STRING, defaultValue: 'pembelajaran' }, // 'pembelajaran', 'pembelajaran custom'
+  type: { type: DataTypes.STRING, defaultValue: 'pembelajaran' }, // 'pembelajaran', 'pembelajaran custom', 'lembur'
   photoSelfie: { type: DataTypes.STRING },
   photoClass: { type: DataTypes.STRING },
   timestamp: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   status: { type: DataTypes.ENUM('masuk', 'telat', 'tidak_hadir') },
   isCustom: { type: DataTypes.BOOLEAN, defaultValue: false },
+  description: { type: DataTypes.TEXT },
+});
+
+const ApprovalRequest = sequelize.define('ApprovalRequest', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
+  type: { 
+    type: DataTypes.ENUM('custom_pembelajaran', 'koreksi', 'perizinan', 'lembur'),
+    allowNull: false
+  },
+  status: { 
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    defaultValue: 'pending'
+  },
+  data: { 
+    type: DataTypes.JSON,
+    allowNull: false 
+  },
+  adminNote: { type: DataTypes.STRING },
+  approvedAt: { type: DataTypes.DATE },
+  approvedBy: { type: DataTypes.UUID },
 });
 
 const Class = sequelize.define('Class', {
@@ -101,4 +125,10 @@ Activity.belongsTo(Schedule, { foreignKey: 'scheduleId' });
 User.hasMany(Activity, { foreignKey: 'userId' });
 Activity.belongsTo(User, { foreignKey: 'userId' });
 
-module.exports = { sequelize, User, Activity, Log, Class, Lesson, Schedule };
+User.hasMany(ApprovalRequest, { foreignKey: 'userId' });
+ApprovalRequest.belongsTo(User, { foreignKey: 'userId' });
+
+ApprovalRequest.belongsTo(Activity, { foreignKey: 'activityId' });
+Activity.hasMany(ApprovalRequest, { foreignKey: 'activityId' });
+
+module.exports = { sequelize, User, Activity, Log, Class, Lesson, Schedule, ApprovalRequest };

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { RefreshCw, Check, ArrowRight, X, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { useScheduleDetail } from '../hooks/useAttendanceData';
+import { useScheduleById } from '../hooks/useAttendanceData';
 import { useSubmitAttendance } from '../hooks/useSubmitAttendance';
 import { attendanceService } from '../services/attendance.service';
 import { cn } from '../../../shared/lib/utils';
@@ -9,7 +9,7 @@ import { cn } from '../../../shared/lib/utils';
 const AttendancePage = () => {
   const { scheduleId } = useParams();
   const navigate = useNavigate();
-  const { data: schedule, isLoading: isScheduleLoading } = useScheduleDetail(scheduleId!);
+  const { data: schedule, isLoading: isScheduleLoading } = useScheduleById(scheduleId!);
   const { mutate, isPending } = useSubmitAttendance();
 
   // Route Guard: Mentalin balik ke home kalau jadwal nggak valid/udah absen

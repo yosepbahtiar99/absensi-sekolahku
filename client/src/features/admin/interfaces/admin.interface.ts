@@ -14,6 +14,10 @@ export interface IActivity {
   timestamp: string;
   photoSelfie: string;
   photoClass: string;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvalNote?: string;
+  approvedAt?: string;
+  approvedBy?: string;
   User: { name: string };
   Schedule: {
     Class: { name: string };

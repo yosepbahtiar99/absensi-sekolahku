@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { 
-  getDashboardSummary, getAllActivities,
+  getDashboardSummary, getAllActivities, getApprovalRequests, approveRequest,
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
   getLessons, createLesson, updateLesson, deleteLesson,
@@ -15,6 +15,8 @@ router.use(verifyToken, isAdmin);
 
 router.get('/summary', getDashboardSummary);
 router.get('/activities', getAllActivities);
+router.get('/requests', getApprovalRequests);
+router.put('/requests/:id/approve', approveRequest);
 router.get('/export-report', exportReport);
 
 // Guru

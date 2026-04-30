@@ -22,8 +22,9 @@ const AdminSidebar = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-    { icon: CheckSquare, label: 'Kehadiran', path: '/admin/activities' },
     { icon: Users, label: 'Master Guru', path: '/admin/guru' },
+    { icon: CheckSquare, label: 'Approval Guru', path: '/admin/approvals' },
+    { icon: CheckSquare, label: 'Riwayat Kehadiran', path: '/admin/activities' },
     { icon: GraduationCap, label: 'Master Kelas', path: '/admin/kelas' },
     { icon: BookOpen, label: 'Master Pelajaran', path: '/admin/pelajaran' },
     { icon: Calendar, label: 'Atur Jadwal', path: '/admin/schedule' },

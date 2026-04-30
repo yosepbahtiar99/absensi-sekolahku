@@ -34,4 +34,19 @@ export const attendanceService = {
     const response = await api.get<ISchedule>(`/teacher/schedule/${id}`);
     return response.data;
   },
+
+  getMyActivities: async (params?: { page?: number; limit?: number }): Promise<any> => {
+    const response = await api.get<any>('/teacher/activities', { params });
+    return response.data;
+  },
+
+  createRequest: async (data: { type: string; activityId?: string; data: any }): Promise<any> => {
+    const response = await api.post('/teacher/requests', data);
+    return response.data;
+  },
+
+  getMyRequests: async (params?: { page?: number; limit?: number }): Promise<any> => {
+    const response = await api.get('/teacher/requests', { params });
+    return response.data;
+  },
 };
