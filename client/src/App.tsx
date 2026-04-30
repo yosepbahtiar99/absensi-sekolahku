@@ -1,6 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './features/auth/pages/LoginPage';
-import GuruHome from './features/teacher-attendance/pages/GuruHome';
+import GuruLayout from './features/teacher-attendance/components/GuruLayout';
+import GuruDashboard from './features/teacher-attendance/pages/GuruDashboard';
+import GuruSchedule from './features/teacher-attendance/pages/GuruSchedule';
+import GuruApproval from './features/teacher-attendance/pages/GuruApproval';
+import GuruProfile from './features/teacher-attendance/pages/GuruProfile';
 import AttendancePage from './features/teacher-attendance/pages/AttendancePage';
 import AdminDashboard from './features/admin/pages/AdminDashboard';
 import AdminActivities from './features/admin/pages/AdminActivities';
@@ -33,13 +37,18 @@ function App() {
         
         {/* Guru Routes */}
         <Route 
-          path="/home" 
           element={
             <ProtectedRoute role="guru">
-              <GuruHome />
+              <GuruLayout />
             </ProtectedRoute>
-          } 
-        />
+          }
+        >
+          <Route path="/home" element={<GuruDashboard />} />
+          <Route path="/schedule" element={<GuruSchedule />} />
+          <Route path="/approval" element={<GuruApproval />} />
+          <Route path="/profile" element={<GuruProfile />} />
+        </Route>
+
         <Route 
           path="/attendance/:scheduleId" 
           element={
