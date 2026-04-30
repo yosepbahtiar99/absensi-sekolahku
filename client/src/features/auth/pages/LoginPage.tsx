@@ -32,10 +32,17 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Card with Full Gradient Border */}
-        <div className="relative group animate-in zoom-in duration-700">
-          <div className="absolute -inset-[1.5px] bg-gradient-to-br from-primary to-accent rounded-[2.5rem] opacity-70 group-hover:opacity-100 transition-opacity blur-[0.5px]"></div>
-          <Card className="p-10 bg-white/90 backdrop-blur-2xl relative rounded-[2.5rem] border-none shadow-2xl shadow-primary/5">
+        {/* Ultimate Gradient Border Card */}
+        <div className="animate-in zoom-in duration-700">
+          <Card 
+            className="p-10 bg-white relative rounded-[2.5rem] shadow-2xl shadow-primary/5 transition-all duration-500 group"
+            style={{
+              border: '2px solid transparent',
+              background: 'linear-gradient(white, white) padding-box, linear-gradient(to bottom right, hsl(var(--primary)), hsl(var(--accent))) border-box',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box'
+            }}
+          >
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-slate-800">Selamat Datang</h2>
               <p className="text-slate-500 text-sm">Masuk dengan akun yang sudah terdaftar</p>
