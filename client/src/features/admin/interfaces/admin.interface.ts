@@ -9,7 +9,7 @@ export interface IAdminSummary {
 }
 
 export interface IActivity {
-  id: number;
+  id: string;
   status: string;
   timestamp: string;
   photoSelfie: string;

@@ -22,7 +22,7 @@ export const useCreateClass = () => {
 export const useUpdateClass = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: IKelasPayload }) => kelasService.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: IKelasPayload }) => kelasService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['master-classes'] });
     },

@@ -10,7 +10,7 @@ export const useTodaySchedules = (day?: string) => {
 
 export const useScheduleDetail = (id: string) => {
   return useQuery({
-    queryKey: ['schedule', id],
+    queryKey: ['schedule-detail', id],
     queryFn: () => attendanceService.getScheduleById(id),
     enabled: !!id,
   });

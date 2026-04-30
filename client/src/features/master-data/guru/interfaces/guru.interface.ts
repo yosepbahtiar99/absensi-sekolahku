@@ -1,5 +1,5 @@
 export interface IGuru {
-  id: number;
+  id: string;
   username: string;
   name: string;
   nip?: string;

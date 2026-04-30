@@ -22,7 +22,7 @@ export const useCreateGuru = () => {
 export const useUpdateGuru = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: IGuruPayload }) => guruService.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: IGuruPayload }) => guruService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['master-gurus'] });
     },

@@ -1,5 +1,5 @@
-export interface IPelajaran {
-  id: number;
+export interface ILesson {
+  id: string;
   name: string;
   hours: number;
 }

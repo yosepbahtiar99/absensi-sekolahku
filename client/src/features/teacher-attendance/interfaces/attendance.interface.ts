@@ -1,15 +1,15 @@
 export interface ISchedule {
-  id: number;
-  classId: number;
-  lessonId: number;
-  teacherId: number;
+  id: string;
+  classId: string;
+  lessonId: string;
+  teacherId: string;
   day: string;
   startTime: string;
   endTime: string;
   Class: { name: string };
   Lesson: { name: string };
   Attendance?: {
-    id: number;
+    id: string;
     status: string;
     timestamp: string;
   };

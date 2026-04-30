@@ -13,12 +13,12 @@ export const guruService = {
     return response.data;
   },
 
-  update: async (id: number, data: IGuruPayload): Promise<IGuru> => {
+  update: async (id: string, data: IGuruPayload): Promise<IGuru> => {
     const response = await api.put<IGuru>(`/admin/gurus/${id}`, data);
     return response.data;
   },
 
-  delete: async (id: number): Promise<void> => {
+  delete: async (id: string): Promise<void> => {
     await api.delete(`/admin/gurus/${id}`);
   },
 };

@@ -32,3 +32,9 @@
 - [x] Report Generation (Export to Excel/PDF)
     - [x] Advanced Filtering (Guru, Pelajaran, Kelas, Date Range, Status)
     - [x] Export to Excel with custom styling
+
+## Infrastructure & Security
+- [ ] Migrate all Primary Keys and Foreign Keys to UUID V4
+    - [ ] Update Sequelize models in `server/models/index.js`
+    - [ ] Update Frontend interfaces (change `number` to `string` for IDs)
+    - [ ] Re-sync database and regenerate seed data

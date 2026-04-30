@@ -12,7 +12,7 @@ export const scheduleService = {
     return response.data;
   },
 
-  delete: async (id: number): Promise<void> => {
+  delete: async (id: string): Promise<void> => {
     await api.delete(`/admin/schedules/${id}`);
   },
 };

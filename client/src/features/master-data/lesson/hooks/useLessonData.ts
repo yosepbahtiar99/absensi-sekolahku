@@ -22,7 +22,7 @@ export const useCreateLesson = () => {
 export const useUpdateLesson = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: IPelajaranPayload }) => lessonService.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: IPelajaranPayload }) => lessonService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['master-lessons'] });
     },

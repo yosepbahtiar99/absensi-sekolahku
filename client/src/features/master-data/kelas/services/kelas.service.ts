@@ -13,12 +13,12 @@ export const kelasService = {
     return response.data;
   },
 
-  update: async (id: number, data: IKelasPayload): Promise<IKelas> => {
+  update: async (id: string, data: { name: string }): Promise<IKelas> => {
     const response = await api.put<IKelas>(`/admin/classes/${id}`, data);
     return response.data;
   },
 
-  delete: async (id: number): Promise<void> => {
+  delete: async (id: string): Promise<void> => {
     await api.delete(`/admin/classes/${id}`);
   },
 };

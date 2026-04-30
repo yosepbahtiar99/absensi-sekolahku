@@ -1,7 +1,8 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const dotenv = require('dotenv');
+const path = require('path');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -15,6 +16,11 @@ const sequelize = new Sequelize(
 );
 
 const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   name: { type: DataTypes.STRING, allowNull: false },
   username: { type: DataTypes.STRING, unique: true, allowNull: false },
   password: { type: DataTypes.STRING, allowNull: false },
@@ -22,6 +28,11 @@ const User = sequelize.define('User', {
 });
 
 const Activity = sequelize.define('Activity', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   type: { type: DataTypes.STRING, defaultValue: 'pembelajaran' }, // 'pembelajaran', 'pembelajaran custom'
   photoSelfie: { type: DataTypes.STRING },
   photoClass: { type: DataTypes.STRING },
@@ -31,27 +42,47 @@ const Activity = sequelize.define('Activity', {
 });
 
 const Class = sequelize.define('Class', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   name: { type: DataTypes.STRING, allowNull: false },
 });
 
 const Lesson = sequelize.define('Lesson', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   name: { type: DataTypes.STRING, allowNull: false },
   hours: { type: DataTypes.INTEGER, defaultValue: 0 },
 });
 
 const Schedule = sequelize.define('Schedule', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   day: { type: DataTypes.ENUM('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'), allowNull: false },
   startTime: { type: DataTypes.TIME, allowNull: false },
   endTime: { type: DataTypes.TIME, allowNull: false },
 });
 
 const Log = sequelize.define('Log', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   action: { type: DataTypes.STRING }, // 'create', 'update', 'delete'
   tableName: { type: DataTypes.STRING },
-  dataId: { type: DataTypes.INTEGER },
+  dataId: { type: DataTypes.STRING }, // Pake string karena dataId nampung UUID
   oldData: { type: DataTypes.JSON },
   newData: { type: DataTypes.JSON },
-  changedBy: { type: DataTypes.INTEGER },
+  changedBy: { type: DataTypes.UUID }, // Refer ke User.id (UUID)
 });
 
 // Relationships

@@ -1,5 +1,5 @@
 export interface IKelas {
-  id: number;
+  id: string;
   name: string;
 }
 
