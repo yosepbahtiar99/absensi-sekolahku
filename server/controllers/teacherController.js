@@ -4,13 +4,17 @@ const { Op } = require('sequelize');
 const getMySchedule = async (req, res) => {
   try {
     const teacherId = req.user.id;
+    const { day } = req.query; // Ambil parameter day dari query
     const days = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
     const todayName = days[new Date().getDay()];
+    
+    // Gunakan day dari query jika ada, jika tidak gunakan hari ini
+    const selectedDay = day || todayName;
 
     const schedules = await Schedule.findAll({
       where: {
         teacherId,
-        day: todayName
+        day: selectedDay
       },
       include: [
         { model: Class, attributes: ['name'] },

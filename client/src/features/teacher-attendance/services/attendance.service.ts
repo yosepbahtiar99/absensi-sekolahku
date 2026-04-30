@@ -2,8 +2,10 @@ import api from '../../../shared/lib/axios';
 import type { ISchedule } from '../interfaces/attendance.interface';
 
 export const attendanceService = {
-  getTodaySchedules: async (): Promise<ISchedule[]> => {
-    const response = await api.get<ISchedule[]>('/teacher/schedule');
+  getTodaySchedules: async (day?: string): Promise<ISchedule[]> => {
+    const response = await api.get<ISchedule[]>('/teacher/schedule', {
+      params: { day }
+    });
     return response.data;
   },
 

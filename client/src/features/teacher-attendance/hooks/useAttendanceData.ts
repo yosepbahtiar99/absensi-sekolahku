@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { attendanceService } from '../services/attendance.service';
 
-export const useTodaySchedules = () => {
+export const useTodaySchedules = (day?: string) => {
   return useQuery({
-    queryKey: ['today-schedules'],
-    queryFn: attendanceService.getTodaySchedules,
+    queryKey: ['today-schedules', day],
+    queryFn: () => attendanceService.getTodaySchedules(day),
   });
 };
 
