@@ -20,6 +20,7 @@ import MasterAcademicYear from '../../features/master-data/academic-year/pages/M
 import MasterTimeSlot from '../../features/master-data/time-slot/pages/MasterTimeSlot';
 import MasterSchedule from '../../features/master-data/schedule/pages/MasterSchedule';
 import CurriculumPage from '../../features/master-data/curriculum/pages/CurriculumPage';
+import MasterGradeLevel from '../../features/master-data/grade-level/pages/MasterGradeLevel';
 import GlobalNotification from '../components/GlobalNotification';
 
 const AppRoutes = () => {
@@ -131,6 +132,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute role="admin">
             <CurriculumPage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/grade-levels" 
+        element={
+          <ProtectedRoute role="admin">
+            <MasterGradeLevel />
           </ProtectedRoute>
         } 
       />

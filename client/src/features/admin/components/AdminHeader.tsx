@@ -7,9 +7,10 @@ interface AdminHeaderProps {
   title: string;
   subtitle?: string;
   icon?: React.ReactNode;
+  actions?: React.ReactNode;
 }
 
-const AdminHeader: React.FC<AdminHeaderProps> = ({ title, subtitle, icon }) => {
+const AdminHeader: React.FC<AdminHeaderProps> = ({ title, subtitle, icon, actions }) => {
   const { data: academicYears = [] } = useAcademicYears();
   const { selectedYearId, setSelectedYearId } = useAcademicYearStore();
   
@@ -35,6 +36,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ title, subtitle, icon }) => {
       </div>
 
       <div className="flex items-center gap-6">
+        {actions && <div className="flex gap-3 pr-6 border-r border-slate-100">{actions}</div>}
         {/* Global Academic Year Selector */}
         <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm transition-all hover:border-primary/30">
           <CalendarDays size={18} className="text-primary" />

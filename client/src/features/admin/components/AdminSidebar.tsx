@@ -14,7 +14,8 @@ import {
   Clock,
   CalendarDays,
   Database,
-  ChevronDown
+  ChevronDown,
+  Layers
 } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useUIStore } from '../../../shared/store/uiStore';
@@ -48,6 +49,7 @@ const AdminSidebar = () => {
     { icon: BookOpen, label: 'Master Pelajaran', path: '/admin/pelajaran' },
     { icon: Clock, label: 'Master Jam', path: '/admin/time-slots' },
     { icon: BookOpen, label: 'Master Kurikulum', path: '/admin/curriculum' },
+    { icon: Layers, label: 'Master Tingkat', path: '/admin/grade-levels' },
   ];
 
   const isMasterActive = masterSubMenus.some(item => location.pathname === item.path);

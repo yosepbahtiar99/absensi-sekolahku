@@ -1,4 +1,4 @@
-const { sequelize, User, Lesson, Class, Schedule, AcademicYear, TimeSlot, Curriculum } = require('./models');
+const { sequelize, User, Lesson, Class, Schedule, AcademicYear, TimeSlot, Curriculum, GradeLevel } = require('./models');
 const bcrypt = require('bcryptjs');
 
 async function syncDB() {
@@ -79,21 +79,33 @@ async function syncDB() {
       role: 'guru'
     });
 
-    // 5. Buat Data Master Contoh
+    // 5. Buat Tingkat Kelas (GradeLevel)
+    const grades = await GradeLevel.bulkCreate([
+      { name: '7', sequence: 7 },
+      { name: '8', sequence: 8 },
+      { name: '9', sequence: 9 },
+      { name: 'X', sequence: 10 },
+      { name: 'XI', sequence: 11 },
+      { name: 'XII', sequence: 12 }
+    ]);
+    const grade7 = grades[0];
+    const grade10 = grades[3];
+
+    // 6. Buat Data Master Contoh
     const mtk = await Lesson.create({ name: 'Matematika', hours: 6 });
     const indo = await Lesson.create({ name: 'Bahasa Indonesia', hours: 4 });
-    await Class.create({ name: 'Kelas VII A', gradeLevel: '7' });
+    await Class.create({ name: 'Kelas VII A', gradeLevelId: grade7.id });
 
-    // 6. Buat Kurikulum
+    // 7. Buat Kurikulum
     await Curriculum.create({
       academicYearId: year.id,
-      gradeLevel: '7',
+      gradeLevelId: grade7.id,
       lessonId: mtk.id,
       requiredHours: 6
     });
     await Curriculum.create({
       academicYearId: year.id,
-      gradeLevel: '7',
+      gradeLevelId: grade7.id,
       lessonId: indo.id,
       requiredHours: 4
     });

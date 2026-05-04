@@ -4,6 +4,7 @@ import * as Yup from 'yup';
 import { Button } from '../../../../shared/components/Button';
 import { Input } from '../../../../shared/components/Input';
 import type { IKelas, IKelasPayload } from '../interfaces/kelas.interface';
+import { useGradeLevels } from '../../grade-level/hooks/useGradeLevelData';
 
 interface KelasFormProps {
   initialValues?: IKelas;
@@ -14,21 +15,21 @@ interface KelasFormProps {
 
 const kelasSchema = Yup.object().shape({
   name: Yup.string().required('Nama kelas wajib diisi'),
-  gradeLevel: Yup.string().required('Tingkat kelas wajib diisi'),
+  gradeLevelId: Yup.string().required('Tingkat kelas wajib diisi'),
 });
 
 const KelasForm: React.FC<KelasFormProps> = ({ initialValues, onSubmit, isLoading, onCancel }) => {
   const isEdit = !!initialValues?.id;
-  const grades = ['7', '8', '9', '10', '11', '12'];
+  const { data: grades = [] } = useGradeLevels();
 
   return (
     <Formik
       initialValues={{
         name: initialValues?.name || '',
-        gradeLevel: initialValues?.gradeLevel || '',
+        gradeLevelId: (initialValues as any)?.gradeLevelId || '',
       }}
       validationSchema={kelasSchema}
-      onSubmit={(values) => onSubmit(values as IKelasPayload)}
+      onSubmit={(values) => onSubmit(values as any)}
     >
       {({ errors, touched, values, handleChange }) => (
         <Form className="space-y-6">
@@ -48,19 +49,19 @@ const KelasForm: React.FC<KelasFormProps> = ({ initialValues, onSubmit, isLoadin
             <div className="col-span-2 md:col-span-1">
               <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Tingkat</label>
               <select
-                name="gradeLevel"
-                value={values.gradeLevel}
+                name="gradeLevelId"
+                value={values.gradeLevelId}
                 onChange={handleChange}
                 className={`w-full p-3 bg-white border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none ${
-                  errors.gradeLevel && touched.gradeLevel ? "border-red-500" : "border-slate-200"
+                  errors.gradeLevelId && touched.gradeLevelId ? "border-red-500" : "border-slate-200"
                 }`}
               >
                 <option value="">-- Pilih --</option>
                 {grades.map(g => (
-                  <option key={g} value={g}>{g}</option>
+                  <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
               </select>
-              <ErrorMessage name="gradeLevel" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
+              <ErrorMessage name="gradeLevelId" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
             </div>
           </div>
 

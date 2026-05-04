@@ -2,7 +2,7 @@ import api from '../../../../shared/lib/axios';
 import type { ICurriculum, ICurriculumPayload } from '../interfaces/curriculum.interface';
 
 export const curriculumService = {
-  getAll: async (params?: { academicYearId?: string; gradeLevel?: string }): Promise<ICurriculum[]> => {
+  getAll: async (params?: { academicYearId?: string; gradeLevelId?: string }): Promise<ICurriculum[]> => {
     const response = await api.get<ICurriculum[]>('/admin/curriculums', { params });
     return response.data;
   },

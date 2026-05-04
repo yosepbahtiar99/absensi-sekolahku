@@ -1,4 +1,4 @@
-const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot, Curriculum } = require('../models');
+const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot, Curriculum, GradeLevel } = require('../models');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const ExcelJS = require('exceljs');
@@ -96,7 +96,11 @@ const getAllActivities = async (req, res) => {
           model: Schedule, 
           where: Object.keys(scheduleWhere).length ? scheduleWhere : null,
           include: [
-            { model: Class, attributes: ['name'] },
+            { 
+              model: Class, 
+              attributes: ['name'],
+              include: [{ model: GradeLevel, attributes: ['name'] }]
+            },
             { model: Lesson, attributes: ['name'] }
           ]
         }
@@ -210,6 +214,7 @@ const getClasses = async (req, res) => {
       where,
       limit,
       offset,
+      include: [{ model: GradeLevel, attributes: ['id', 'name'] }],
       order: [['name', 'ASC']]
     });
 
@@ -229,8 +234,8 @@ const getClasses = async (req, res) => {
 
 const createClass = async (req, res) => {
   try {
-    const { name, gradeLevel } = req.body;
-    const cls = await Class.create({ name, gradeLevel });
+    const { name, gradeLevelId } = req.body;
+    const cls = await Class.create({ name, gradeLevelId });
     res.json(cls);
   } catch (error) {
     res.status(500).json({ message: 'Gagal tambah kelas' });
@@ -240,8 +245,8 @@ const createClass = async (req, res) => {
 const updateClass = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, gradeLevel } = req.body;
-    await Class.update({ name, gradeLevel }, { where: { id } });
+    const { name, gradeLevelId } = req.body;
+    await Class.update({ name, gradeLevelId }, { where: { id } });
     res.json({ message: 'Kelas berhasil diupdate' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal update kelas' });
@@ -413,18 +418,19 @@ const deleteTimeSlot = async (req, res) => {
 // --- CURRICULUM CRUD ---
 const getCurriculums = async (req, res) => {
   try {
-    const { academicYearId, gradeLevel } = req.query;
+    const { academicYearId, gradeLevelId } = req.query;
     const where = {};
     if (academicYearId) where.academicYearId = academicYearId;
-    if (gradeLevel) where.gradeLevel = gradeLevel;
+    if (gradeLevelId) where.gradeLevelId = gradeLevelId;
 
     const curriculums = await Curriculum.findAll({
       where,
       include: [
         { model: Lesson, attributes: ['id', 'name'] },
-        { model: AcademicYear, attributes: ['id', 'name'] }
+        { model: AcademicYear, attributes: ['id', 'name'] },
+        { model: GradeLevel, attributes: ['id', 'name'] }
       ],
-      order: [['gradeLevel', 'ASC']]
+      order: [[GradeLevel, 'sequence', 'ASC']]
     });
     res.json(curriculums);
   } catch (error) {
@@ -435,15 +441,15 @@ const getCurriculums = async (req, res) => {
 
 const createCurriculum = async (req, res) => {
   try {
-    const { academicYearId, gradeLevel, lessonId, requiredHours } = req.body;
+    const { academicYearId, gradeLevelId, lessonId, requiredHours } = req.body;
     
     // Check if mapping already exists
     const existing = await Curriculum.findOne({
-      where: { academicYearId, gradeLevel, lessonId }
+      where: { academicYearId, gradeLevelId, lessonId }
     });
     if (existing) return res.status(400).json({ message: 'Mapel sudah terdaftar di kurikulum tingkat ini' });
 
-    const curriculum = await Curriculum.create({ academicYearId, gradeLevel, lessonId, requiredHours });
+    const curriculum = await Curriculum.create({ academicYearId, gradeLevelId, lessonId, requiredHours });
     res.json(curriculum);
   } catch (error) {
     res.status(500).json({ message: 'Gagal tambah kurikulum' });
@@ -520,6 +526,33 @@ const createOrUpdateSchedule = async (req, res) => {
       }
     });
     if (classConflict) return res.status(400).json({ message: 'Kelas sudah ada pelajaran lain di slot jam tersebut' });
+
+    // 3. Validasi Kuota Kurikulum (JP)
+    const targetClass = await Class.findByPk(classId);
+    const curriculum = await Curriculum.findOne({
+      where: {
+        academicYearId,
+        gradeLevelId: targetClass?.gradeLevelId,
+        lessonId
+      }
+    });
+
+    if (curriculum) {
+      const currentUsage = await Schedule.count({
+        where: {
+          academicYearId,
+          classId,
+          lessonId,
+          id: { [Op.ne]: id || 0 }
+        }
+      });
+
+      if (currentUsage >= curriculum.requiredHours) {
+        return res.status(400).json({ 
+          message: `Kuota jam pelajaran ${targetClass.name} untuk mapel ini sudah habis (${curriculum.requiredHours} JP)` 
+        });
+      }
+    }
 
     const data = { day, academicYearId, timeSlotId, teacherId, classId, lessonId };
 
@@ -926,6 +959,43 @@ const cloneSchedule = async (req, res) => {
   }
 };
 
+// --- GRADE LEVEL CRUD ---
+const getGradeLevels = async (req, res) => {
+  try {
+    const grades = await GradeLevel.findAll({ order: [['sequence', 'ASC']] });
+    res.json(grades);
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal mengambil data tingkat kelas' });
+  }
+};
+
+const createGradeLevel = async (req, res) => {
+  try {
+    const grade = await GradeLevel.create(req.body);
+    res.json(grade);
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal tambah tingkat kelas' });
+  }
+};
+
+const updateGradeLevel = async (req, res) => {
+  try {
+    await GradeLevel.update(req.body, { where: { id: req.params.id } });
+    res.json({ message: 'Tingkat kelas berhasil diupdate' });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal update tingkat kelas' });
+  }
+};
+
+const deleteGradeLevel = async (req, res) => {
+  try {
+    await GradeLevel.destroy({ where: { id: req.params.id } });
+    res.json({ message: 'Tingkat kelas berhasil dihapus' });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal hapus tingkat kelas' });
+  }
+};
+
 module.exports = { 
   getDashboardSummary, 
   getAllActivities,
@@ -937,6 +1007,7 @@ module.exports = {
   getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
   getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
   getCurriculums, createCurriculum, updateCurriculum, deleteCurriculum,
+  getGradeLevels, createGradeLevel, updateGradeLevel, deleteGradeLevel,
   getSchedules, createOrUpdateSchedule, deleteSchedule,
   cloneSchedule, exportSchedule,
   exportReport

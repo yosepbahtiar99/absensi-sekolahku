@@ -69,6 +69,16 @@ const ApprovalRequest = sequelize.define('ApprovalRequest', {
   approvedBy: { type: DataTypes.UUID },
 });
 
+const GradeLevel = sequelize.define('GradeLevel', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
+  name: { type: DataTypes.STRING, allowNull: false },
+  sequence: { type: DataTypes.INTEGER, defaultValue: 0 },
+});
+
 const Class = sequelize.define('Class', {
   id: {
     type: DataTypes.UUID,
@@ -76,7 +86,6 @@ const Class = sequelize.define('Class', {
     primaryKey: true
   },
   name: { type: DataTypes.STRING, allowNull: false },
-  gradeLevel: { type: DataTypes.STRING, allowNull: true }, // e.g., "10", "11", "XII"
 });
 
 const Lesson = sequelize.define('Lesson', {
@@ -123,7 +132,6 @@ const Curriculum = sequelize.define('Curriculum', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
-  gradeLevel: { type: DataTypes.STRING, allowNull: false },
   requiredHours: { type: DataTypes.INTEGER, defaultValue: 0 },
 });
 
@@ -195,6 +203,13 @@ Curriculum.belongsTo(AcademicYear, { foreignKey: 'academicYearId' });
 Lesson.hasMany(Curriculum, { foreignKey: 'lessonId' });
 Curriculum.belongsTo(Lesson, { foreignKey: 'lessonId' });
 
+// GradeLevel Relationships
+GradeLevel.hasMany(Class, { foreignKey: 'gradeLevelId' });
+Class.belongsTo(GradeLevel, { foreignKey: 'gradeLevelId' });
+
+GradeLevel.hasMany(Curriculum, { foreignKey: 'gradeLevelId' });
+Curriculum.belongsTo(GradeLevel, { foreignKey: 'gradeLevelId' });
+
 module.exports = { 
   sequelize, 
   User, 
@@ -206,5 +221,6 @@ module.exports = {
   ApprovalRequest,
   AcademicYear,
   TimeSlot,
-  Curriculum
+  Curriculum,
+  GradeLevel
 };

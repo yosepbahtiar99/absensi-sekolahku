@@ -42,11 +42,15 @@
 - [x] Reporting Consistency: Ensure reports pull from the snapshotted data in `Activity`
 
 ### Phase 5: Curriculum & Compliance (New! 🎯)
-- [ ] Implement `gradeLevel` in `Class` Model
-- [ ] Create `Curriculum` Model (academicYearId, gradeLevel, lessonId, requiredHours)
-- [ ] Create UI for Curriculum Management (Mapping Lesson per Grade Level)
-- [ ] Implement Compliance Tracker in Master Schedule (Visual indicator for missing/insufficient hours)
+- [x] Implement `gradeLevel` in `Class` Model
+- [x] Create `Curriculum` Model (academicYearId, gradeLevel, lessonId, requiredHours)
+- [x] Create UI for Curriculum Management (Initial Version)
+- [x] Implement Compliance Tracker in Master Schedule
+- [x] Create `GradeLevel` Master Model (Dynamic levels instead of hardcoded 7-12)
+- [x] Create UI for Managing Grade Levels
+- [x] Refactor Class & Curriculum to use `GradeLevel` associations
 - [ ] Add validation to prevent/warn when plotting over-quota lessons
+
 
 
 ## UI/UX Improvements
@@ -61,7 +65,7 @@
 - [x] Master Data Management (Guru, Kelas, Pelajaran, Schedule)
     - [x] Tambahkan jumlah jam pelajaran di Master Pelajaran (kuota/alokasi jam per guru)
 - [x] Schedule Management Improvements
-    - [x] View per kelas di flow Assign Master Schedule (indikator terassign/belum)
+- [x] View per kelas di flow Assign Master Schedule (indikator terassign/belum)
 - [x] Core Optimizations
     - [x] Server-side Pagination implementation (Express + Sequelize)
     - [x] Client-side Pagination integration (TanStack Query + UI Pagination)

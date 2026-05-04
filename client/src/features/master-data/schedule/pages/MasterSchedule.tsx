@@ -1,43 +1,58 @@
 import { useState, useMemo } from 'react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
+import { 
+  DndContext, 
+  DragOverlay, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
   useSensors,
+  type DragEndEvent,
+  type DragStartEvent
 } from '@dnd-kit/core';
-import {
-  sortableKeyboardCoordinates,
+import { 
+  sortableKeyboardCoordinates, 
 } from '@dnd-kit/sortable';
-import { Plus, X, Calendar, Info, GraduationCap, Copy, ChevronRight, Loader2, FileSpreadsheet } from 'lucide-react';
-import { scheduleService } from '../services/schedule.service';
-import AdminSidebar from '../../../admin/components/AdminSidebar';
-import { Button } from '../../../../shared/components/Button';
-import { Card } from '../../../../shared/components/Card';
+import { 
+  Calendar, 
+  Download, 
+  Copy, 
+  Users, 
+  BookOpen, 
+  Info, 
+  AlertCircle,
+  Loader2,
+  ChevronUp,
+  ChevronDown,
+  Search,
+} from 'lucide-react';
 import { useSchedules, useUpsertSchedule, useDeleteSchedule, useCloneSchedule } from '../hooks/useScheduleData';
 import { useGurus } from '../../guru/hooks/useGuruData';
 import { useClasses } from '../../kelas/hooks/useKelasData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
-import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
 import { useTimeSlots } from '../../time-slot/hooks/useTimeSlotData';
 import { useCurriculums } from '../../curriculum/hooks/useCurriculumData';
 import { useAcademicYearStore } from '../../../../shared/store/academicYearStore';
 import AdminHeader from '../../../admin/components/AdminHeader';
-import SortableScheduleItem from '../components/SortableScheduleItem';
+import DraggableAssetItem from '../components/DraggableAssetItem';
 import DroppableGridCell from '../components/DroppableGridCell';
-import ScheduleForm from '../forms/ScheduleForm';
-import type { ISchedulePayload } from '../interfaces/schedule.interface';
+import ScheduleFormModal from '../components/ScheduleFormModal';
+import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { useNotificationStore } from '../../../../shared/store/notificationStore';
+import { Button } from '../../../../shared/components/Button';
 
 const MasterSchedule = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
-  const [selectedSchedule, setSelectedSchedule] = useState<Partial<ISchedulePayload> | undefined>(undefined);
   const [activeDay, setActiveDay] = useState('senin');
-  const [sourceYearId, setSourceYearId] = useState('');
+  const [activeItem, setActiveItem] = useState<any>(null);
+  const [isAssetsOpen, setIsAssetsOpen] = useState(true);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalData, setModalData] = useState<any>(null);
 
-  const { data: academicYears = [] } = useAcademicYears();
+  // Search States
+  const [guruSearch, setGuruSearch] = useState('');
+  const [lessonSearch, setLessonSearch] = useState('');
+
   const { selectedYearId } = useAcademicYearStore();
   const currentYearId = selectedYearId;
 
@@ -49,217 +64,184 @@ const MasterSchedule = () => {
   const { data: timeSlots = [] } = useTimeSlots({ academicYearId: currentYearId || undefined });
   const { data: curriculumRes = [] } = useCurriculums({ academicYearId: currentYearId || undefined });
 
-  // --- Curriculum Compliance Logic ---
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-
-  // Filter time slots by active day to ensure correct columns
   const filteredTimeSlots = useMemo(() => {
     return timeSlots.filter(ts => ts.day.toLowerCase() === activeDay.toLowerCase())
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
   }, [timeSlots, activeDay]);
 
-  const schedules = schedData; // Schedules is not paginated yet in server, but hook was updated? Wait.
+  const schedules = schedData || [];
   const gurus = guruRes?.data || [];
   const classes = kelasRes?.data || [];
   const lessons = lessonRes?.data || [];
 
-  const complianceStatus = useMemo(() => {
-    if (!selectedClassId || !curriculumRes || !schedules || !classes) return [];
-    
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+
+  const lessonStats = useMemo(() => {
+    if (!selectedClassId || !curriculumRes || !classes) return {};
     const targetClass = classes.find(c => c.id === selectedClassId);
-    if (!targetClass?.gradeLevel) return [];
-
-    // Filter curriculum for this grade level
-    const classCurriculum = curriculumRes.filter(c => c.gradeLevel === targetClass.gradeLevel);
-
-    return classCurriculum.map(curr => {
-      // Count how many JP already assigned for this lesson in this class (all days)
-      const assignedJP = (schedules as any[]).filter(s => s.classId === selectedClassId && s.lessonId === curr.lessonId).length;
-      return {
-        lessonName: curr.Lesson?.name || 'Unknown',
-        assigned: assignedJP,
+    if (!targetClass?.gradeLevelId) return {};
+    const classCurriculum = curriculumRes.filter(c => c.gradeLevelId === targetClass.gradeLevelId);
+    const stats: Record<string, { assigned: number; required: number; remaining: number }> = {};
+    classCurriculum.forEach(curr => {
+      const assignedCount = schedules.filter(s => s.classId === selectedClassId && s.lessonId === curr.lessonId).length;
+      stats[curr.lessonId] = {
+        assigned: assignedCount,
         required: curr.requiredHours,
-        isFulfilled: assignedJP >= curr.requiredHours
+        remaining: curr.requiredHours - assignedCount
       };
     });
+    return stats;
   }, [selectedClassId, curriculumRes, schedules, classes]);
+
+  const complianceStatus = useMemo(() => {
+    return Object.entries(lessonStats).map(([lessonId, stat]) => {
+      const lesson = lessons.find(l => l.id === lessonId);
+      return {
+        lessonName: lesson?.name || 'Unknown',
+        assigned: stat.assigned,
+        required: stat.required,
+        isFulfilled: stat.assigned >= stat.required
+      };
+    });
+  }, [lessonStats, lessons]);
 
   const upsertMutation = useUpsertSchedule();
   const deleteMutation = useDeleteSchedule();
-
   const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // --- Logic Features ---
-  
-  // 1. Calculate Teacher Hours Allocation
-  const teacherStats = useMemo(() => {
-    if (!gurus || !schedules) return [];
-    return gurus.map(guru => {
-      const teacherSchedules = schedules.filter(s => s.teacherId === guru.id);
-      const totalHours = teacherSchedules.length; // 1 Slot = 1 JP. Simple & Akurat.
-      return { ...guru, totalHours };
-    }).sort((a, b) => b.totalHours - a.totalHours);
-  }, [gurus, schedules]);
-
-  // 2. Class Coverage for Active Day
-  const classStatus = useMemo(() => {
-    if (!classes || !schedules) return [];
-    return classes.map(cls => {
-      const hasSchedule = schedules.some(s => s.classId === cls.id && s.day === activeDay);
-      return { ...cls, hasSchedule };
-    });
-  }, [classes, schedules, activeDay]);
-
-  // --- Handlers ---
   const { showNotification } = useNotificationStore();
 
-  const handleOpenModal = (sched?: Partial<ISchedulePayload>, dayHint?: string) => {
-    setSelectedSchedule(sched || { day: dayHint || activeDay });
-    setIsModalOpen(true);
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const [type, id] = (active.id as string).split(':');
+    if (type === 'guru') setActiveItem({ type: 'guru', ...gurus.find(g => g.id === id) });
+    else setActiveItem({ type: 'lesson', ...lessons.find(l => l.id === id) });
   };
 
-  const handleCloseModal = () => {
-    setSelectedSchedule(undefined);
-    setIsModalOpen(false);
-  };
-
-  const handleSave = (values: ISchedulePayload) => {
-    upsertMutation.mutate(values, {
-      onSuccess: () => {
-        showNotification(values.id ? 'Jadwal berhasil diperbarui!' : 'Jadwal baru berhasil ditambahkan!', 'success');
-        handleCloseModal();
-      },
-      onError: (error: any) => {
-        const msg = error.response?.data?.message || 'Gagal menyimpan jadwal.';
-        showNotification(msg, 'error');
-      }
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    if (window.confirm('Hapus jadwal ini?')) {
-      deleteMutation.mutate(id, {
-        onSuccess: () => showNotification('Jadwal berhasil dihapus!', 'success'),
-        onError: () => showNotification('Gagal menghapus jadwal.', 'error')
-      });
-    }
-  };
-
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { over, active } = event;
+    setActiveItem(null);
     if (!over) return;
+    const [overType, overId] = (over.id as string).split(':');
+    if (overType !== 'cell') return;
 
-    const scheduleId = active.id;
-    const [classId, timeSlotId] = over.id.split(':');
+    const [classId, timeSlotId] = overId.split('|');
+    const [activeType, activeId] = (active.id as string).split(':');
+    const existing = schedules?.find(s => s.classId === classId && s.timeSlotId === timeSlotId && s.day === activeDay);
 
-    const schedule = schedules?.find(s => s.id === scheduleId);
-    if (!schedule) return;
-
-    // If dropped on the same cell, do nothing
-    if (schedule.classId === classId && schedule.timeSlotId === timeSlotId) return;
-
-    // Update via upsert
-    const payload: ISchedulePayload = {
-      id: schedule.id,
-      day: activeDay,
-      academicYearId: currentYearId || '',
+    const payload = {
+      academicYearId: currentYearId!,
       classId,
       timeSlotId,
-      teacherId: schedule.teacherId,
-      lessonId: schedule.lessonId
+      day: activeDay,
+      teacherId: activeType === 'guru' ? activeId : (existing?.teacherId || ''),
+      lessonId: activeType === 'lesson' ? activeId : (existing?.lessonId || '')
     };
 
-    upsertMutation.mutate(payload, {
-      onSuccess: () => showNotification('Jadwal dipindahkan!', 'success'),
-      onError: (error: any) => {
-        const msg = error.response?.data?.message || 'Gagal memindahkan jadwal.';
-        showNotification(msg, 'error');
+    if (activeType === 'lesson' && lessonStats[activeId]) {
+      const stat = lessonStats[activeId];
+      if (!existing && stat.remaining <= 0) {
+        if (!window.confirm(`${activeItem.name} sudah memenuhi kuota (${stat.required} JP). Tetap tambahkan?`)) return;
       }
+    }
+
+    if (!payload.teacherId || !payload.lessonId) {
+      setModalData(payload);
+      setIsModalOpen(true);
+      return;
+    }
+
+    upsertMutation.mutate(payload, {
+      onSuccess: () => showNotification('Jadwal diperbarui', 'success'),
+      onError: (err: any) => showNotification(err.response?.data?.message || 'Gagal', 'error')
     });
   };
+
+  const handleCellClick = (classId: string, timeSlotId: string) => {
+    const existing = schedules?.find(s => s.classId === classId && s.timeSlotId === timeSlotId && s.day === activeDay);
+    setModalData({
+      academicYearId: currentYearId!,
+      classId,
+      timeSlotId,
+      day: activeDay,
+      teacherId: existing?.teacherId || '',
+      lessonId: existing?.lessonId || ''
+    });
+    setIsModalOpen(true);
+    setSelectedClassId(classId);
+  };
+
+  // Filtered Assets for Search
+  const filteredGurus = useMemo(() => 
+    gurus.filter(g => g.name.toLowerCase().includes(guruSearch.toLowerCase())), 
+  [gurus, guruSearch]);
+
+  const filteredLessons = useMemo(() => 
+    lessons.filter(l => l.name.toLowerCase().includes(lessonSearch.toLowerCase())), 
+  [lessons, lessonSearch]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <AdminSidebar />
-      
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <AdminHeader 
           title="Matrix Scheduling" 
-          subtitle="Visualisasi pemetaan jadwal Kelas vs Jam Pelajaran." 
+          subtitle="Atur jadwal mingguan dengan pengawasan kuota JP kurikulum."
           icon={<Calendar className="text-primary" size={28} />}
+          actions={
+            <div className="flex gap-3">
+              <Button variant="outline" className="rounded-xl px-6" onClick={() => window.confirm('Clone jadwal?') && cloneSchedule({ fromYearId: '...', toYearId: currentYearId! })} disabled={isCloning}>
+                {isCloning ? <Loader2 className="animate-spin mr-2" /> : <Copy size={18} className="mr-2" />}
+                Clone
+              </Button>
+              <Button className="rounded-xl px-6 shadow-lg shadow-primary/20">
+                <Download size={18} className="mr-2" />
+                Export
+              </Button>
+            </div>
+          }
         />
 
-        <div className="p-8 pb-4 flex justify-between items-center">
-          <div className="flex gap-2 p-1.5 bg-slate-100/80 backdrop-blur-md rounded-[2rem] w-fit border border-slate-200/50 shadow-inner">
-            {days.map(d => (
-              <button
-                key={d}
-                onClick={() => setActiveDay(d)}
-                className={`px-8 py-2.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${
-                  activeDay === d 
-                    ? 'bg-white text-primary shadow-xl shadow-primary/10 ring-1 ring-primary/5' 
-                    : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
-                }`}
-              >
-                {d}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => currentYearId && scheduleService.exportExcel(currentYearId)} 
-              className="border-emerald-200 text-emerald-600 hover:bg-emerald-50"
-              disabled={!currentYearId}
-            >
-              <FileSpreadsheet size={18} className="mr-2" />
-              Export Excel
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsCloneModalOpen(true)} 
-              className="border-slate-200 hover:bg-slate-50"
-              disabled={!currentYearId}
-            >
-              <Copy size={18} className="mr-2" />
-              Copy Jadwal
-            </Button>
-            <Button onClick={() => handleOpenModal()} className="shadow-lg shadow-primary/20" disabled={!currentYearId}>
-              <Plus size={20} className="mr-2" />
-              Tambah Jadwal
-            </Button>
-          </div>
-        </div>
+        <DndContext 
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0">
+              <div className="px-8 pt-6 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
+                {days.map(day => (
+                  <button
+                    key={day}
+                    onClick={() => setActiveDay(day)}
+                    className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      activeDay === day 
+                        ? 'bg-primary text-white shadow-xl shadow-primary/30' 
+                        : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
 
-        <div className="flex-1 flex overflow-hidden">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="flex-1 overflow-auto p-8 pt-0 bg-[#F8FAFC] custom-scrollbar">
-              <div className="inline-block min-w-full align-middle">
-                <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+              <div className="flex-1 p-8 pt-4 overflow-auto custom-scrollbar">
+                <div className="inline-block min-w-full bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/50">
-                        <th className="sticky left-0 z-20 bg-slate-50/80 backdrop-blur-md p-6 text-left border-r border-b border-slate-100 min-w-[200px]">
-                          <div className="flex items-center gap-3">
-                            <GraduationCap className="text-slate-400" size={20} />
-                            <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Kelas \ Jam</span>
-                          </div>
+                      <tr>
+                        <th className="sticky left-0 top-0 z-20 bg-slate-50 p-6 border-r border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">
+                          Kelas / Jam
                         </th>
                         {filteredTimeSlots.map(slot => (
-                          <th key={slot.id} className="p-6 border-b border-r border-slate-100 min-w-[240px]">
-                            <div className="flex flex-col items-center">
-                              <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-1">{slot.label}</span>
-                              <span className="text-[10px] font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-full">{slot.startTime} - {slot.endTime}</span>
-                            </div>
+                          <th key={slot.id} className="sticky top-0 z-10 bg-slate-50 p-6 border-b border-slate-100 text-center min-w-[220px]">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{slot.label}</p>
+                            <p className="text-xs font-black text-primary mt-1">{slot.startTime.slice(0,5)} - {slot.endTime.slice(0,5)}</p>
                           </th>
                         ))}
                       </tr>
@@ -268,54 +250,24 @@ const MasterSchedule = () => {
                       {classes.map(cls => (
                         <tr 
                           key={cls.id} 
-                          className={`group hover:bg-slate-50/30 transition-colors ${selectedClassId === cls.id ? 'bg-primary/5' : ''}`}
+                          className={`group hover:bg-slate-50/50 transition-colors ${selectedClassId === cls.id ? 'bg-primary/[0.03]' : ''}`}
                           onClick={() => setSelectedClassId(cls.id)}
                         >
-                          <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/50 backdrop-blur-md p-6 border-r border-b border-slate-100 cursor-pointer">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-black text-slate-800 text-sm">{cls.name}</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tingkat: {cls.gradeLevel || '-'}</p>
-                              </div>
-                              {selectedClassId === cls.id && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>}
+                          <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/80 backdrop-blur-md p-6 border-r border-b border-slate-100 cursor-pointer">
+                            <div>
+                              <p className="font-black text-slate-800 text-sm">{cls.name}</p>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{(cls as any).GradeLevel?.name || '-'}</p>
                             </div>
                           </td>
-                          {filteredTimeSlots.map(slot => {
-                            const schedule = schedules?.find(s => s.classId === cls.id && s.timeSlotId === slot.id && s.day === activeDay);
-                            
-                            const isTeacherConflict = schedule && schedules?.some(s => 
-                              s.teacherId === schedule.teacherId && 
-                              s.timeSlotId === slot.id && 
-                              s.day === activeDay && 
-                              s.id !== schedule.id
-                            );
-
-                            return (
-                              <DroppableGridCell 
-                                key={slot.id} 
-                                id={`${cls.id}:${slot.id}`}
-                                isEmpty={!schedule}
-                                onAdd={() => handleOpenModal({ day: activeDay, classId: cls.id, timeSlotId: slot.id })}
-                              >
-                                {schedule && (
-                                  <SortableScheduleItem
-                                    schedule={schedule}
-                                    onDelete={handleDelete}
-                                    isConflict={isTeacherConflict}
-                                    onEdit={(s) => handleOpenModal({
-                                      id: s.id,
-                                      day: s.day,
-                                      timeSlotId: s.timeSlotId,
-                                      teacherId: s.teacherId,
-                                      classId: s.classId,
-                                      lessonId: s.lessonId,
-                                      academicYearId: s.academicYearId
-                                    })}
-                                  />
-                                )}
-                              </DroppableGridCell>
-                            );
-                          })}
+                          {filteredTimeSlots.map(slot => (
+                            <DroppableGridCell 
+                              key={`${cls.id}-${slot.id}`}
+                              id={`cell:${cls.id}|${slot.id}`}
+                              schedule={schedules.find(s => s.classId === cls.id && s.timeSlotId === slot.id && s.day === activeDay)}
+                              onDelete={(id) => deleteMutation.mutate(id)}
+                              onClick={() => handleCellClick(cls.id, slot.id)}
+                            />
+                          ))}
                         </tr>
                       ))}
                     </tbody>
@@ -323,68 +275,41 @@ const MasterSchedule = () => {
                 </div>
               </div>
             </div>
-          </DndContext>
 
-          <aside className="w-80 bg-white border-l border-slate-100 flex flex-col animate-in slide-in-from-right duration-500">
-            <div className="p-8 border-b border-slate-100 bg-slate-50/50">
-              <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                <Info size={16} className="text-primary" />
-                Live Insights
-              </h4>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
-              {/* Teacher Allocation Section */}
-              <section>
-                <div className="flex items-center justify-between mb-6">
-                  <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Alokasi Jam Guru</h5>
-                  <div className="bg-slate-100 px-2 py-0.5 rounded text-[10px] font-bold text-slate-500">Global</div>
-                </div>
-                <div className="space-y-5">
-                  {teacherStats.slice(0, 5).map((stat, i) => (
-                    <div key={i} className="group">
-                      <div className="flex justify-between items-end mb-2">
-                        <span className="text-xs font-bold text-slate-700 truncate max-w-[140px]">{stat.name}</span>
-                        <span className="text-[10px] font-black text-primary">{stat.totalHours} JP</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary rounded-full transition-all duration-1000" 
-                          style={{ width: `${Math.min((stat.totalHours / 40) * 100, 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* Curriculum Compliance Tracker */}
-              <section className="animate-in fade-in slide-in-from-bottom duration-700">
-                <div className="flex items-center justify-between mb-6">
+            <div className="w-80 bg-white border-l border-slate-100 flex flex-col h-full overflow-hidden">
+              <div className="p-8 h-full overflow-y-auto custom-scrollbar">
+                <div className="flex items-center justify-between mb-8">
                   <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Compliance Tracker</h5>
-                  <div className="bg-primary/10 px-2 py-0.5 rounded text-[10px] font-black text-primary">Kelas: {classes.find(c => c.id === selectedClassId)?.name || '-'}</div>
+                  {selectedClassId && (
+                    <div className="bg-primary/10 px-3 py-1 rounded-full text-[10px] font-black text-primary uppercase">
+                      {classes.find(c => c.id === selectedClassId)?.name}
+                    </div>
+                  )}
                 </div>
-                
+
                 {!selectedClassId ? (
-                  <div className="bg-slate-50 border border-dashed border-slate-200 rounded-3xl p-6 text-center">
-                    <Info size={20} className="mx-auto text-slate-300 mb-2" />
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Pilih baris kelas untuk cek kurikulum</p>
+                  <div className="h-64 flex flex-col items-center justify-center bg-slate-50/50 border-2 border-dashed border-slate-100 rounded-[2rem] p-8 text-center">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                      <Info size={24} className="text-slate-300" />
+                    </div>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Pilih baris kelas untuk melihat tracker</p>
                   </div>
                 ) : complianceStatus.length === 0 ? (
-                  <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 text-center">
-                    <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Kurikulum belum di-set</p>
+                  <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-8 text-center">
+                    <AlertCircle size={24} className="mx-auto text-amber-300 mb-3" />
+                    <p className="text-[11px] font-bold text-amber-600 uppercase tracking-widest leading-relaxed">Kurikulum belum di-set untuk tingkat ini</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {complianceStatus.map((status, i) => (
-                      <div key={i} className="bg-white border border-slate-100 p-4 rounded-2xl shadow-sm">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-[11px] font-bold text-slate-700 max-w-[140px] truncate">{status.lessonName}</span>
-                          <span className={`text-[10px] font-black ${status.isFulfilled ? 'text-emerald-500' : 'text-amber-500'}`}>
-                            {status.assigned} / {status.required} JP
+                      <div key={i} className="bg-white border border-slate-100 p-5 rounded-3xl shadow-sm hover:border-primary/20 transition-all">
+                        <div className="flex justify-between items-start mb-3">
+                          <span className="text-xs font-black text-slate-700 leading-tight pr-2">{status.lessonName}</span>
+                          <span className={`text-[10px] font-black shrink-0 ${status.isFulfilled ? 'text-emerald-500' : 'text-amber-500'}`}>
+                            {status.assigned}/{status.required} JP
                           </span>
                         </div>
-                        <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
                           <div 
                             className={`h-full transition-all duration-1000 ${status.isFulfilled ? 'bg-emerald-500' : 'bg-amber-400'}`}
                             style={{ width: `${Math.min((status.assigned / status.required) * 100, 100)}%` }}
@@ -394,137 +319,127 @@ const MasterSchedule = () => {
                     ))}
                   </div>
                 )}
-              </section>
-
-              {/* Class Status Section */}
-              <section>
-                <div className="flex items-center justify-between mb-6">
-                  <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status Kelas ({activeDay})</h5>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {classStatus.map((cls, i) => (
-                    <div 
-                      key={i} 
-                      className={`p-3 rounded-2xl border text-center transition-all ${
-                        cls.hasSchedule 
-                          ? 'bg-emerald-50 border-emerald-100 text-emerald-700 shadow-sm' 
-                          : 'bg-white border-slate-100 text-slate-400 grayscale opacity-60'
-                      }`}
-                    >
-                      <GraduationCap size={16} className="mx-auto mb-1.5 opacity-40" />
-                      <p className="text-[10px] font-black uppercase tracking-tighter">{cls.name}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* Legend Card */}
-              <Card className="bg-primary/5 border-primary/10 p-5 rounded-[2rem]">
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Pro Tip</p>
-                <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                  Gunakan insight di atas untuk memastikan beban mengajar guru merata dan semua kelas sudah terisi jadwalnya.
-                </p>
-              </Card>
-            </div>
-          </aside>
-        </div>
-      </main>
-
-      {/* Modal / Sidebar Form */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-end">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={handleCloseModal}></div>
-          <div className="relative w-full max-w-md h-full bg-white shadow-2xl p-8 flex flex-col animate-in slide-in-from-right duration-500">
-            <div className="flex justify-between items-center mb-10">
-              <div>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                  {selectedSchedule?.id ? 'Edit Jadwal' : 'Tambah Jadwal'}
-                </h3>
-                <p className="text-slate-400 text-sm font-medium">Lengkapi rincian jadwal mengajar.</p>
               </div>
-              <button onClick={handleCloseModal} className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
-                <X size={24} className="text-slate-400" />
-              </button>
             </div>
-
-            <ScheduleForm 
-              initialValues={selectedSchedule}
-              gurus={gurus || []}
-              classes={classes || []}
-              lessons={lessons || []}
-              timeSlots={timeSlots || []}
-              academicYearId={currentYearId || ''}
-              onSubmit={handleSave} 
-              onCancel={handleCloseModal}
-              isLoading={upsertMutation.isPending}
-            />
           </div>
-        </div>
-      )}
-      {/* Clone Schedule Modal */}
-      {isCloneModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <Card className="w-full max-w-md p-8 shadow-2xl border-none rounded-[2.5rem] animate-in zoom-in-95 duration-300">
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                  <Copy className="text-primary" size={24} />
-                  Copy Jadwal
-                </h3>
-                <p className="text-slate-500 font-medium text-xs mt-1">Import jadwal dari periode sebelumnya.</p>
+
+          <div className={`absolute bottom-0 left-64 right-80 bg-white border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-40 transition-all duration-500 rounded-t-[2.5rem] ${isAssetsOpen ? 'h-[20rem]' : 'h-12'}`}>
+            <button 
+              onClick={() => setIsAssetsOpen(!isAssetsOpen)}
+              className="absolute -top-5 left-1/2 -translate-x-1/2 bg-white border border-slate-200 p-2 rounded-full shadow-md text-slate-400 hover:text-primary transition-all"
+            >
+              {isAssetsOpen ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+            </button>
+
+            <div className={`p-6 h-full flex flex-col overflow-hidden ${isAssetsOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <div className="flex gap-8 h-full">
+                {/* Teachers Column */}
+                <div className="flex-1 flex flex-col min-w-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Users size={14} className="text-blue-500" />
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Daftar Guru</span>
+                    </div>
+                    <div className="relative">
+                      <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                      <input 
+                        type="text" 
+                        placeholder="Cari guru..." 
+                        value={guruSearch}
+                        onChange={(e) => setGuruSearch(e.target.value)}
+                        className="pl-8 pr-4 py-1.5 bg-slate-50 border-none rounded-full text-[10px] font-bold outline-none ring-1 ring-slate-100 focus:ring-primary/20 w-32 transition-all"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-x-auto flex gap-3 pb-2 no-scrollbar">
+                    {filteredGurus.map(guru => (
+                      <div key={guru.id} className="min-w-[160px]">
+                        <DraggableAssetItem id={`guru:${guru.id}`} type="guru" name={guru.name} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lessons Column */}
+                <div className="flex-1 flex flex-col min-w-0 border-l border-slate-100 pl-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <BookOpen size={14} className="text-amber-500" />
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mata Pelajaran</span>
+                    </div>
+                    <div className="relative">
+                      <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                      <input 
+                        type="text" 
+                        placeholder="Cari mapel..." 
+                        value={lessonSearch}
+                        onChange={(e) => setLessonSearch(e.target.value)}
+                        className="pl-8 pr-4 py-1.5 bg-slate-50 border-none rounded-full text-[10px] font-bold outline-none ring-1 ring-slate-100 focus:ring-primary/20 w-32 transition-all"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-x-auto flex gap-3 pb-4 no-scrollbar">
+                    {filteredLessons.map(lesson => {
+                      const stat = lessonStats[lesson.id];
+                      return (
+                        <div key={lesson.id} className="min-w-[180px]">
+                          <DraggableAssetItem 
+                            id={`lesson:${lesson.id}`} 
+                            type="lesson" 
+                            name={lesson.name} 
+                            badge={stat ? `${stat.assigned}/${stat.required} JP` : undefined}
+                            isFulfilled={stat ? stat.remaining <= 0 : false}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              <button onClick={() => setIsCloneModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
-                <X size={20} />
-              </button>
             </div>
+          </div>
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Pilih Tahun Ajaran Asal</label>
-                <select
-                  value={sourceYearId}
-                  onChange={(e) => setSourceYearId(e.target.value)}
-                  className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none appearance-none"
-                >
-                  <option value="">-- Pilih Periode Asal --</option>
-                  {academicYears.filter(y => y.id !== currentYearId).map(y => (
-                    <option key={y.id} value={y.id}>{y.name}</option>
-                  ))}
-                </select>
+          <DragOverlay dropAnimation={null}>
+            {activeItem ? (
+              <div className="p-4 bg-white rounded-2xl shadow-2xl border-2 border-primary ring-8 ring-primary/5 min-w-[180px] rotate-3 scale-110 flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${activeItem.type === 'guru' ? 'bg-blue-50 text-blue-500' : 'bg-amber-50 text-amber-500'}`}>
+                  {activeItem.type === 'guru' ? <Users size={16} /> : <BookOpen size={16} />}
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{activeItem.type}</p>
+                  <p className="text-xs font-black text-slate-800">{activeItem.name}</p>
+                </div>
               </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
 
-              <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex gap-3">
-                <Info size={18} className="text-blue-500 shrink-0" />
-                <p className="text-[11px] font-medium text-blue-600 leading-relaxed">
-                  Jadwal akan di-copy berdasarkan <span className="font-black uppercase tracking-tighter">Nomor Periode (Jam ke-n)</span>. Pastikan struktur Jam Pelajaran di periode tujuan sudah sama dengan periode asal.
-                </p>
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                <Button variant="ghost" className="flex-1 rounded-2xl" onClick={() => setIsCloneModalOpen(false)}>Batal</Button>
-                <Button 
-                  className="flex-1 rounded-2xl shadow-lg shadow-primary/20" 
-                  disabled={!sourceYearId || isCloning}
-                  onClick={() => {
-                    cloneSchedule({ fromYearId: sourceYearId, toYearId: currentYearId! }, {
-                      onSuccess: (res) => {
-                        useNotificationStore.getState().showNotification(res.message, 'success');
-                        setIsCloneModalOpen(false);
-                      },
-                      onError: (err: any) => {
-                        useNotificationStore.getState().showNotification(err.response?.data?.message || 'Gagal copy jadwal', 'error');
-                      }
-                    });
-                  }}
-                >
-                  {isCloning ? <Loader2 className="animate-spin mr-2" size={18} /> : <ChevronRight className="mr-2" size={18} />}
-                  Mulai Copy
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
+        {isModalOpen && (
+          <ScheduleFormModal 
+            initialValues={modalData}
+            gurus={gurus}
+            lessons={lessons}
+            isLoading={upsertMutation.isPending}
+            onClose={() => setIsModalOpen(false)}
+            onSubmit={(values) => {
+              if (lessonStats[values.lessonId]) {
+                const stat = lessonStats[values.lessonId];
+                const isChangingToSame = schedules.find(s => s.classId === values.classId && s.timeSlotId === values.timeSlotId && s.day === values.day)?.lessonId === values.lessonId;
+                if (!isChangingToSame && stat.remaining <= 0) {
+                  if (!window.confirm(`Kuota Mapel sudah terpenuhi. Tetap simpan?`)) return;
+                }
+              }
+              upsertMutation.mutate(values, {
+                onSuccess: () => {
+                  showNotification('Jadwal disimpan', 'success');
+                  setIsModalOpen(false);
+                },
+                onError: (err: any) => showNotification(err.response?.data?.message || 'Gagal', 'error')
+              });
+            }}
+          />
+        )}
+      </main>
     </div>
   );
 };

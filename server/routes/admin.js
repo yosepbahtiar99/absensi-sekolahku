@@ -8,6 +8,7 @@ const {
   getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
   getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
   getCurriculums, createCurriculum, updateCurriculum, deleteCurriculum,
+  getGradeLevels, createGradeLevel, updateGradeLevel, deleteGradeLevel,
   getSchedules, createOrUpdateSchedule, deleteSchedule, cloneSchedule, exportSchedule,
   exportReport
 } = require('../controllers/adminController');
@@ -57,6 +58,12 @@ router.get('/curriculums', getCurriculums);
 router.post('/curriculums', createCurriculum);
 router.put('/curriculums/:id', updateCurriculum);
 router.delete('/curriculums/:id', deleteCurriculum);
+
+// Tingkat Kelas
+router.get('/grade-levels', getGradeLevels);
+router.post('/grade-levels', createGradeLevel);
+router.put('/grade-levels/:id', updateGradeLevel);
+router.delete('/grade-levels/:id', deleteGradeLevel);
 
 // Jadwal
 router.get('/schedules', getSchedules);

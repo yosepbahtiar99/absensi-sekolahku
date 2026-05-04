@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Trash2, BookOpen, GraduationCap, Info, Loader2 } from 'lucide-react';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import AdminHeader from '../../../admin/components/AdminHeader';
@@ -7,18 +7,27 @@ import { Card } from '../../../../shared/components/Card';
 import { useAcademicYearStore } from '../../../../shared/store/academicYearStore';
 import { useCurriculums, useCreateCurriculum, useDeleteCurriculum } from '../hooks/useCurriculumData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
+import { useGradeLevels } from '../../grade-level/hooks/useGradeLevelData';
 import { useNotificationStore } from '../../../../shared/store/notificationStore';
 
 const CurriculumPage = () => {
   const { selectedYearId } = useAcademicYearStore();
   const { showNotification } = useNotificationStore();
-  const [selectedGrade, setSelectedGrade] = useState('7');
+  const [selectedGradeId, setSelectedGradeId] = useState<string>('');
   const [newLessonId, setNewLessonId] = useState('');
   const [requiredHours, setRequiredHours] = useState(2);
 
+  const { data: grades = [] } = useGradeLevels();
+
+  useEffect(() => {
+    if (grades.length > 0 && !selectedGradeId) {
+      setSelectedGradeId(grades[0].id);
+    }
+  }, [grades]);
+
   const { data: curriculums = [], isLoading } = useCurriculums({ 
     academicYearId: selectedYearId || undefined,
-    gradeLevel: selectedGrade
+    gradeLevelId: selectedGradeId
   });
 
   const { data: lessonRes } = useLessons({ limit: 100 });
@@ -28,11 +37,11 @@ const CurriculumPage = () => {
   const deleteMutation = useDeleteCurriculum();
 
   const handleAdd = () => {
-    if (!selectedYearId || !newLessonId) return;
+    if (!selectedYearId || !newLessonId || !selectedGradeId) return;
     
     createMutation.mutate({
       academicYearId: selectedYearId,
-      gradeLevel: selectedGrade,
+      gradeLevelId: selectedGradeId,
       lessonId: newLessonId,
       requiredHours
     }, {
@@ -54,8 +63,6 @@ const CurriculumPage = () => {
     }
   };
 
-  const grades = ['7', '8', '9', '10', '11', '12'];
-
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <AdminSidebar />
@@ -72,18 +79,18 @@ const CurriculumPage = () => {
             <div className="w-full md:w-80 space-y-6">
               <section>
                 <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-1">Pilih Tingkat</h5>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {grades.map(g => (
                     <button
-                      key={g}
-                      onClick={() => setSelectedGrade(g)}
+                      key={g.id}
+                      onClick={() => setSelectedGradeId(g.id)}
                       className={`py-3 rounded-2xl text-xs font-black transition-all ${
-                        selectedGrade === g 
+                        selectedGradeId === g.id 
                           ? 'bg-primary text-white shadow-lg shadow-primary/20' 
                           : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'
                       }`}
                     >
-                      {g}
+                      {g.name}
                     </button>
                   ))}
                 </div>
@@ -117,7 +124,7 @@ const CurriculumPage = () => {
                   <Button 
                     className="w-full rounded-xl py-6" 
                     onClick={handleAdd}
-                    disabled={!newLessonId || createMutation.isPending}
+                    disabled={!newLessonId || createMutation.isPending || !selectedGradeId}
                   >
                     {createMutation.isPending ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} className="mr-2" />}
                     Tambahkan
@@ -143,7 +150,7 @@ const CurriculumPage = () => {
                   <div>
                     <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                       <GraduationCap size={18} className="text-primary" />
-                      Kurikulum Tingkat {selectedGrade}
+                      Kurikulum {grades.find(g => g.id === selectedGradeId)?.name || '...'}
                     </h4>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Daftar mapel wajib dan target alokasi jam.</p>
                   </div>

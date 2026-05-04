@@ -1,10 +1,11 @@
 export interface IKelas {
   id: string;
   name: string;
-  gradeLevel?: string;
+  gradeLevelId?: string;
+  GradeLevel?: { id: string; name: string };
 }
 
 export interface IKelasPayload {
   name: string;
-  gradeLevel: string;
+  gradeLevelId: string;
 }

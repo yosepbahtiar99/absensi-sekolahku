@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { curriculumService } from '../services/curriculum.service';
 import type { ICurriculumPayload } from '../interfaces/curriculum.interface';
 
-export const useCurriculums = (params?: { academicYearId?: string; gradeLevel?: string }) => {
+export const useCurriculums = (params?: { academicYearId?: string; gradeLevelId?: string }) => {
   return useQuery({
     queryKey: ['curriculums', params],
     queryFn: () => curriculumService.getAll(params),
