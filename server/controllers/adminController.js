@@ -5,6 +5,9 @@ const ExcelJS = require('exceljs');
 
 const getDashboardSummary = async (req, res) => {
   try {
+    const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
+    const yearWhere = activeYear ? { academicYearId: activeYear.id } : {};
+
     const totalGuru = await User.count({ where: { role: 'guru' } });
     const totalKelas = await Class.count();
     const totalPelajaran = await Lesson.count();
@@ -12,6 +15,7 @@ const getDashboardSummary = async (req, res) => {
     const today = new Date().setHours(0,0,0,0);
     const totalHadir = await Activity.count({
       where: {
+        ...yearWhere,
         timestamp: { [Op.gte]: today },
         status: 'masuk'
       }
@@ -19,6 +23,7 @@ const getDashboardSummary = async (req, res) => {
     
     const totalTelat = await Activity.count({
       where: {
+        ...yearWhere,
         timestamp: { [Op.gte]: today },
         status: 'telat'
       }
@@ -28,6 +33,7 @@ const getDashboardSummary = async (req, res) => {
       totalGuru,
       totalKelas,
       totalPelajaran,
+      activeYear: activeYear?.name,
       todayStats: {
         hadir: totalHadir,
         telat: totalTelat
@@ -44,11 +50,12 @@ const getAllActivities = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-    const { search, teacherId, classId, lessonId, startDate, endDate, status, approvalStatus } = req.query;
+    const { search, teacherId, classId, lessonId, startDate, endDate, status, academicYearId } = req.query;
 
     const where = {};
     if (teacherId) where.userId = teacherId;
     if (status) where.status = status;
+    if (academicYearId) where.academicYearId = academicYearId;
     
     if (startDate || endDate) {
       where.timestamp = {};
@@ -373,11 +380,12 @@ const deleteSchedule = async (req, res) => {
 
 const exportReport = async (req, res) => {
   try {
-    const { teacherId, lessonId, classId, startDate, endDate, status } = req.query;
+    const { teacherId, lessonId, classId, startDate, endDate, status, academicYearId } = req.query;
 
     const where = {};
     if (teacherId) where.userId = teacherId;
     if (status) where.status = status;
+    if (academicYearId) where.academicYearId = academicYearId;
     
     if (startDate || endDate) {
       where.timestamp = {};
@@ -436,9 +444,9 @@ const exportReport = async (req, res) => {
         no: index + 1,
         date: new Date(act.timestamp).toLocaleDateString('id-ID'),
         time: new Date(act.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        teacher: act.User.name,
-        lesson: act.Schedule.Lesson.name,
-        class: act.Schedule.Class.name,
+        teacher: act.snapshotTeacherName || act.User?.name || 'Unknown',
+        lesson: act.snapshotLessonName || act.Schedule?.Lesson?.name || 'Custom/Lembur',
+        class: act.snapshotClassName || act.Schedule?.Class?.name || '-',
         status: act.status.toUpperCase(),
       });
     });
@@ -513,6 +521,7 @@ const approveRequest = async (req, res) => {
 
     if (status === 'approved') {
       const payload = request.data;
+      const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
 
       if (request.type === 'koreksi') {
         // Update activity timestamp
@@ -524,29 +533,37 @@ const approveRequest = async (req, res) => {
         // Create new activity for custom lesson
         await Activity.create({
           userId: request.userId,
+          academicYearId: activeYear?.id,
           type: 'pembelajaran custom',
           isCustom: true,
           photoSelfie: payload.photoSelfie,
           photoClass: payload.photoClass,
           timestamp: new Date(),
-          status: 'masuk' // Custom usually means they attended
+          status: 'masuk', // Custom biasanya dianggap hadir
+          snapshotLessonName: payload.subject || 'Custom Lesson',
+          snapshotClassName: payload.class || 'Custom Class',
+          snapshotTeacherName: (await User.findByPk(request.userId))?.name
         });
       } else if (request.type === 'perizinan') {
         // Create activity as 'tidak_hadir'
         await Activity.create({
           userId: request.userId,
+          academicYearId: activeYear?.id,
           type: 'pembelajaran',
           status: 'tidak_hadir',
           timestamp: new Date(),
-          description: `Izin: ${payload.absenceType}. Catatan: ${payload.reason}`
+          description: `Izin: ${payload.absenceType}. Catatan: ${payload.reason}`,
+          snapshotTeacherName: (await User.findByPk(request.userId))?.name
         });
       } else if (request.type === 'lembur') {
         // Create activity as 'lembur'
         await Activity.create({
           userId: request.userId,
+          academicYearId: activeYear?.id,
           type: 'lembur',
           timestamp: new Date(),
-          description: payload.reason
+          description: payload.reason,
+          snapshotTeacherName: (await User.findByPk(request.userId))?.name
         });
       }
     }

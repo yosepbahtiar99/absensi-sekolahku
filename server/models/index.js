@@ -40,6 +40,10 @@ const Activity = sequelize.define('Activity', {
   status: { type: DataTypes.ENUM('masuk', 'telat', 'tidak_hadir') },
   isCustom: { type: DataTypes.BOOLEAN, defaultValue: false },
   description: { type: DataTypes.TEXT },
+  // Snapshot Data for History Integrity
+  snapshotClassName: { type: DataTypes.STRING },
+  snapshotLessonName: { type: DataTypes.STRING },
+  snapshotTeacherName: { type: DataTypes.STRING },
 });
 
 const ApprovalRequest = sequelize.define('ApprovalRequest', {
@@ -84,6 +88,34 @@ const Lesson = sequelize.define('Lesson', {
   hours: { type: DataTypes.INTEGER, defaultValue: 0 },
 });
 
+const AcademicYear = sequelize.define('AcademicYear', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
+  name: { type: DataTypes.STRING, allowNull: false }, // e.g., "2023/2024 Ganjil"
+  startDate: { type: DataTypes.DATEONLY },
+  endDate: { type: DataTypes.DATEONLY },
+  isActive: { type: DataTypes.BOOLEAN, defaultValue: false },
+});
+
+const TimeSlot = sequelize.define('TimeSlot', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
+  day: { 
+    type: DataTypes.ENUM('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'), 
+    allowNull: false 
+  },
+  label: { type: DataTypes.STRING, allowNull: false }, // e.g., "Jam ke-1"
+  startTime: { type: DataTypes.TIME, allowNull: false },
+  endTime: { type: DataTypes.TIME, allowNull: false },
+  periodNumber: { type: DataTypes.INTEGER },
+});
+
 const Schedule = sequelize.define('Schedule', {
   id: {
     type: DataTypes.UUID,
@@ -91,8 +123,9 @@ const Schedule = sequelize.define('Schedule', {
     primaryKey: true
   },
   day: { type: DataTypes.ENUM('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'), allowNull: false },
-  startTime: { type: DataTypes.TIME, allowNull: false },
-  endTime: { type: DataTypes.TIME, allowNull: false },
+  // deprecated: we'll use TimeSlot instead, but keeping for compatibility during migration
+  startTime: { type: DataTypes.TIME, allowNull: true },
+  endTime: { type: DataTypes.TIME, allowNull: true },
 });
 
 const Log = sequelize.define('Log', {
@@ -131,4 +164,28 @@ ApprovalRequest.belongsTo(User, { foreignKey: 'userId' });
 ApprovalRequest.belongsTo(Activity, { foreignKey: 'activityId' });
 Activity.hasMany(ApprovalRequest, { foreignKey: 'activityId' });
 
-module.exports = { sequelize, User, Activity, Log, Class, Lesson, Schedule, ApprovalRequest };
+// Academic Year & TimeSlot Relationships
+AcademicYear.hasMany(TimeSlot, { foreignKey: 'academicYearId' });
+TimeSlot.belongsTo(AcademicYear, { foreignKey: 'academicYearId' });
+
+AcademicYear.hasMany(Schedule, { foreignKey: 'academicYearId' });
+Schedule.belongsTo(AcademicYear, { foreignKey: 'academicYearId' });
+
+AcademicYear.hasMany(Activity, { foreignKey: 'academicYearId' });
+Activity.belongsTo(AcademicYear, { foreignKey: 'academicYearId' });
+
+TimeSlot.hasMany(Schedule, { foreignKey: 'timeSlotId' });
+Schedule.belongsTo(TimeSlot, { foreignKey: 'timeSlotId' });
+
+module.exports = { 
+  sequelize, 
+  User, 
+  Activity, 
+  Log, 
+  Class, 
+  Lesson, 
+  Schedule, 
+  ApprovalRequest,
+  AcademicYear,
+  TimeSlot
+};

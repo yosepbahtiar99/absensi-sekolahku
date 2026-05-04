@@ -53,8 +53,16 @@ const submitAttendance = async (req, res) => {
     const { scheduleId, photoSelfie, photoClass, type, isCustom } = req.body;
     const userId = req.user.id;
 
-    // Ambil info jadwal buat cek telat
-    const schedule = await Schedule.findByPk(scheduleId);
+    // Ambil info jadwal buat cek telat & snapshot
+    const schedule = await Schedule.findByPk(scheduleId, {
+      include: [
+        { model: Class },
+        { model: Lesson },
+        { model: User, as: 'teacher' },
+        { model: TimeSlot }
+      ]
+    });
+
     if (!schedule) return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
 
     // Cek apakah sudah absen hari ini
@@ -73,27 +81,35 @@ const submitAttendance = async (req, res) => {
       return res.status(400).json({ message: 'Anda sudah melakukan absensi untuk jadwal ini hari ini' });
     }
 
+    // Ambil jam dari TimeSlot (Prioritas) atau fallback ke manual Schedule (Backward Compatibility)
+    const effectiveStartTime = schedule.TimeSlot ? schedule.TimeSlot.startTime : schedule.startTime;
+    const effectiveEndTime = schedule.TimeSlot ? schedule.TimeSlot.endTime : schedule.endTime;
+
+    if (!effectiveStartTime || !effectiveEndTime) {
+      return res.status(400).json({ message: 'Jam pelaksanaan tidak terdefinisi' });
+    }
+
     // Logika Telat (Toleransi 15 Menit)
     const now = new Date();
-    const [sH, sM] = schedule.startTime.split(':').map(Number);
-    const [eH, eM] = schedule.endTime.split(':').map(Number);
+    const [sH, sM] = effectiveStartTime.split(':').map(Number);
+    const [eH, eM] = effectiveEndTime.split(':').map(Number);
     
-    const startTime = new Date();
-    startTime.setHours(sH, sM, 0);
+    const startTimeDate = new Date();
+    startTimeDate.setHours(sH, sM, 0);
     
-    const endTime = new Date();
-    endTime.setHours(eH, eM, 0);
+    const endTimeDate = new Date();
+    endTimeDate.setHours(eH, eM, 0);
 
     // Validasi apakah jadwal sudah mulai atau sudah selesai
-    if (now < startTime) {
+    if (now < startTimeDate) {
       return res.status(400).json({ message: 'Jadwal belum dimulai bro!' });
     }
 
-    if (now > endTime) {
+    if (now > endTimeDate) {
       return res.status(400).json({ message: 'Jadwal sudah berakhir bro!' });
     }
 
-    const diffInMinutes = (now.getTime() - startTime.getTime()) / (1000 * 60);
+    const diffInMinutes = (now.getTime() - startTimeDate.getTime()) / (1000 * 60);
     
     let status = 'masuk';
     if (diffInMinutes > 15) {
@@ -103,12 +119,17 @@ const submitAttendance = async (req, res) => {
     const activity = await Activity.create({
       scheduleId,
       userId,
+      academicYearId: schedule.academicYearId,
       photoSelfie,
       photoClass,
       type: type || 'pembelajaran',
       isCustom: isCustom || false,
       status,
-      timestamp: now
+      timestamp: now,
+      // Snapshot Data
+      snapshotClassName: schedule.Class?.name || 'Unknown Class',
+      snapshotLessonName: schedule.Lesson?.name || 'Unknown Lesson',
+      snapshotTeacherName: schedule.teacher?.name || 'Unknown Teacher',
     });
 
     res.json({ message: 'Absensi berhasil disimpan', activity });

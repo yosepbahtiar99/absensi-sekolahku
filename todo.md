@@ -9,6 +9,38 @@
     - [x] Ensure strong typing (no `any`)
     - [x] Use TanStack Query for all API interactions (Complete!)
 
+## Future Roadmap: Super App Evolution 🚀
+
+### Phase 1: Structural Integrity (Academic Year & Time Slots)
+- [x] Implement `AcademicYear` Model (id, name, isActive, startDate, endDate)
+- [x] Implement `TimeSlot` (Jam Pelajaran) Model
+    - [x] Link to `AcademicYear`
+    - [x] Define `day`, `label`, `startTime`, `endTime`, `periodNumber`
+- [x] Refactor `Schedule` Model:
+    - [x] Add `academicYearId`
+    - [x] Add `timeSlotId`
+    - [x] Remove/Deprecate manual `startTime` & `endTime`
+- [x] Refactor `Activity` Model:
+    - [x] Add `academicYearId` to ensure historical filtering
+    - [x] Implement Data Snapshotting (Store `className`, `lessonName`, `teacherName` at creation time)
+
+### Phase 2: Master Data Management UI
+- [ ] Create UI for Managing Academic Years (Add/Edit/Set Active)
+- [ ] Create UI for Managing Time Slots (Template Jam Pelajaran per Hari)
+    - [ ] Support different slot structures for different days (e.g., Monday Ceremony, Friday Short Day)
+
+### Phase 3: Advanced Scheduling (Matrix Grid)
+- [ ] Revamp Schedule Page to "Matrix Grid" Visualization
+    - [ ] X-Axis: Time Slots (Jam 1, Jam 2, dst)
+    - [ ] Y-Axis: Classes (X-A, X-B, dst)
+    - [ ] Interactivity: Drag & Drop teachers/lessons into the grid
+- [ ] Conflict Detection: Visual indicator if a teacher is already assigned in another class at the same time slot
+- [ ] Cloning Feature: "Import Schedule from Previous Period" (Deep copy of schedules to new academic year)
+
+### Phase 4: History & Analytics
+- [ ] Global Period Selector in Admin Dashboard (View data for current/past academic years)
+- [ ] Reporting Consistency: Ensure reports pull from the snapshotted data in `Activity`
+
 ## UI/UX Improvements
 - [x] Revamp Guru Home (Mobile-first, Premium design)
 - [x] Revamp Login Page (Glassmorphism, Modern UI)
@@ -17,7 +49,7 @@
 - [x] Revamp Admin Sidebar (Modern Dark Theme)
 - [x] Revamp Admin Activities (Clean Data Table)
 
-## Features
+## Features Completed
 - [x] Master Data Management (Guru, Kelas, Pelajaran, Schedule)
     - [x] Tambahkan jumlah jam pelajaran di Master Pelajaran (kuota/alokasi jam per guru)
 - [x] Schedule Management Improvements
