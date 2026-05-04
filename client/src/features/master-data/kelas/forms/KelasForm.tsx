@@ -3,6 +3,7 @@ import { Formik, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { Button } from '../../../../shared/components/Button';
 import { Input } from '../../../../shared/components/Input';
+import { SelectField } from '../../../../shared/components/SelectField';
 import type { IKelas, IKelasPayload } from '../interfaces/kelas.interface';
 import { useGradeLevels } from '../../grade-level/hooks/useGradeLevelData';
 
@@ -31,7 +32,7 @@ const KelasForm: React.FC<KelasFormProps> = ({ initialValues, onSubmit, isLoadin
       validationSchema={kelasSchema}
       onSubmit={(values) => onSubmit(values as any)}
     >
-      {({ errors, touched, values, handleChange }) => (
+      {({ errors, touched, values, handleChange, setFieldValue }) => (
         <Form className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 md:col-span-1">
@@ -47,21 +48,14 @@ const KelasForm: React.FC<KelasFormProps> = ({ initialValues, onSubmit, isLoadin
             </div>
 
             <div className="col-span-2 md:col-span-1">
-              <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Tingkat</label>
-              <select
-                name="gradeLevelId"
+              <SelectField
+                label="Tingkat"
+                placeholder="-- Pilih Tingkat --"
                 value={values.gradeLevelId}
-                onChange={handleChange}
-                className={`w-full p-3 bg-white border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none ${
-                  errors.gradeLevelId && touched.gradeLevelId ? "border-red-500" : "border-slate-200"
-                }`}
-              >
-                <option value="">-- Pilih --</option>
-                {grades.map(g => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
-              </select>
-              <ErrorMessage name="gradeLevelId" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
+                options={grades.map(g => ({ value: g.id, label: g.name }))}
+                onChange={(val) => setFieldValue('gradeLevelId', val)}
+                error={touched.gradeLevelId ? (errors.gradeLevelId as string) : undefined}
+              />
             </div>
           </div>
 

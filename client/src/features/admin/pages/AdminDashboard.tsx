@@ -1,11 +1,13 @@
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useAdminSummary } from '../hooks/useAdminData';
-import { Users, GraduationCap, BookOpen, Clock, AlertTriangle, CheckCircle, TrendingUp, Calendar, ArrowRight, Loader2, LayoutDashboard } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, Clock, AlertTriangle, CheckCircle, Calendar, ArrowRight, Loader2, LayoutDashboard } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminHeader from '../components/AdminHeader';
 import { useAcademicYearStore } from '../../../shared/store/academicYearStore';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { selectedYearId } = useAcademicYearStore();
   const { data: summary, isLoading } = useAdminSummary(selectedYearId || undefined);
@@ -44,10 +46,6 @@ const AdminDashboard = () => {
                     <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl group-hover:scale-110 transition-transform`}>
                       <stat.icon size={28} />
                     </div>
-                    <div className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                      <TrendingUp size={12} />
-                      +12%
-                    </div>
                   </div>
                   <div>
                     <p className="text-sm text-slate-400 font-bold uppercase tracking-[0.1em] mb-1">{stat.label}</p>
@@ -65,7 +63,7 @@ const AdminDashboard = () => {
                     <Clock size={24} className="text-primary" />
                     Kehadiran Guru Hari Ini
                   </h3>
-                  <button className="text-primary font-bold text-sm hover:underline">Lihat Detail</button>
+                  <button onClick={() => navigate('/admin/activities')} className="text-primary font-bold text-sm hover:underline">Lihat Detail</button>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -106,7 +104,10 @@ const AdminDashboard = () => {
                     Gunakan fitur Drag & Drop untuk mengatur pembagian guru dan mata pelajaran ke setiap kelas secara efisien.
                   </p>
                 </div>
-                <button className="relative z-10 bg-white text-primary px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-cyan-50 transition-all active:scale-95 shadow-xl group/btn">
+                <button 
+                  onClick={() => navigate('/admin/schedule')}
+                  className="relative z-10 bg-white text-primary px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-cyan-50 transition-all active:scale-95 shadow-xl group/btn"
+                >
                   <span>Atur Jadwal</span>
                   <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
                 </button>

@@ -555,9 +555,17 @@ const createOrUpdateSchedule = async (req, res) => {
     }
 
     const data = { day, academicYearId, timeSlotId, teacherId, classId, lessonId };
+    let finalId = id;
 
-    if (id) {
-      await Schedule.update(data, { where: { id } });
+    if (!finalId) {
+      const existingSlot = await Schedule.findOne({
+        where: { day, academicYearId, timeSlotId, classId }
+      });
+      if (existingSlot) finalId = existingSlot.id;
+    }
+
+    if (finalId) {
+      await Schedule.update(data, { where: { id: finalId } });
       res.json({ message: 'Jadwal berhasil diupdate' });
     } else {
       const newSchedule = await Schedule.create(data);

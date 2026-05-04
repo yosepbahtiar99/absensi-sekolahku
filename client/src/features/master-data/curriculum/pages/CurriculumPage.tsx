@@ -4,6 +4,7 @@ import AdminSidebar from '../../../admin/components/AdminSidebar';
 import AdminHeader from '../../../admin/components/AdminHeader';
 import { Button } from '../../../../shared/components/Button';
 import { Card } from '../../../../shared/components/Card';
+import { SelectField } from '../../../../shared/components/SelectField';
 import { useAcademicYearStore } from '../../../../shared/store/academicYearStore';
 import { useCurriculums, useCreateCurriculum, useDeleteCurriculum } from '../hooks/useCurriculumData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
@@ -99,26 +100,20 @@ const CurriculumPage = () => {
               <Card className="p-6 border-none shadow-[0_10px_40px_rgba(0,0,0,0.03)] rounded-[2rem]">
                 <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Tambah Standar Mapel</h5>
                 <div className="space-y-5">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-500 px-1">Mata Pelajaran</label>
-                    <select
-                      value={newLessonId}
-                      onChange={(e) => setNewLessonId(e.target.value)}
-                      className="w-full p-3 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none"
-                    >
-                      <option value="">-- Pilih Mapel --</option>
-                      {lessons.map(l => (
-                        <option key={l.id} value={l.id}>{l.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <SelectField
+                    label="Mata Pelajaran"
+                    placeholder="-- Pilih Mapel --"
+                    value={newLessonId}
+                    options={lessons.map(l => ({ value: l.id, label: l.name }))}
+                    onChange={(val) => setNewLessonId(val)}
+                  />
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-500 px-1">Target Jam (JP)</label>
                     <input
                       type="number"
                       value={requiredHours}
                       onChange={(e) => setRequiredHours(parseInt(e.target.value))}
-                      className="w-full p-3 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                      className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     />
                   </div>
                   <Button 

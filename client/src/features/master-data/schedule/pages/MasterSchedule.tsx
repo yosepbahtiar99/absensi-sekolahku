@@ -27,16 +27,19 @@ import {
   Search,
 } from 'lucide-react';
 import { useSchedules, useUpsertSchedule, useDeleteSchedule, useCloneSchedule } from '../hooks/useScheduleData';
+import { scheduleService } from '../services/schedule.service';
 import { useGurus } from '../../guru/hooks/useGuruData';
 import { useClasses } from '../../kelas/hooks/useKelasData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
 import { useTimeSlots } from '../../time-slot/hooks/useTimeSlotData';
 import { useCurriculums } from '../../curriculum/hooks/useCurriculumData';
+import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
 import { useAcademicYearStore } from '../../../../shared/store/academicYearStore';
 import AdminHeader from '../../../admin/components/AdminHeader';
 import DraggableAssetItem from '../components/DraggableAssetItem';
 import DroppableGridCell from '../components/DroppableGridCell';
 import ScheduleFormModal from '../components/ScheduleFormModal';
+import CloneScheduleModal from '../components/CloneScheduleModal';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { useNotificationStore } from '../../../../shared/store/notificationStore';
 import { Button } from '../../../../shared/components/Button';
@@ -48,8 +51,8 @@ const MasterSchedule = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<any>(null);
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
 
-  // Search States
   const [guruSearch, setGuruSearch] = useState('');
   const [lessonSearch, setLessonSearch] = useState('');
 
@@ -63,6 +66,7 @@ const MasterSchedule = () => {
   const { data: lessonRes } = useLessons({ limit: 100 });
   const { data: timeSlots = [] } = useTimeSlots({ academicYearId: currentYearId || undefined });
   const { data: curriculumRes = [] } = useCurriculums({ academicYearId: currentYearId || undefined });
+  const { data: academicYears = [] } = useAcademicYears();
 
   const filteredTimeSlots = useMemo(() => {
     return timeSlots.filter(ts => ts.day.toLowerCase() === activeDay.toLowerCase())
@@ -134,6 +138,7 @@ const MasterSchedule = () => {
     const existing = schedules?.find(s => s.classId === classId && s.timeSlotId === timeSlotId && s.day === activeDay);
 
     const payload = {
+      id: existing?.id,
       academicYearId: currentYearId!,
       classId,
       timeSlotId,
@@ -164,6 +169,7 @@ const MasterSchedule = () => {
   const handleCellClick = (classId: string, timeSlotId: string) => {
     const existing = schedules?.find(s => s.classId === classId && s.timeSlotId === timeSlotId && s.day === activeDay);
     setModalData({
+      id: existing?.id,
       academicYearId: currentYearId!,
       classId,
       timeSlotId,
@@ -175,7 +181,6 @@ const MasterSchedule = () => {
     setSelectedClassId(classId);
   };
 
-  // Filtered Assets for Search
   const filteredGurus = useMemo(() => 
     gurus.filter(g => g.name.toLowerCase().includes(guruSearch.toLowerCase())), 
   [gurus, guruSearch]);
@@ -194,11 +199,19 @@ const MasterSchedule = () => {
           icon={<Calendar className="text-primary" size={28} />}
           actions={
             <div className="flex gap-3">
-              <Button variant="outline" className="rounded-xl px-6" onClick={() => window.confirm('Clone jadwal?') && cloneSchedule({ fromYearId: '...', toYearId: currentYearId! })} disabled={isCloning}>
+              <Button 
+                variant="outline" 
+                className="rounded-xl px-6" 
+                onClick={() => setIsCloneModalOpen(true)} 
+                disabled={isCloning}
+              >
                 {isCloning ? <Loader2 className="animate-spin mr-2" /> : <Copy size={18} className="mr-2" />}
                 Clone
               </Button>
-              <Button className="rounded-xl px-6 shadow-lg shadow-primary/20">
+              <Button 
+                onClick={() => currentYearId && scheduleService.exportExcel(currentYearId)}
+                className="rounded-xl px-6 shadow-lg shadow-primary/20"
+              >
                 <Download size={18} className="mr-2" />
                 Export
               </Button>
@@ -333,7 +346,6 @@ const MasterSchedule = () => {
 
             <div className={`p-6 h-full flex flex-col overflow-hidden ${isAssetsOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <div className="flex gap-8 h-full">
-                {/* Teachers Column */}
                 <div className="flex-1 flex flex-col min-w-0">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -360,7 +372,6 @@ const MasterSchedule = () => {
                   </div>
                 </div>
 
-                {/* Lessons Column */}
                 <div className="flex-1 flex flex-col min-w-0 border-l border-slate-100 pl-8">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -435,6 +446,24 @@ const MasterSchedule = () => {
                   setIsModalOpen(false);
                 },
                 onError: (err: any) => showNotification(err.response?.data?.message || 'Gagal', 'error')
+              });
+            }}
+          />
+        )}
+
+        {isCloneModalOpen && (
+          <CloneScheduleModal 
+            academicYears={academicYears}
+            currentYearId={currentYearId!}
+            isLoading={isCloning}
+            onClose={() => setIsCloneModalOpen(false)}
+            onClone={(fromId) => {
+              cloneSchedule({ fromYearId: fromId, toYearId: currentYearId! }, {
+                onSuccess: () => {
+                  showNotification('Jadwal berhasil di-clone', 'success');
+                  setIsCloneModalOpen(false);
+                },
+                onError: (err: any) => showNotification(err.response?.data?.message || 'Gagal clone', 'error')
               });
             }}
           />

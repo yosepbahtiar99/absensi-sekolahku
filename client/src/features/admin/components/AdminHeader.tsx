@@ -2,6 +2,7 @@ import React from 'react';
 import { CalendarDays, Bell, User as UserIcon } from 'lucide-react';
 import { useAcademicYears } from '../../master-data/academic-year/hooks/useAcademicYearData';
 import { useAcademicYearStore } from '../../../shared/store/academicYearStore';
+import { SelectField } from '../../../shared/components/SelectField';
 
 interface AdminHeaderProps {
   title: string;
@@ -37,21 +38,19 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ title, subtitle, icon, action
 
       <div className="flex items-center gap-6">
         {actions && <div className="flex gap-3 pr-6 border-r border-slate-100">{actions}</div>}
-        {/* Global Academic Year Selector */}
-        <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm transition-all hover:border-primary/30">
-          <CalendarDays size={18} className="text-primary" />
-          <div className="flex flex-col">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Periode Aktif</span>
-            <select 
-              value={selectedYearId || ''} 
-              onChange={(e) => setSelectedYearId(e.target.value)}
-              className="bg-transparent border-none text-xs font-black uppercase tracking-wider text-slate-800 outline-none p-0 h-auto cursor-pointer"
-            >
-              <option value="" disabled>Pilih Tahun Ajaran</option>
-              {academicYears.map(y => (
-                <option key={y.id} value={y.id}>{y.name} {y.isActive ? '(Aktif)' : ''}</option>
-              ))}
-            </select>
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/10 p-2.5 rounded-xl text-primary shrink-0">
+            <CalendarDays size={20} />
+          </div>
+          <div className="flex flex-col min-w-[160px]">
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5 ml-1">Periode Aktif</span>
+            <SelectField
+              variant="header"
+              value={selectedYearId || ''}
+              options={academicYears.map(y => ({ value: y.id, label: `${y.name}${y.isActive ? ' (Aktif)' : ''}` }))}
+              onChange={(val) => setSelectedYearId(val)}
+              placeholder="Pilih Tahun"
+            />
           </div>
         </div>
 

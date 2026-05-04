@@ -1,8 +1,9 @@
 import React from 'react';
-import { Formik, Form, ErrorMessage } from 'formik';
+import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { X, Loader2 } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
+import { SelectField } from '../../../../shared/components/SelectField';
 
 interface ScheduleFormModalProps {
   initialValues: {
@@ -29,8 +30,8 @@ const ScheduleFormModal: React.FC<ScheduleFormModalProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 duration-300 relative">
+        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 rounded-t-[2.5rem]">
           <div>
             <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Atur Jadwal</h3>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Tentukan Guru & Mata Pelajaran</p>
@@ -45,40 +46,26 @@ const ScheduleFormModal: React.FC<ScheduleFormModalProps> = ({
           validationSchema={scheduleSchema}
           onSubmit={onSubmit}
         >
-          {({ values, handleChange, setFieldValue }) => (
+          {({ values, setFieldValue, errors, touched }) => (
             <Form className="p-8 space-y-6">
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Guru Pengajar</label>
-                  <select
-                    name="teacherId"
-                    value={values.teacherId}
-                    onChange={handleChange}
-                    className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                  >
-                    <option value="">-- Pilih Guru --</option>
-                    {gurus.map(g => (
-                      <option key={g.id} value={g.id}>{g.name}</option>
-                    ))}
-                  </select>
-                  <ErrorMessage name="teacherId" component="p" className="text-red-500 text-[10px] font-bold italic px-1" />
-                </div>
+                <SelectField
+                  label="Guru Pengajar"
+                  placeholder="-- Pilih Guru --"
+                  value={values.teacherId}
+                  options={gurus.map(g => ({ value: g.id, label: g.name }))}
+                  onChange={(val) => setFieldValue('teacherId', val)}
+                  error={touched.teacherId ? (errors.teacherId as string) : undefined}
+                />
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Mata Pelajaran</label>
-                  <select
-                    name="lessonId"
-                    value={values.lessonId}
-                    onChange={handleChange}
-                    className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                  >
-                    <option value="">-- Pilih Mapel --</option>
-                    {lessons.map(l => (
-                      <option key={l.id} value={l.id}>{l.name}</option>
-                    ))}
-                  </select>
-                  <ErrorMessage name="lessonId" component="p" className="text-red-500 text-[10px] font-bold italic px-1" />
-                </div>
+                <SelectField
+                  label="Mata Pelajaran"
+                  placeholder="-- Pilih Mapel --"
+                  value={values.lessonId}
+                  options={lessons.map(l => ({ value: l.id, label: l.name }))}
+                  onChange={(val) => setFieldValue('lessonId', val)}
+                  error={touched.lessonId ? (errors.lessonId as string) : undefined}
+                />
               </div>
 
               <div className="flex gap-3 pt-4">

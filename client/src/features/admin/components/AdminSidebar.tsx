@@ -28,20 +28,6 @@ const AdminSidebar = () => {
   const location = useLocation();
   const [isMasterOpen, setIsMasterOpen] = useState(false);
 
-  // Auto expand Master Data if active
-  useEffect(() => {
-    const isMasterActive = [
-      '/admin/academic-years',
-      '/admin/guru',
-      '/admin/kelas',
-      '/admin/pelajaran',
-      '/admin/time-slots',
-      '/admin/curriculum'
-    ].some(path => location.pathname === path);
-    
-    if (isMasterActive) setIsMasterOpen(true);
-  }, [location.pathname]);
-
   const masterSubMenus = [
     { icon: CalendarDays, label: 'Master Tahun Ajaran', path: '/admin/academic-years' },
     { icon: Users, label: 'Master Guru', path: '/admin/guru' },
@@ -53,6 +39,11 @@ const AdminSidebar = () => {
   ];
 
   const isMasterActive = masterSubMenus.some(item => location.pathname === item.path);
+
+  // Auto expand Master Data if active
+  useEffect(() => {
+    if (isMasterActive) setIsMasterOpen(true);
+  }, [isMasterActive]);
 
   return (
     <div 
