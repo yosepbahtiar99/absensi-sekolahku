@@ -5,6 +5,8 @@ const {
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
   getLessons, createLesson, updateLesson, deleteLesson,
+  getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
+  getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
   getSchedules, createOrUpdateSchedule, deleteSchedule,
   exportReport
 } = require('../controllers/adminController');
@@ -36,6 +38,18 @@ router.get('/lessons', getLessons);
 router.post('/lessons', createLesson);
 router.put('/lessons/:id', updateLesson);
 router.delete('/lessons/:id', deleteLesson);
+
+// Tahun Ajaran
+router.get('/academic-years', getAcademicYears);
+router.post('/academic-years', createAcademicYear);
+router.put('/academic-years/:id', updateAcademicYear);
+router.delete('/academic-years/:id', deleteAcademicYear);
+
+// Slot Jam Pelajaran
+router.get('/time-slots', getTimeSlots);
+router.post('/time-slots', createTimeSlot);
+router.put('/time-slots/:id', updateTimeSlot);
+router.delete('/time-slots/:id', deleteTimeSlot);
 
 // Jadwal
 router.get('/schedules', getSchedules);

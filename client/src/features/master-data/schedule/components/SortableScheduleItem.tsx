@@ -36,7 +36,7 @@ const SortableScheduleItem: React.FC<SortableScheduleItemProps> = ({ schedule, o
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
           <div className="flex justify-between items-start mb-3">
             <div className="bg-primary/10 text-primary text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider">
-              {schedule.startTime.substring(0, 5)} — {schedule.endTime.substring(0, 5)}
+              {schedule.TimeSlot ? `${schedule.TimeSlot.startTime.substring(0, 5)} — ${schedule.TimeSlot.endTime.substring(0, 5)}` : `${schedule.startTime?.substring(0, 5)} — ${schedule.endTime?.substring(0, 5)}`}
             </div>
             <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <button 
@@ -63,7 +63,7 @@ const SortableScheduleItem: React.FC<SortableScheduleItemProps> = ({ schedule, o
               <div className="bg-slate-50 p-1.5 rounded-md group-hover:bg-primary/5 group-hover:text-primary transition-colors">
                 <User size={12} />
               </div>
-              <span className="truncate">{schedule.Teacher?.name}</span>
+              <span className="truncate">{schedule.teacher?.name}</span>
             </div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
               <div className="bg-slate-50 p-1.5 rounded-md group-hover:bg-primary/5 group-hover:text-primary transition-colors">

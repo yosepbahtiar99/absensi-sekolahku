@@ -305,16 +305,113 @@ const deleteLesson = async (req, res) => {
   }
 };
 
+// --- ACADEMIC YEAR CRUD ---
+const getAcademicYears = async (req, res) => {
+  try {
+    const years = await AcademicYear.findAll({ order: [['startDate', 'DESC']] });
+    res.json(years);
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal mengambil data tahun ajaran' });
+  }
+};
+
+const createAcademicYear = async (req, res) => {
+  try {
+    const { name, startDate, endDate, isActive } = req.body;
+    if (isActive) {
+      await AcademicYear.update({ isActive: false }, { where: {} });
+    }
+    const year = await AcademicYear.create({ name, startDate, endDate, isActive });
+    res.json(year);
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal tambah tahun ajaran' });
+  }
+};
+
+const updateAcademicYear = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, startDate, endDate, isActive } = req.body;
+    if (isActive) {
+      await AcademicYear.update({ isActive: false }, { where: { id: { [Op.ne]: id } } });
+    }
+    await AcademicYear.update({ name, startDate, endDate, isActive }, { where: { id } });
+    res.json({ message: 'Tahun ajaran berhasil diupdate' });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal update tahun ajaran' });
+  }
+};
+
+const deleteAcademicYear = async (req, res) => {
+  try {
+    await AcademicYear.destroy({ where: { id: req.params.id } });
+    res.json({ message: 'Tahun ajaran berhasil dihapus' });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal hapus tahun ajaran' });
+  }
+};
+
+// --- TIME SLOT CRUD ---
+const getTimeSlots = async (req, res) => {
+  try {
+    const { academicYearId, day } = req.query;
+    const where = {};
+    if (academicYearId) where.academicYearId = academicYearId;
+    if (day) where.day = day;
+
+    const slots = await TimeSlot.findAll({ 
+      where, 
+      order: [['day', 'ASC'], ['startTime', 'ASC']] 
+    });
+    res.json(slots);
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal mengambil data slot jam' });
+  }
+};
+
+const createTimeSlot = async (req, res) => {
+  try {
+    const slot = await TimeSlot.create(req.body);
+    res.json(slot);
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal tambah slot jam' });
+  }
+};
+
+const updateTimeSlot = async (req, res) => {
+  try {
+    await TimeSlot.update(req.body, { where: { id: req.params.id } });
+    res.json({ message: 'Slot jam berhasil diupdate' });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal update slot jam' });
+  }
+};
+
+const deleteTimeSlot = async (req, res) => {
+  try {
+    await TimeSlot.destroy({ where: { id: req.params.id } });
+    res.json({ message: 'Slot jam berhasil dihapus' });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal hapus slot jam' });
+  }
+};
+
 // --- SCHEDULE CRUD & LOGIC ---
 const getSchedules = async (req, res) => {
   try {
+    const { academicYearId } = req.query;
+    const where = {};
+    if (academicYearId) where.academicYearId = academicYearId;
+
     const schedules = await Schedule.findAll({
+      where,
       include: [
         { model: User, as: 'teacher', attributes: ['id', 'name'] },
         { model: Class, attributes: ['id', 'name'] },
-        { model: Lesson, attributes: ['id', 'name'] }
+        { model: Lesson, attributes: ['id', 'name'] },
+        { model: TimeSlot, attributes: ['label', 'startTime', 'endTime'] }
       ],
-      order: [['startTime', 'ASC']]
+      order: [['day', 'ASC']]
     });
     res.json(schedules);
   } catch (error) {
@@ -324,43 +421,39 @@ const getSchedules = async (req, res) => {
 
 const createOrUpdateSchedule = async (req, res) => {
   try {
-    const { id, day, startTime, endTime, teacherId, classId, lessonId } = req.body;
+    const { id, day, academicYearId, timeSlotId, teacherId, classId, lessonId } = req.body;
 
     // 1. Validasi Overlap Guru
     const teacherConflict = await Schedule.findOne({
       where: {
         day,
+        academicYearId,
+        timeSlotId,
         teacherId,
-        id: { [Op.ne]: id || 0 },
-        [Op.or]: [
-          { startTime: { [Op.between]: [startTime, endTime] } },
-          { endTime: { [Op.between]: [startTime, endTime] } },
-          { [Op.and]: [{ startTime: { [Op.lte]: startTime } }, { endTime: { [Op.gte]: endTime } }] }
-        ]
+        id: { [Op.ne]: id || 0 }
       }
     });
-    if (teacherConflict) return res.status(400).json({ message: 'Guru sudah ada jadwal lain di jam tersebut' });
+    if (teacherConflict) return res.status(400).json({ message: 'Guru sudah ada jadwal lain di slot jam tersebut' });
 
     // 2. Validasi Overlap Kelas
     const classConflict = await Schedule.findOne({
       where: {
         day,
+        academicYearId,
+        timeSlotId,
         classId,
-        id: { [Op.ne]: id || 0 },
-        [Op.or]: [
-          { startTime: { [Op.between]: [startTime, endTime] } },
-          { endTime: { [Op.between]: [startTime, endTime] } },
-          { [Op.and]: [{ startTime: { [Op.lte]: startTime } }, { endTime: { [Op.gte]: endTime } }] }
-        ]
+        id: { [Op.ne]: id || 0 }
       }
     });
-    if (classConflict) return res.status(400).json({ message: 'Kelas sudah ada pelajaran lain di jam tersebut' });
+    if (classConflict) return res.status(400).json({ message: 'Kelas sudah ada pelajaran lain di slot jam tersebut' });
+
+    const data = { day, academicYearId, timeSlotId, teacherId, classId, lessonId };
 
     if (id) {
-      await Schedule.update({ day, startTime, endTime, teacherId, classId, lessonId }, { where: { id } });
+      await Schedule.update(data, { where: { id } });
       res.json({ message: 'Jadwal berhasil diupdate' });
     } else {
-      const newSchedule = await Schedule.create({ day, startTime, endTime, teacherId, classId, lessonId });
+      const newSchedule = await Schedule.create(data);
       res.json(newSchedule);
     }
   } catch (error) {
@@ -590,6 +683,8 @@ module.exports = {
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
   getLessons, createLesson, updateLesson, deleteLesson,
+  getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
+  getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
   getSchedules, createOrUpdateSchedule, deleteSchedule,
   exportReport
 };

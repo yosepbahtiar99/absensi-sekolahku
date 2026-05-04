@@ -16,6 +16,8 @@ import AdminApprovals from '../../features/admin/pages/AdminApprovals';
 import MasterGuru from '../../features/master-data/guru/pages/MasterGuru';
 import MasterKelas from '../../features/master-data/kelas/pages/MasterKelas';
 import MasterPelajaran from '../../features/master-data/lesson/pages/MasterPelajaran';
+import MasterAcademicYear from '../../features/master-data/academic-year/pages/MasterAcademicYear';
+import MasterTimeSlot from '../../features/master-data/time-slot/pages/MasterTimeSlot';
 import MasterSchedule from '../../features/master-data/schedule/pages/MasterSchedule';
 import GlobalNotification from '../components/GlobalNotification';
 
@@ -104,6 +106,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute role="admin">
             <MasterPelajaran />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/academic-years" 
+        element={
+          <ProtectedRoute role="admin">
+            <MasterAcademicYear />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/time-slots" 
+        element={
+          <ProtectedRoute role="admin">
+            <MasterTimeSlot />
           </ProtectedRoute>
         } 
       />

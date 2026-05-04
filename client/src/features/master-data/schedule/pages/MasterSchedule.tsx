@@ -20,6 +20,8 @@ import { useSchedules, useUpsertSchedule, useDeleteSchedule } from '../hooks/use
 import { useGurus } from '../../guru/hooks/useGuruData';
 import { useClasses } from '../../kelas/hooks/useKelasData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
+import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
+import { useTimeSlots } from '../../time-slot/hooks/useTimeSlotData';
 import SortableScheduleItem from '../components/SortableScheduleItem';
 import ScheduleForm from '../forms/ScheduleForm';
 import type { ISchedulePayload } from '../interfaces/schedule.interface';
@@ -30,10 +32,17 @@ const MasterSchedule = () => {
   const [selectedSchedule, setSelectedSchedule] = useState<Partial<ISchedulePayload> | undefined>(undefined);
   const [activeDay, setActiveDay] = useState('senin');
 
-  const { data: schedData, isLoading: isSchedLoading } = useSchedules();
+  const { data: academicYears = [] } = useAcademicYears();
+  const activeYear = academicYears.find(y => y.isActive);
+  const [selectedYearId, setSelectedYearId] = useState<string>('');
+
+  const currentYearId = selectedYearId || activeYear?.id;
+
+  const { data: schedData, isLoading: isSchedLoading } = useSchedules(currentYearId);
   const { data: guruRes } = useGurus({ limit: 100 });
   const { data: kelasRes } = useClasses({ limit: 100 });
   const { data: lessonRes } = useLessons({ limit: 100 });
+  const { data: timeSlots = [] } = useTimeSlots({ academicYearId: currentYearId });
 
   const schedules = schedData; // Schedules is not paginated yet in server, but hook was updated? Wait.
   const gurus = guruRes?.data || [];
@@ -130,7 +139,19 @@ const MasterSchedule = () => {
             <p className="text-slate-500 font-medium">Drag & drop untuk mengatur jadwal mengajar harian.</p>
           </div>
           <div className="flex gap-3">
-             <Button onClick={() => handleOpenModal()} className="shadow-lg shadow-primary/20">
+             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm mr-2">
+                <Calendar size={16} className="text-slate-400" />
+                <select 
+                  value={currentYearId} 
+                  onChange={(e) => setSelectedYearId(e.target.value)}
+                  className="bg-transparent border-none text-xs font-black uppercase tracking-wider text-slate-600 outline-none"
+                >
+                  {academicYears.map(y => (
+                    <option key={y.id} value={y.id}>{y.name} {y.isActive ? '(Aktif)' : ''}</option>
+                  ))}
+                </select>
+              </div>
+             <Button onClick={() => handleOpenModal()} className="shadow-lg shadow-primary/20" disabled={!currentYearId}>
                 <Plus size={20} className="mr-2" />
                 Tambah Jadwal
               </Button>
@@ -183,11 +204,11 @@ const MasterSchedule = () => {
                               onEdit={(s) => handleOpenModal({
                                 id: s.id,
                                 day: s.day,
-                                startTime: s.startTime.substring(0, 5),
-                                endTime: s.endTime.substring(0, 5),
+                                timeSlotId: s.timeSlotId,
                                 teacherId: s.teacherId,
                                 classId: s.classId,
-                                lessonId: s.lessonId
+                                lessonId: s.lessonId,
+                                academicYearId: s.academicYearId
                               })}
                             />
                           ))}
@@ -297,6 +318,8 @@ const MasterSchedule = () => {
               gurus={gurus || []}
               classes={classes || []}
               lessons={lessons || []}
+              timeSlots={timeSlots || []}
+              academicYearId={currentYearId || ''}
               onSubmit={handleSave} 
               onCancel={handleCloseModal}
               isLoading={upsertMutation.isPending}

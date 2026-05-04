@@ -7,12 +7,19 @@ export interface ISchedule {
   classId: string;
   lessonId: string;
   teacherId: string;
+  academicYearId: string;
+  timeSlotId: string;
   day: string;
-  startTime: string;
-  endTime: string;
+  startTime?: string;
+  endTime?: string;
   Class: IKelas;
   Lesson: IPelajaran;
-  Teacher: IGuru;
+  teacher?: IGuru;
+  TimeSlot?: {
+    label: string;
+    startTime: string;
+    endTime: string;
+  };
 }
 
 export interface ISchedulePayload {
@@ -20,7 +27,7 @@ export interface ISchedulePayload {
   classId: string;
   lessonId: string;
   teacherId: string;
+  academicYearId: string;
+  timeSlotId: string;
   day: string;
-  startTime: string;
-  endTime: string;
 }

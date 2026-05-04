@@ -9,7 +9,9 @@ import {
   LogOut, 
   School, 
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Clock,
+  CalendarDays
 } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useUIStore } from '../../../shared/store/uiStore';
@@ -27,6 +29,8 @@ const AdminSidebar = () => {
     { icon: Users, label: 'Master Guru', path: '/admin/guru' },
     { icon: GraduationCap, label: 'Master Kelas', path: '/admin/kelas' },
     { icon: BookOpen, label: 'Master Pelajaran', path: '/admin/pelajaran' },
+    { icon: CalendarDays, label: 'Master Tahun Ajaran', path: '/admin/academic-years' },
+    { icon: Clock, label: 'Master Jam', path: '/admin/time-slots' },
     { icon: Calendar, label: 'Atur Jadwal', path: '/admin/schedule' },
   ];
 

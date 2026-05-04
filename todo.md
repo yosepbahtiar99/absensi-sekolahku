@@ -25,9 +25,9 @@
     - [x] Implement Data Snapshotting (Store `className`, `lessonName`, `teacherName` at creation time)
 
 ### Phase 2: Master Data Management UI
-- [ ] Create UI for Managing Academic Years (Add/Edit/Set Active)
-- [ ] Create UI for Managing Time Slots (Template Jam Pelajaran per Hari)
-    - [ ] Support different slot structures for different days (e.g., Monday Ceremony, Friday Short Day)
+- [x] Create UI for Managing Academic Years (Add/Edit/Set Active)
+- [x] Create UI for Managing Time Slots (Template Jam Pelajaran per Hari)
+    - [x] Support different slot structures for different days (e.g., Monday Ceremony, Friday Short Day)
 
 ### Phase 3: Advanced Scheduling (Matrix Grid)
 - [ ] Revamp Schedule Page to "Matrix Grid" Visualization

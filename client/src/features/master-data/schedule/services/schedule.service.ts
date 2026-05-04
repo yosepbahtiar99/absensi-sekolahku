@@ -2,8 +2,8 @@ import api from '../../../../shared/lib/axios';
 import type { ISchedule, ISchedulePayload } from '../interfaces/schedule.interface';
 
 export const scheduleService = {
-  getAll: async (): Promise<ISchedule[]> => {
-    const response = await api.get<ISchedule[]>('/admin/schedules');
+  getAll: async (academicYearId?: string): Promise<ISchedule[]> => {
+    const response = await api.get<ISchedule[]>('/admin/schedules', { params: { academicYearId } });
     return response.data;
   },
 
