@@ -76,6 +76,7 @@ const Class = sequelize.define('Class', {
     primaryKey: true
   },
   name: { type: DataTypes.STRING, allowNull: false },
+  gradeLevel: { type: DataTypes.STRING, allowNull: true }, // e.g., "10", "11", "XII"
 });
 
 const Lesson = sequelize.define('Lesson', {
@@ -114,6 +115,16 @@ const TimeSlot = sequelize.define('TimeSlot', {
   startTime: { type: DataTypes.TIME, allowNull: false },
   endTime: { type: DataTypes.TIME, allowNull: false },
   periodNumber: { type: DataTypes.INTEGER },
+});
+
+const Curriculum = sequelize.define('Curriculum', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
+  gradeLevel: { type: DataTypes.STRING, allowNull: false },
+  requiredHours: { type: DataTypes.INTEGER, defaultValue: 0 },
 });
 
 const Schedule = sequelize.define('Schedule', {
@@ -177,6 +188,13 @@ Activity.belongsTo(AcademicYear, { foreignKey: 'academicYearId' });
 TimeSlot.hasMany(Schedule, { foreignKey: 'timeSlotId' });
 Schedule.belongsTo(TimeSlot, { foreignKey: 'timeSlotId' });
 
+// Curriculum Relationships
+AcademicYear.hasMany(Curriculum, { foreignKey: 'academicYearId' });
+Curriculum.belongsTo(AcademicYear, { foreignKey: 'academicYearId' });
+
+Lesson.hasMany(Curriculum, { foreignKey: 'lessonId' });
+Curriculum.belongsTo(Lesson, { foreignKey: 'lessonId' });
+
 module.exports = { 
   sequelize, 
   User, 
@@ -187,5 +205,6 @@ module.exports = {
   Schedule, 
   ApprovalRequest,
   AcademicYear,
-  TimeSlot
+  TimeSlot,
+  Curriculum
 };

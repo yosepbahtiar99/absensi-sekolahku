@@ -21,6 +21,7 @@ import { useClasses } from '../../kelas/hooks/useKelasData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
 import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
 import { useTimeSlots } from '../../time-slot/hooks/useTimeSlotData';
+import { useCurriculums } from '../../curriculum/hooks/useCurriculumData';
 import { useAcademicYearStore } from '../../../../shared/store/academicYearStore';
 import AdminHeader from '../../../admin/components/AdminHeader';
 import SortableScheduleItem from '../components/SortableScheduleItem';
@@ -46,6 +47,10 @@ const MasterSchedule = () => {
   const { data: kelasRes } = useClasses({ limit: 100 });
   const { data: lessonRes } = useLessons({ limit: 100 });
   const { data: timeSlots = [] } = useTimeSlots({ academicYearId: currentYearId || undefined });
+  const { data: curriculumRes = [] } = useCurriculums({ academicYearId: currentYearId || undefined });
+
+  // --- Curriculum Compliance Logic ---
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
   // Filter time slots by active day to ensure correct columns
   const filteredTimeSlots = useMemo(() => {
@@ -57,6 +62,27 @@ const MasterSchedule = () => {
   const gurus = guruRes?.data || [];
   const classes = kelasRes?.data || [];
   const lessons = lessonRes?.data || [];
+
+  const complianceStatus = useMemo(() => {
+    if (!selectedClassId || !curriculumRes || !schedules || !classes) return [];
+    
+    const targetClass = classes.find(c => c.id === selectedClassId);
+    if (!targetClass?.gradeLevel) return [];
+
+    // Filter curriculum for this grade level
+    const classCurriculum = curriculumRes.filter(c => c.gradeLevel === targetClass.gradeLevel);
+
+    return classCurriculum.map(curr => {
+      // Count how many JP already assigned for this lesson in this class (all days)
+      const assignedJP = (schedules as any[]).filter(s => s.classId === selectedClassId && s.lessonId === curr.lessonId).length;
+      return {
+        lessonName: curr.Lesson?.name || 'Unknown',
+        assigned: assignedJP,
+        required: curr.requiredHours,
+        isFulfilled: assignedJP >= curr.requiredHours
+      };
+    });
+  }, [selectedClassId, curriculumRes, schedules, classes]);
 
   const upsertMutation = useUpsertSchedule();
   const deleteMutation = useDeleteSchedule();
@@ -240,10 +266,19 @@ const MasterSchedule = () => {
                     </thead>
                     <tbody>
                       {classes.map(cls => (
-                        <tr key={cls.id} className="group hover:bg-slate-50/30 transition-colors">
-                          <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/50 backdrop-blur-md p-6 border-r border-b border-slate-100">
-                            <p className="font-black text-slate-800 text-sm">{cls.name}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ID: {cls.id.slice(0, 8)}</p>
+                        <tr 
+                          key={cls.id} 
+                          className={`group hover:bg-slate-50/30 transition-colors ${selectedClassId === cls.id ? 'bg-primary/5' : ''}`}
+                          onClick={() => setSelectedClassId(cls.id)}
+                        >
+                          <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/50 backdrop-blur-md p-6 border-r border-b border-slate-100 cursor-pointer">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-black text-slate-800 text-sm">{cls.name}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tingkat: {cls.gradeLevel || '-'}</p>
+                              </div>
+                              {selectedClassId === cls.id && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>}
+                            </div>
                           </td>
                           {filteredTimeSlots.map(slot => {
                             const schedule = schedules?.find(s => s.classId === cls.id && s.timeSlotId === slot.id && s.day === activeDay);
@@ -321,6 +356,44 @@ const MasterSchedule = () => {
                     </div>
                   ))}
                 </div>
+              </section>
+
+              {/* Curriculum Compliance Tracker */}
+              <section className="animate-in fade-in slide-in-from-bottom duration-700">
+                <div className="flex items-center justify-between mb-6">
+                  <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Compliance Tracker</h5>
+                  <div className="bg-primary/10 px-2 py-0.5 rounded text-[10px] font-black text-primary">Kelas: {classes.find(c => c.id === selectedClassId)?.name || '-'}</div>
+                </div>
+                
+                {!selectedClassId ? (
+                  <div className="bg-slate-50 border border-dashed border-slate-200 rounded-3xl p-6 text-center">
+                    <Info size={20} className="mx-auto text-slate-300 mb-2" />
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">Pilih baris kelas untuk cek kurikulum</p>
+                  </div>
+                ) : complianceStatus.length === 0 ? (
+                  <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 text-center">
+                    <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Kurikulum belum di-set</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {complianceStatus.map((status, i) => (
+                      <div key={i} className="bg-white border border-slate-100 p-4 rounded-2xl shadow-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-[11px] font-bold text-slate-700 max-w-[140px] truncate">{status.lessonName}</span>
+                          <span className={`text-[10px] font-black ${status.isFulfilled ? 'text-emerald-500' : 'text-amber-500'}`}>
+                            {status.assigned} / {status.required} JP
+                          </span>
+                        </div>
+                        <div className="h-1 w-full bg-slate-50 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-1000 ${status.isFulfilled ? 'bg-emerald-500' : 'bg-amber-400'}`}
+                            style={{ width: `${Math.min((status.assigned / status.required) * 100, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Class Status Section */}

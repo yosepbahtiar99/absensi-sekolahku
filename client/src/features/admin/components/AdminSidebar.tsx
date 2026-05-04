@@ -34,7 +34,8 @@ const AdminSidebar = () => {
       '/admin/guru',
       '/admin/kelas',
       '/admin/pelajaran',
-      '/admin/time-slots'
+      '/admin/time-slots',
+      '/admin/curriculum'
     ].some(path => location.pathname === path);
     
     if (isMasterActive) setIsMasterOpen(true);
@@ -46,6 +47,7 @@ const AdminSidebar = () => {
     { icon: GraduationCap, label: 'Master Kelas', path: '/admin/kelas' },
     { icon: BookOpen, label: 'Master Pelajaran', path: '/admin/pelajaran' },
     { icon: Clock, label: 'Master Jam', path: '/admin/time-slots' },
+    { icon: BookOpen, label: 'Master Kurikulum', path: '/admin/curriculum' },
   ];
 
   const isMasterActive = masterSubMenus.some(item => location.pathname === item.path);

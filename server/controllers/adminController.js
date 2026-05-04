@@ -1,4 +1,4 @@
-const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot } = require('../models');
+const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot, Curriculum } = require('../models');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const ExcelJS = require('exceljs');
@@ -7,10 +7,13 @@ const getDashboardSummary = async (req, res) => {
   try {
     const { academicYearId } = req.query;
     let targetYearId = academicYearId;
+    let activeYear = null;
 
     if (!targetYearId) {
-      const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
+      activeYear = await AcademicYear.findOne({ where: { isActive: true } });
       targetYearId = activeYear?.id;
+    } else {
+      activeYear = await AcademicYear.findByPk(targetYearId);
     }
 
     const yearWhere = targetYearId ? { academicYearId: targetYearId } : {};
@@ -226,7 +229,8 @@ const getClasses = async (req, res) => {
 
 const createClass = async (req, res) => {
   try {
-    const cls = await Class.create(req.body);
+    const { name, gradeLevel } = req.body;
+    const cls = await Class.create({ name, gradeLevel });
     res.json(cls);
   } catch (error) {
     res.status(500).json({ message: 'Gagal tambah kelas' });
@@ -235,7 +239,9 @@ const createClass = async (req, res) => {
 
 const updateClass = async (req, res) => {
   try {
-    await Class.update(req.body, { where: { id: req.params.id } });
+    const { id } = req.params;
+    const { name, gradeLevel } = req.body;
+    await Class.update({ name, gradeLevel }, { where: { id } });
     res.json({ message: 'Kelas berhasil diupdate' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal update kelas' });
@@ -400,6 +406,67 @@ const deleteTimeSlot = async (req, res) => {
     res.json({ message: 'Slot jam berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal hapus slot jam' });
+  }
+};
+
+
+// --- CURRICULUM CRUD ---
+const getCurriculums = async (req, res) => {
+  try {
+    const { academicYearId, gradeLevel } = req.query;
+    const where = {};
+    if (academicYearId) where.academicYearId = academicYearId;
+    if (gradeLevel) where.gradeLevel = gradeLevel;
+
+    const curriculums = await Curriculum.findAll({
+      where,
+      include: [
+        { model: Lesson, attributes: ['id', 'name'] },
+        { model: AcademicYear, attributes: ['id', 'name'] }
+      ],
+      order: [['gradeLevel', 'ASC']]
+    });
+    res.json(curriculums);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal mengambil data kurikulum' });
+  }
+};
+
+const createCurriculum = async (req, res) => {
+  try {
+    const { academicYearId, gradeLevel, lessonId, requiredHours } = req.body;
+    
+    // Check if mapping already exists
+    const existing = await Curriculum.findOne({
+      where: { academicYearId, gradeLevel, lessonId }
+    });
+    if (existing) return res.status(400).json({ message: 'Mapel sudah terdaftar di kurikulum tingkat ini' });
+
+    const curriculum = await Curriculum.create({ academicYearId, gradeLevel, lessonId, requiredHours });
+    res.json(curriculum);
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal tambah kurikulum' });
+  }
+};
+
+const updateCurriculum = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { requiredHours } = req.body;
+    await Curriculum.update({ requiredHours }, { where: { id } });
+    res.json({ message: 'Kurikulum berhasil diupdate' });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal update kurikulum' });
+  }
+};
+
+const deleteCurriculum = async (req, res) => {
+  try {
+    await Curriculum.destroy({ where: { id: req.params.id } });
+    res.json({ message: 'Kurikulum berhasil dihapus' });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal hapus kurikulum' });
   }
 };
 
@@ -869,6 +936,7 @@ module.exports = {
   getLessons, createLesson, updateLesson, deleteLesson,
   getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
   getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
+  getCurriculums, createCurriculum, updateCurriculum, deleteCurriculum,
   getSchedules, createOrUpdateSchedule, deleteSchedule,
   cloneSchedule, exportSchedule,
   exportReport

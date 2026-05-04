@@ -1,4 +1,4 @@
-const { sequelize, User, Lesson, Class, Schedule, AcademicYear, TimeSlot } = require('./models');
+const { sequelize, User, Lesson, Class, Schedule, AcademicYear, TimeSlot, Curriculum } = require('./models');
 const bcrypt = require('bcryptjs');
 
 async function syncDB() {
@@ -80,8 +80,24 @@ async function syncDB() {
     });
 
     // 5. Buat Data Master Contoh
-    await Lesson.create({ name: 'Bahasa Indonesia', hours: 4 });
-    await Class.create({ name: 'Kelas VII A' });
+    const mtk = await Lesson.create({ name: 'Matematika', hours: 6 });
+    const indo = await Lesson.create({ name: 'Bahasa Indonesia', hours: 4 });
+    await Class.create({ name: 'Kelas VII A', gradeLevel: '7' });
+
+    // 6. Buat Kurikulum
+    await Curriculum.create({
+      academicYearId: year.id,
+      gradeLevel: '7',
+      lessonId: mtk.id,
+      requiredHours: 6
+    });
+    await Curriculum.create({
+      academicYearId: year.id,
+      gradeLevel: '7',
+      lessonId: indo.id,
+      requiredHours: 4
+    });
+    console.log('✅ Data Master & Kurikulum Berhasil Dibuat!');
 
     console.log('-----------------------------------');
     console.log('🚀 SELESAI SINKRONISASI!');

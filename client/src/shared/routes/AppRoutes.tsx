@@ -19,6 +19,7 @@ import MasterPelajaran from '../../features/master-data/lesson/pages/MasterPelaj
 import MasterAcademicYear from '../../features/master-data/academic-year/pages/MasterAcademicYear';
 import MasterTimeSlot from '../../features/master-data/time-slot/pages/MasterTimeSlot';
 import MasterSchedule from '../../features/master-data/schedule/pages/MasterSchedule';
+import CurriculumPage from '../../features/master-data/curriculum/pages/CurriculumPage';
 import GlobalNotification from '../components/GlobalNotification';
 
 const AppRoutes = () => {
@@ -122,6 +123,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute role="admin">
             <MasterTimeSlot />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/curriculum" 
+        element={
+          <ProtectedRoute role="admin">
+            <CurriculumPage />
           </ProtectedRoute>
         } 
       />
