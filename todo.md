@@ -1,7 +1,7 @@
 # Absensi Sekolahku Todo List
 
 ## High Priority
-- [/] Refactor project architecture to be more readable and maintainable
+- [x] Refactor project architecture to be more readable and maintainable
     - [x] Follow Feature-Driven structure in `client/src/features/` (Auth, Teacher, Admin, & Master Data)
     - [x] Separate logic into `components/`, `forms/`, `services/`, `hooks/`, `interfaces/`, and `validations/` (Complete!)
     - [x] Move cross-cutting concerns to `client/src/shared/`
@@ -40,6 +40,14 @@
 ### Phase 4: History & Analytics
 - [x] Global Period Selector in Admin Dashboard (View data for current/past academic years)
 - [x] Reporting Consistency: Ensure reports pull from the snapshotted data in `Activity`
+
+### Phase 5: Curriculum & Compliance (New! 🎯)
+- [ ] Implement `gradeLevel` in `Class` Model
+- [ ] Create `Curriculum` Model (academicYearId, gradeLevel, lessonId, requiredHours)
+- [ ] Create UI for Curriculum Management (Mapping Lesson per Grade Level)
+- [ ] Implement Compliance Tracker in Master Schedule (Visual indicator for missing/insufficient hours)
+- [ ] Add validation to prevent/warn when plotting over-quota lessons
+
 
 ## UI/UX Improvements
 - [x] Revamp Guru Home (Mobile-first, Premium design)

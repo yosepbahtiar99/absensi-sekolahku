@@ -415,7 +415,7 @@ const getSchedules = async (req, res) => {
       include: [
         { model: User, as: 'teacher', attributes: ['id', 'name'] },
         { model: Class, attributes: ['id', 'name'] },
-        { model: Lesson, attributes: ['id', 'name'] },
+        { model: Lesson, attributes: ['id', 'name', 'hours'] },
         { model: TimeSlot, attributes: ['label', 'startTime', 'endTime'] }
       ],
       order: [['day', 'ASC']]

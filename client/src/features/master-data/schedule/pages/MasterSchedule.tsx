@@ -75,7 +75,7 @@ const MasterSchedule = () => {
     if (!gurus || !schedules) return [];
     return gurus.map(guru => {
       const teacherSchedules = schedules.filter(s => s.teacherId === guru.id);
-      const totalHours = teacherSchedules.reduce((acc, curr) => acc + (curr.Lesson?.hours || 0), 0);
+      const totalHours = teacherSchedules.length; // 1 Slot = 1 JP. Simple & Akurat.
       return { ...guru, totalHours };
     }).sort((a, b) => b.totalHours - a.totalHours);
   }, [gurus, schedules]);
