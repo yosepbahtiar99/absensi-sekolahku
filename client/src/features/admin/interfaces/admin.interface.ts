@@ -6,8 +6,24 @@ export interface IAcademicYear {
   isActive: boolean;
 }
 
+export interface IAcademicYearPayload {
+  name: string;
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+}
+
 export interface ITimeSlot {
   id: string;
+  academicYearId: string;
+  day: string;
+  label: string;
+  startTime: string;
+  endTime: string;
+  periodNumber?: number;
+}
+
+export interface ITimeSlotPayload {
   academicYearId: string;
   day: string;
   label: string;

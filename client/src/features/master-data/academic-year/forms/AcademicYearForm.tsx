@@ -1,13 +1,13 @@
 import React from 'react';
 import { Formik, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import type { IAcademicYear, IAcademicYearPayload } from '../../../admin/interfaces/admin.interface';
 import { Button } from '../../../../shared/components/Button';
 import { Input } from '../../../../shared/components/Input';
-import { IAcademicYear } from '../../../admin/interfaces/admin.interface';
 
 interface AcademicYearFormProps {
   initialValues?: IAcademicYear;
-  onSubmit: (values: any) => void;
+  onSubmit: (values: IAcademicYearPayload) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }

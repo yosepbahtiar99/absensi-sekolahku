@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { timeSlotService } from '../services/timeSlot.service';
-import { ITimeSlot } from '../../../admin/interfaces/admin.interface';
+import type { ITimeSlot } from '../../../admin/interfaces/admin.interface';
 
 export const useTimeSlots = (params?: { academicYearId?: string, day?: string }) => {
   return useQuery({

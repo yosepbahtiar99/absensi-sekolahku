@@ -1,4 +1,4 @@
-const { User, Class, Lesson, Schedule, Activity, ApprovalRequest } = require('../models');
+const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot } = require('../models');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const ExcelJS = require('exceljs');

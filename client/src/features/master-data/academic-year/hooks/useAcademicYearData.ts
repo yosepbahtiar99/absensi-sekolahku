@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { academicYearService } from '../services/academicYear.service';
-import { IAcademicYear } from '../../../admin/interfaces/admin.interface';
+import type { IAcademicYear } from '../../../admin/interfaces/admin.interface';
 
 export const useAcademicYears = () => {
   return useQuery({

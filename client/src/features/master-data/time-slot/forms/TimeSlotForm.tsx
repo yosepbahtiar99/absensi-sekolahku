@@ -3,7 +3,7 @@ import { Formik, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { Button } from '../../../../shared/components/Button';
 import { Input } from '../../../../shared/components/Input';
-import { ITimeSlot } from '../../../admin/interfaces/admin.interface';
+import type { ITimeSlot } from '../../../admin/interfaces/admin.interface';
 
 interface TimeSlotFormProps {
   initialValues?: ITimeSlot;

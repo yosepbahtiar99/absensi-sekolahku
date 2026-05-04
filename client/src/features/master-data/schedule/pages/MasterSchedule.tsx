@@ -23,8 +23,10 @@ import { useLessons } from '../../lesson/hooks/useLessonData';
 import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
 import { useTimeSlots } from '../../time-slot/hooks/useTimeSlotData';
 import SortableScheduleItem from '../components/SortableScheduleItem';
+import DroppableGridCell from '../components/DroppableGridCell';
 import ScheduleForm from '../forms/ScheduleForm';
 import type { ISchedulePayload } from '../interfaces/schedule.interface';
+import type { ITimeSlot, IAcademicYear } from '../../../admin/interfaces/admin.interface';
 import { useNotificationStore } from '../../../../shared/store/notificationStore';
 
 const MasterSchedule = () => {
@@ -119,10 +121,33 @@ const MasterSchedule = () => {
     const { active, over } = event;
     if (!over) return;
 
-    if (active.id !== over.id) {
-      // Logic for moving between days could go here
-      // For now we keep it simple as the original logic
-    }
+    const scheduleId = active.id;
+    const [classId, timeSlotId] = over.id.split(':');
+
+    const schedule = schedules?.find(s => s.id === scheduleId);
+    if (!schedule) return;
+
+    // If dropped on the same cell, do nothing
+    if (schedule.classId === classId && schedule.timeSlotId === timeSlotId) return;
+
+    // Update via upsert
+    const payload: ISchedulePayload = {
+      id: schedule.id,
+      day: activeDay,
+      academicYearId: currentYearId || '',
+      classId,
+      timeSlotId,
+      teacherId: schedule.teacherId,
+      lessonId: schedule.lessonId
+    };
+
+    upsertMutation.mutate(payload, {
+      onSuccess: () => showNotification('Jadwal dipindahkan!', 'success'),
+      onError: (error: any) => {
+        const msg = error.response?.data?.message || 'Gagal memindahkan jadwal.';
+        showNotification(msg, 'error');
+      }
+    });
   };
 
   return (
@@ -134,9 +159,9 @@ const MasterSchedule = () => {
           <div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
               <Calendar className="text-primary" size={32} />
-              Master Schedule
+              Matrix Scheduling
             </h2>
-            <p className="text-slate-500 font-medium">Drag & drop untuk mengatur jadwal mengajar harian.</p>
+            <p className="text-slate-500 font-medium text-sm">Visualisasi pemetaan jadwal Kelas vs Jam Pelajaran.</p>
           </div>
           <div className="flex gap-3">
              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm mr-2">
@@ -158,77 +183,104 @@ const MasterSchedule = () => {
           </div>
         </header>
 
-        <div className="flex-1 flex overflow-hidden">
-          {/* Main Board Container */}
-          <div className="flex-1 overflow-x-auto p-8 pt-4 bg-[#F8FAFC] custom-scrollbar">
-            <div className="flex gap-6 min-w-max h-full pb-8">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
+        <div className="px-8 mb-6">
+          <div className="flex gap-2 p-1.5 bg-slate-100/80 backdrop-blur-md rounded-[2rem] w-fit border border-slate-200/50 shadow-inner">
+            {days.map(d => (
+              <button
+                key={d}
+                onClick={() => setActiveDay(d)}
+                className={`px-8 py-2.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${
+                  activeDay === d 
+                    ? 'bg-white text-primary shadow-xl shadow-primary/10 ring-1 ring-primary/5' 
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+                }`}
               >
-                {days.map((day) => (
-                  <div 
-                    key={day} 
-                    className={`w-80 flex flex-col rounded-[2.5rem] border-2 transition-all duration-300 ${
-                      activeDay === day ? 'bg-white border-primary/20 shadow-xl shadow-primary/5' : 'bg-slate-50/50 border-transparent'
-                    }`}
-                    onClick={() => setActiveDay(day)}
-                  >
-                    <div className="p-6 pb-4 flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${activeDay === day ? 'bg-primary animate-pulse' : 'bg-slate-300'}`}></div>
-                        <h3 className="font-black text-slate-800 uppercase tracking-[0.2em] text-xs">{day}</h3>
-                      </div>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleOpenModal(undefined, day); }}
-                        className="p-2 hover:bg-primary/5 rounded-xl text-slate-400 hover:text-primary transition-all"
-                      >
-                        <Plus size={18} />
-                      </button>
-                    </div>
-
-                    <div className="flex-1 px-4 overflow-y-auto custom-scrollbar pb-6">
-                      {isSchedLoading ? (
-                        <div className="flex justify-center py-10 opacity-30"><Loader2 className="animate-spin" /></div>
-                      ) : (
-                        <SortableContext
-                          items={schedules?.filter(s => s.day === day).map(s => s.id) || []}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          {schedules?.filter(s => s.day === day).map((item) => (
-                            <SortableScheduleItem
-                              key={item.id}
-                              schedule={item}
-                              onDelete={handleDelete}
-                              onEdit={(s) => handleOpenModal({
-                                id: s.id,
-                                day: s.day,
-                                timeSlotId: s.timeSlotId,
-                                teacherId: s.teacherId,
-                                classId: s.classId,
-                                lessonId: s.lessonId,
-                                academicYearId: s.academicYearId
-                              })}
-                            />
-                          ))}
-                        </SortableContext>
-                      )}
-
-                      {schedules?.filter(s => s.day === day).length === 0 && (
-                        <div className="h-32 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center text-slate-400 gap-2 bg-white/50">
-                          <Clock size={24} className="opacity-20" />
-                          <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Belum Ada Jadwal</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </DndContext>
-            </div>
+                {d}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Sidebar Insights */}
+        <div className="flex-1 flex overflow-hidden">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex-1 overflow-auto p-8 pt-0 bg-[#F8FAFC] custom-scrollbar">
+              <div className="inline-block min-w-full align-middle">
+                <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/50">
+                        <th className="sticky left-0 z-20 bg-slate-50/80 backdrop-blur-md p-6 text-left border-r border-b border-slate-100 min-w-[200px]">
+                          <div className="flex items-center gap-3">
+                            <GraduationCap className="text-slate-400" size={20} />
+                            <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Kelas \ Jam</span>
+                          </div>
+                        </th>
+                        {timeSlots.filter(ts => ts.day === activeDay).sort((a,b) => (a.periodNumber || 0) - (b.periodNumber || 0)).map(slot => (
+                          <th key={slot.id} className="p-6 border-b border-r border-slate-100 min-w-[240px]">
+                            <div className="flex flex-col items-center">
+                              <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-1">{slot.label}</span>
+                              <span className="text-[10px] font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-full">{slot.startTime} - {slot.endTime}</span>
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {classes.map(cls => (
+                        <tr key={cls.id} className="group hover:bg-slate-50/30 transition-colors">
+                          <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/50 backdrop-blur-md p-6 border-r border-b border-slate-100">
+                            <p className="font-black text-slate-800 text-sm">{cls.name}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ID: {cls.id.slice(0, 8)}</p>
+                          </td>
+                          {timeSlots.filter(ts => ts.day === activeDay).sort((a,b) => (a.periodNumber || 0) - (b.periodNumber || 0)).map(slot => {
+                            const schedule = schedules?.find(s => s.classId === cls.id && s.timeSlotId === slot.id && s.day === activeDay);
+                            
+                            const isTeacherConflict = schedule && schedules?.some(s => 
+                              s.teacherId === schedule.teacherId && 
+                              s.timeSlotId === slot.id && 
+                              s.day === activeDay && 
+                              s.id !== schedule.id
+                            );
+
+                            return (
+                              <DroppableGridCell 
+                                key={slot.id} 
+                                id={`${cls.id}:${slot.id}`}
+                                isEmpty={!schedule}
+                                onAdd={() => handleOpenModal({ day: activeDay, classId: cls.id, timeSlotId: slot.id })}
+                              >
+                                {schedule && (
+                                  <SortableScheduleItem
+                                    schedule={schedule}
+                                    onDelete={handleDelete}
+                                    isConflict={isTeacherConflict}
+                                    onEdit={(s) => handleOpenModal({
+                                      id: s.id,
+                                      day: s.day,
+                                      timeSlotId: s.timeSlotId,
+                                      teacherId: s.teacherId,
+                                      classId: s.classId,
+                                      lessonId: s.lessonId,
+                                      academicYearId: s.academicYearId
+                                    })}
+                                  />
+                                )}
+                              </DroppableGridCell>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </DndContext>
+
           <aside className="w-80 bg-white border-l border-slate-100 flex flex-col animate-in slide-in-from-right duration-500">
             <div className="p-8 border-b border-slate-100 bg-slate-50/50">
               <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
