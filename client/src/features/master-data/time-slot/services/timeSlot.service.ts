@@ -1,5 +1,5 @@
 import api from '../../../../shared/lib/axios';
-import type { ITimeSlot, ITimeSlotPayload } from '../../../admin/interfaces/admin.interface';
+import type { ITimeSlot } from '../../../admin/interfaces/admin.interface';
 
 export const timeSlotService = {
   getAll: async (params?: { academicYearId?: string, day?: string }): Promise<ITimeSlot[]> => {

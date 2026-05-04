@@ -1,11 +1,14 @@
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useAdminSummary } from '../hooks/useAdminData';
-import { Users, GraduationCap, BookOpen, Clock, AlertTriangle, CheckCircle, TrendingUp, Calendar, ArrowRight, Loader2 } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, Clock, AlertTriangle, CheckCircle, TrendingUp, Calendar, ArrowRight, Loader2, LayoutDashboard } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
+import AdminHeader from '../components/AdminHeader';
+import { useAcademicYearStore } from '../../../shared/store/academicYearStore';
 
 const AdminDashboard = () => {
   const { user } = useAuthStore();
-  const { data: summary, isLoading } = useAdminSummary();
+  const { selectedYearId } = useAcademicYearStore();
+  const { data: summary, isLoading } = useAdminSummary(selectedYearId || undefined);
 
   const stats = [
     { label: 'Total Guru', value: summary?.totalGuru || 0, icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
@@ -17,19 +20,14 @@ const AdminDashboard = () => {
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <AdminSidebar />
       
-      <main className="flex-1 p-10 overflow-y-auto">
-        <header className="mb-10 flex justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Dashboard Overview</h2>
-            <p className="text-slate-500 font-medium">Selamat datang kembali, <span className="text-primary font-bold">{user?.name}</span></p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 text-sm font-bold text-slate-600">
-              <Calendar size={18} className="text-primary" />
-              {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </div>
-          </div>
-        </header>
+      <main className="flex-1 overflow-hidden flex flex-col">
+        <AdminHeader 
+          title="Dashboard Overview" 
+          subtitle={`Selamat datang kembali, ${user?.name}`}
+          icon={<LayoutDashboard size={28} />}
+        />
+
+        <div className="flex-1 p-8 overflow-y-auto">
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
@@ -116,6 +114,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
+        </div>
       </main>
     </div>
   );

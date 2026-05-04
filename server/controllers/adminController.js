@@ -5,8 +5,15 @@ const ExcelJS = require('exceljs');
 
 const getDashboardSummary = async (req, res) => {
   try {
-    const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
-    const yearWhere = activeYear ? { academicYearId: activeYear.id } : {};
+    const { academicYearId } = req.query;
+    let targetYearId = academicYearId;
+
+    if (!targetYearId) {
+      const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
+      targetYearId = activeYear?.id;
+    }
+
+    const yearWhere = targetYearId ? { academicYearId: targetYearId } : {};
 
     const totalGuru = await User.count({ where: { role: 'guru' } });
     const totalKelas = await Class.count();

@@ -8,11 +8,9 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import {
-  SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Plus, X, Calendar, Clock, Info, Loader2, GraduationCap } from 'lucide-react';
+import { Plus, X, Calendar, Info, GraduationCap } from 'lucide-react';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Button } from '../../../../shared/components/Button';
 import { Card } from '../../../../shared/components/Card';
@@ -20,13 +18,13 @@ import { useSchedules, useUpsertSchedule, useDeleteSchedule } from '../hooks/use
 import { useGurus } from '../../guru/hooks/useGuruData';
 import { useClasses } from '../../kelas/hooks/useKelasData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
-import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
 import { useTimeSlots } from '../../time-slot/hooks/useTimeSlotData';
+import { useAcademicYearStore } from '../../../../shared/store/academicYearStore';
+import AdminHeader from '../../../admin/components/AdminHeader';
 import SortableScheduleItem from '../components/SortableScheduleItem';
 import DroppableGridCell from '../components/DroppableGridCell';
 import ScheduleForm from '../forms/ScheduleForm';
 import type { ISchedulePayload } from '../interfaces/schedule.interface';
-import type { ITimeSlot, IAcademicYear } from '../../../admin/interfaces/admin.interface';
 import { useNotificationStore } from '../../../../shared/store/notificationStore';
 
 const MasterSchedule = () => {
@@ -34,17 +32,14 @@ const MasterSchedule = () => {
   const [selectedSchedule, setSelectedSchedule] = useState<Partial<ISchedulePayload> | undefined>(undefined);
   const [activeDay, setActiveDay] = useState('senin');
 
-  const { data: academicYears = [] } = useAcademicYears();
-  const activeYear = academicYears.find(y => y.isActive);
-  const [selectedYearId, setSelectedYearId] = useState<string>('');
+  const { selectedYearId } = useAcademicYearStore();
+  const currentYearId = selectedYearId;
 
-  const currentYearId = selectedYearId || activeYear?.id;
-
-  const { data: schedData, isLoading: isSchedLoading } = useSchedules(currentYearId);
+  const { data: schedData } = useSchedules(currentYearId || undefined);
   const { data: guruRes } = useGurus({ limit: 100 });
   const { data: kelasRes } = useClasses({ limit: 100 });
   const { data: lessonRes } = useLessons({ limit: 100 });
-  const { data: timeSlots = [] } = useTimeSlots({ academicYearId: currentYearId });
+  const { data: timeSlots = [] } = useTimeSlots({ academicYearId: currentYearId || undefined });
 
   const schedules = schedData; // Schedules is not paginated yet in server, but hook was updated? Wait.
   const gurus = guruRes?.data || [];
@@ -155,35 +150,13 @@ const MasterSchedule = () => {
       <AdminSidebar />
       
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="p-8 pb-4 flex justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-              <Calendar className="text-primary" size={32} />
-              Matrix Scheduling
-            </h2>
-            <p className="text-slate-500 font-medium text-sm">Visualisasi pemetaan jadwal Kelas vs Jam Pelajaran.</p>
-          </div>
-          <div className="flex gap-3">
-             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm mr-2">
-                <Calendar size={16} className="text-slate-400" />
-                <select 
-                  value={currentYearId} 
-                  onChange={(e) => setSelectedYearId(e.target.value)}
-                  className="bg-transparent border-none text-xs font-black uppercase tracking-wider text-slate-600 outline-none"
-                >
-                  {academicYears.map(y => (
-                    <option key={y.id} value={y.id}>{y.name} {y.isActive ? '(Aktif)' : ''}</option>
-                  ))}
-                </select>
-              </div>
-             <Button onClick={() => handleOpenModal()} className="shadow-lg shadow-primary/20" disabled={!currentYearId}>
-                <Plus size={20} className="mr-2" />
-                Tambah Jadwal
-              </Button>
-          </div>
-        </header>
+        <AdminHeader 
+          title="Matrix Scheduling" 
+          subtitle="Visualisasi pemetaan jadwal Kelas vs Jam Pelajaran." 
+          icon={<Calendar className="text-primary" size={28} />}
+        />
 
-        <div className="px-8 mb-6">
+        <div className="p-8 pb-4 flex justify-between items-center">
           <div className="flex gap-2 p-1.5 bg-slate-100/80 backdrop-blur-md rounded-[2rem] w-fit border border-slate-200/50 shadow-inner">
             {days.map(d => (
               <button
@@ -199,6 +172,10 @@ const MasterSchedule = () => {
               </button>
             ))}
           </div>
+          <Button onClick={() => handleOpenModal()} className="shadow-lg shadow-primary/20" disabled={!currentYearId}>
+            <Plus size={20} className="mr-2" />
+            Tambah Jadwal
+          </Button>
         </div>
 
         <div className="flex-1 flex overflow-hidden">

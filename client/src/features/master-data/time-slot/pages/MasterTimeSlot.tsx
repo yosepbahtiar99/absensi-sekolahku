@@ -5,7 +5,7 @@ import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Plus, Edit2, Trash2, Clock, X, Filter } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
 import TimeSlotForm from '../forms/TimeSlotForm';
-import type { ITimeSlot, ITimeSlotPayload } from '../../../admin/interfaces/admin.interface';
+import type { ITimeSlot } from '../../../admin/interfaces/admin.interface';
 import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
 const MasterTimeSlot = () => {

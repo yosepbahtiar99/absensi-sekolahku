@@ -1,5 +1,5 @@
 import api from '../../../../shared/lib/axios';
-import type { IAcademicYear, IAcademicYearPayload } from '../../../admin/interfaces/admin.interface';
+import type { IAcademicYear } from '../../../admin/interfaces/admin.interface';
 
 export const academicYearService = {
   getAll: async (): Promise<IAcademicYear[]> => {

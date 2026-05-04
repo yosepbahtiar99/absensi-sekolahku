@@ -1,24 +1,28 @@
-const { Schedule, Class, Lesson, Activity, ApprovalRequest } = require('../models');
+const { User, Schedule, Class, Lesson, Activity, ApprovalRequest, AcademicYear, TimeSlot } = require('../models');
 const { Op } = require('sequelize');
 
 const getMySchedule = async (req, res) => {
   try {
     const teacherId = req.user.id;
-    const { day } = req.query; // Ambil parameter day dari query
+    const { day } = req.query; 
     const days = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
     const todayName = days[new Date().getDay()];
-    
-    // Gunakan day dari query jika ada, jika tidak gunakan hari ini
     const selectedDay = day || todayName;
+
+    // Get Active Academic Year
+    const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
+    if (!activeYear) return res.json([]);
 
     const schedules = await Schedule.findAll({
       where: {
         teacherId,
-        day: selectedDay
+        day: selectedDay,
+        academicYearId: activeYear.id
       },
       include: [
         { model: Class, attributes: ['name'] },
-        { model: Lesson, attributes: ['name'] },
+        { model: Lesson, attributes: ['name', 'hours'] },
+        { model: TimeSlot, attributes: ['label', 'startTime', 'endTime'] },
         { 
           model: Activity, 
           where: { 
@@ -29,17 +33,25 @@ const getMySchedule = async (req, res) => {
           },
           required: false 
         }
-      ],
-      order: [['startTime', 'ASC']]
+      ]
     });
 
     const result = schedules.map(s => {
-      const schedule = s.toJSON();
-      // Map Activities array to a single Attendance object to match frontend interface
-      schedule.Attendance = schedule.Activities && schedule.Activities.length > 0 ? schedule.Activities[0] : null;
-      delete schedule.Activities;
-      return schedule;
-    });
+      const data = s.toJSON();
+      // Use time from TimeSlot if available
+      const startTime = data.TimeSlot?.startTime || data.startTime;
+      const endTime = data.TimeSlot?.endTime || data.endTime;
+      
+      const Attendance = data.Activities && data.Activities.length > 0 ? data.Activities[0] : null;
+      
+      return {
+        ...data,
+        startTime,
+        endTime,
+        Attendance,
+        Activities: undefined
+      };
+    }).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
 
     res.json(result);
   } catch (error) {
@@ -90,17 +102,24 @@ const submitAttendance = async (req, res) => {
     }
 
     // Logika Telat (Toleransi 15 Menit)
+    // Cek keterlambatan
     const now = new Date();
-    const [sH, sM] = effectiveStartTime.split(':').map(Number);
-    const [eH, eM] = effectiveEndTime.split(':').map(Number);
+    const scheduleStartTime = schedule.TimeSlot?.startTime || schedule.startTime;
+    const scheduleEndTime = schedule.TimeSlot?.endTime || schedule.endTime;
     
-    const startTimeDate = new Date();
-    startTimeDate.setHours(sH, sM, 0);
-    
-    const endTimeDate = new Date();
-    endTimeDate.setHours(eH, eM, 0);
+    if (!scheduleStartTime || !scheduleEndTime) {
+      return res.status(400).json({ message: 'Jam pelaksanaan tidak terdefinisi' });
+    }
 
-    // Validasi apakah jadwal sudah mulai atau sudah selesai
+    const [schedHour, schedMinute] = scheduleStartTime.split(':').map(Number);
+    const [endHour, endMinute] = scheduleEndTime.split(':').map(Number);
+
+    const startTimeDate = new Date();
+    startTimeDate.setHours(schedHour, schedMinute, 0);
+
+    const endTimeDate = new Date();
+    endTimeDate.setHours(endHour, endMinute, 0);
+
     if (now < startTimeDate) {
       return res.status(400).json({ message: 'Jadwal belum dimulai bro!' });
     }
@@ -109,27 +128,24 @@ const submitAttendance = async (req, res) => {
       return res.status(400).json({ message: 'Jadwal sudah berakhir bro!' });
     }
 
-    const diffInMinutes = (now.getTime() - startTimeDate.getTime()) / (1000 * 60);
-    
     let status = 'masuk';
-    if (diffInMinutes > 15) {
-      status = 'telat';
-    }
+    const diffInMinutes = (now.getTime() - startTimeDate.getTime()) / (1000 * 60);
+    if (diffInMinutes > 15) status = 'telat';
 
     const activity = await Activity.create({
-      scheduleId,
       userId,
+      scheduleId,
       academicYearId: schedule.academicYearId,
       photoSelfie,
       photoClass,
+      status,
       type: type || 'pembelajaran',
       isCustom: isCustom || false,
-      status,
       timestamp: now,
-      // Snapshot Data
+      // Snapshot data
       snapshotClassName: schedule.Class?.name || 'Unknown Class',
       snapshotLessonName: schedule.Lesson?.name || 'Unknown Lesson',
-      snapshotTeacherName: schedule.teacher?.name || 'Unknown Teacher',
+      snapshotTeacherName: (await User.findByPk(userId))?.name || 'Unknown Teacher'
     });
 
     res.json({ message: 'Absensi berhasil disimpan', activity });

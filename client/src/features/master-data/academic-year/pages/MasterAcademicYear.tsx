@@ -4,7 +4,7 @@ import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Plus, Edit2, Trash2, CalendarDays, X, CheckCircle2, Circle } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
 import AcademicYearForm from '../forms/AcademicYearForm';
-import type { IAcademicYear, IAcademicYearPayload } from '../../../admin/interfaces/admin.interface';
+import type { IAcademicYear } from '../../../admin/interfaces/admin.interface';
 import { DataTable, type Column } from '../../../../shared/components/DataTable';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';

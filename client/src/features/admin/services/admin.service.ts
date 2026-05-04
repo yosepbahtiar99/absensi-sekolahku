@@ -25,8 +25,8 @@ export interface IPaginatedResponse<T> {
 }
 
 export const adminService = {
-  getSummary: async (): Promise<IAdminSummary> => {
-    const response = await api.get<IAdminSummary>('/admin/summary');
+  getSummary: async (academicYearId?: string): Promise<IAdminSummary> => {
+    const response = await api.get<IAdminSummary>('/admin/summary', { params: { academicYearId } });
     return response.data;
   },
 
