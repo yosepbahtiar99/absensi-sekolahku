@@ -13,11 +13,14 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ title, subtitle, icon }) => {
   const { data: academicYears = [] } = useAcademicYears();
   const { selectedYearId, setSelectedYearId } = useAcademicYearStore();
   
-  // Set default active year if nothing is selected
+  // Set default active year if nothing is selected or if selected ID is stale (after DB reset)
   React.useEffect(() => {
-    if (!selectedYearId && academicYears.length > 0) {
-      const activeYear = academicYears.find(y => y.isActive) || academicYears[0];
-      setSelectedYearId(activeYear.id);
+    if (academicYears.length > 0) {
+      const exists = academicYears.some(y => y.id === selectedYearId);
+      if (!selectedYearId || !exists) {
+        const activeYear = academicYears.find(y => y.isActive) || academicYears[0];
+        setSelectedYearId(activeYear.id);
+      }
     }
   }, [academicYears, selectedYearId, setSelectedYearId]);
 

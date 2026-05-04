@@ -162,6 +162,7 @@ const getScheduleDetail = async (req, res) => {
       include: [
         { model: Class, attributes: ['name'] },
         { model: Lesson, attributes: ['name'] },
+        { model: TimeSlot, attributes: ['label', 'startTime', 'endTime'] },
         { 
           model: Activity,
           where: {
@@ -178,6 +179,11 @@ const getScheduleDetail = async (req, res) => {
     if (!scheduleData) return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
 
     const schedule = scheduleData.toJSON();
+    
+    // Map effective times
+    schedule.startTime = schedule.TimeSlot?.startTime || schedule.startTime;
+    schedule.endTime = schedule.TimeSlot?.endTime || schedule.endTime;
+    
     schedule.Attendance = schedule.Activities && schedule.Activities.length > 0 ? schedule.Activities[0] : null;
     delete schedule.Activities;
 

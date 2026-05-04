@@ -10,7 +10,8 @@ import {
 import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { Plus, X, Calendar, Info, GraduationCap, Copy, ChevronRight, Loader2 } from 'lucide-react';
+import { Plus, X, Calendar, Info, GraduationCap, Copy, ChevronRight, Loader2, FileSpreadsheet } from 'lucide-react';
+import { scheduleService } from '../services/schedule.service';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Button } from '../../../../shared/components/Button';
 import { Card } from '../../../../shared/components/Card';
@@ -184,6 +185,15 @@ const MasterSchedule = () => {
             ))}
           </div>
           <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => currentYearId && scheduleService.exportExcel(currentYearId)} 
+              className="border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+              disabled={!currentYearId}
+            >
+              <FileSpreadsheet size={18} className="mr-2" />
+              Export Excel
+            </Button>
             <Button 
               variant="outline" 
               onClick={() => setIsCloneModalOpen(true)} 

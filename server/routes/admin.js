@@ -7,7 +7,7 @@ const {
   getLessons, createLesson, updateLesson, deleteLesson,
   getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
   getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
-  getSchedules, createOrUpdateSchedule, deleteSchedule, cloneSchedule,
+  getSchedules, createOrUpdateSchedule, deleteSchedule, cloneSchedule, exportSchedule,
   exportReport
 } = require('../controllers/adminController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
@@ -55,6 +55,7 @@ router.delete('/time-slots/:id', deleteTimeSlot);
 router.get('/schedules', getSchedules);
 router.post('/schedules', createOrUpdateSchedule);
 router.post('/schedules/clone', cloneSchedule);
+router.get('/schedules/export', exportSchedule);
 router.delete('/schedules/:id', deleteSchedule);
 
 module.exports = router;

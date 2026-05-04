@@ -682,6 +682,123 @@ const approveRequest = async (req, res) => {
   }
 };
 
+const exportSchedule = async (req, res) => {
+  try {
+    const { academicYearId } = req.query;
+    if (!academicYearId) return res.status(400).json({ message: 'Tahun ajaran harus dipilih' });
+
+    const year = await AcademicYear.findByPk(academicYearId);
+    const classes = await Class.findAll({ order: [['name', 'ASC']] });
+    const timeSlots = await TimeSlot.findAll({ 
+      where: { academicYearId },
+      order: [['startTime', 'ASC']] 
+    });
+    const schedules = await Schedule.findAll({
+      where: { academicYearId },
+      include: [
+        { model: User, as: 'teacher', attributes: ['name'] },
+        { model: Lesson, attributes: ['name'] }
+      ]
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat'];
+
+    for (const cls of classes) {
+      const sheet = workbook.addWorksheet(cls.name.replace(/[\\\/\?\*\[\]]/g, '')); // Clean sheet name
+
+      // 1. Title Header
+      sheet.mergeCells('A1:F1');
+      const titleCell = sheet.getCell('A1');
+      titleCell.value = `JADWAL PELAJARAN - ${cls.name}`;
+      titleCell.font = { bold: true, size: 16 };
+      titleCell.alignment = { horizontal: 'center' };
+
+      sheet.mergeCells('A2:F2');
+      const subTitleCell = sheet.getCell('A2');
+      subTitleCell.value = `TAHUN AJARAN: ${year?.name || '-'}`;
+      subTitleCell.font = { bold: true, size: 11 };
+      subTitleCell.alignment = { horizontal: 'center' };
+
+      // 2. Table Header (Days)
+      const headerRow = sheet.getRow(4);
+      headerRow.values = ['Waktu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0891B2' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
+        };
+      });
+
+      // 3. Unique time slots (sorted)
+      // Since different days might have different slots, we collect all unique time intervals
+      const uniqueTimes = [...new Set(timeSlots.map(ts => `${ts.startTime.substring(0,5)} - ${ts.endTime.substring(0,5)}`))].sort();
+
+      uniqueTimes.forEach((timeStr, idx) => {
+        const row = sheet.getRow(5 + idx);
+        row.getCell(1).value = timeStr;
+        row.getCell(1).font = { bold: true };
+        row.getCell(1).alignment = { horizontal: 'center' };
+
+        days.forEach((day, dayIdx) => {
+          const slotForThisTime = timeSlots.find(ts => 
+            ts.day === day && 
+            `${ts.startTime.substring(0,5)} - ${ts.endTime.substring(0,5)}` === timeStr
+          );
+
+          if (slotForThisTime) {
+            const sched = schedules.find(s => s.classId === cls.id && s.timeSlotId === slotForThisTime.id && s.day === day);
+            const cell = row.getCell(2 + dayIdx);
+            
+            if (sched) {
+              cell.value = `${sched.Lesson?.name}\n(${sched.teacher?.name})`;
+              cell.alignment = { wrapText: true, horizontal: 'center', vertical: 'middle' };
+              cell.font = { size: 9 };
+            } else {
+              // Special labels for empty slots (e.g. Break, Ceremony) if they exist in timeSlots
+              if (slotForThisTime.label.toLowerCase() !== 'jam ke-' && !slotForThisTime.label.startsWith('Jam ke')) {
+                cell.value = slotForThisTime.label;
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                cell.font = { italic: true, size: 8, color: { argb: 'FF64748B' } };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+              }
+            }
+          } else {
+            // No slot for this time on this day
+            const cell = row.getCell(2 + dayIdx);
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+          }
+        });
+
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.border = {
+            top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
+          };
+        });
+      });
+
+      // Column widths
+      sheet.getColumn(1).width = 20;
+      sheet.getColumn(2).width = 25;
+      sheet.getColumn(3).width = 25;
+      sheet.getColumn(4).width = 25;
+      sheet.getColumn(5).width = 25;
+      sheet.getColumn(6).width = 25;
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=Jadwal_Pelajaran_${year?.name.replace(/ /g, '_')}.xlsx`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal export jadwal' });
+  }
+};
+
 const cloneSchedule = async (req, res) => {
   try {
     const { fromYearId, toYearId } = req.body;
@@ -753,6 +870,6 @@ module.exports = {
   getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
   getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
   getSchedules, createOrUpdateSchedule, deleteSchedule,
-  cloneSchedule,
+  cloneSchedule, exportSchedule,
   exportReport
 };

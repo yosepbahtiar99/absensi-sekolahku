@@ -20,26 +20,46 @@ async function syncDB() {
     });
     console.log('✅ Tahun Ajaran Berhasil Dibuat!');
 
-    // 2. Buat Template Jam Pelajaran (Time Slots) untuk Senin
-    const slots = [
-      { label: 'Jam ke-1', start: '07:30:00', end: '08:15:00', num: 1 },
-      { label: 'Jam ke-2', start: '08:15:00', end: '09:00:00', num: 2 },
-      { label: 'Istirahat', start: '09:00:00', end: '09:30:00', num: 0 },
-      { label: 'Jam ke-3', start: '09:30:00', end: '10:15:00', num: 3 },
-      { label: 'Jam ke-4', start: '10:15:00', end: '11:00:00', num: 4 },
+    // 2. Definisi Template Jam Pelajaran
+    const timeSlotsData = [
+      // SENIN
+      { day: 'senin', label: 'Upacara', start: '06:30:00', end: '07:30:00', num: 0 },
+      { day: 'senin', label: 'Jam ke-1', start: '07:30:00', end: '08:15:00', num: 1 },
+      { day: 'senin', label: 'Jam ke-2', start: '08:15:00', end: '09:00:00', num: 2 },
+      { day: 'senin', label: 'Jam ke-3', start: '09:00:00', end: '09:30:00', num: 3 },
+      { day: 'senin', label: 'Istirahat', start: '09:30:00', end: '10:15:00', num: 0 },
+      { day: 'senin', label: 'Jam ke-4', start: '10:15:00', end: '11:00:00', num: 4 },
+      { day: 'senin', label: 'Jam ke-5', start: '11:00:00', end: '11:45:00', num: 5 },
+
+      // SELASA, RABU, KAMIS (Looping)
+      ...['selasa', 'rabu', 'kamis'].flatMap(day => [
+        { day, label: 'Jam ke-1', start: '07:00:00', end: '07:45:00', num: 1 },
+        { day, label: 'Jam ke-2', start: '07:45:00', end: '08:30:00', num: 2 },
+        { day, label: 'Jam ke-3', start: '08:30:00', end: '09:15:00', num: 3 },
+        { day, label: 'Istirahat', start: '09:15:00', end: '10:00:00', num: 0 },
+        { day, label: 'Jam ke-4', start: '10:30:00', end: '11:15:00', num: 4 },
+        { day, label: 'Jam ke-5', start: '11:15:00', end: '12:00:00', num: 5 },
+      ]),
+
+      // JUMAT
+      { day: 'jumat', label: 'Duha Bersama', start: '06:30:00', end: '07:45:00', num: 0 },
+      { day: 'jumat', label: 'Jam ke-2', start: '07:45:00', end: '08:30:00', num: 2 },
+      { day: 'jumat', label: 'Istirahat', start: '08:30:00', end: '09:15:00', num: 0 },
+      { day: 'jumat', label: 'Jam ke-3', start: '09:15:00', end: '10:00:00', num: 3 },
+      { day: 'jumat', label: 'Jam ke-4', start: '10:30:00', end: '11:15:00', num: 4 },
     ];
 
-    for (const s of slots) {
+    for (const s of timeSlotsData) {
       await TimeSlot.create({
         academicYearId: year.id,
-        day: 'senin',
+        day: s.day,
         label: s.label,
         startTime: s.start,
         endTime: s.end,
         periodNumber: s.num
       });
     }
-    console.log('✅ Template Jam Pelajaran (Senin) Berhasil Dibuat!');
+    console.log('✅ Template Jam Pelajaran Sultan Berhasil Dibuat!');
 
     // 3. Buat Admin Pertama
     const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -52,31 +72,19 @@ async function syncDB() {
 
     // 4. Buat Guru Contoh
     const hashedPassGuru = await bcrypt.hash('guru123', 10);
-    const guru = await User.create({
-      name: 'Pak Budi Santoso',
+    await User.create({
+      name: 'Budi Santoso',
       username: 'guru',
       password: hashedPassGuru,
       role: 'guru'
     });
 
     // 5. Buat Data Master Contoh
-    const mapel = await Lesson.create({ name: 'Bahasa Indonesia', hours: 4 });
-    const kelasA = await Class.create({ name: 'Kelas VII A' });
-
-    // 6. Ambil Slot Jam ke-1 untuk Jadwal Contoh
-    const slot1 = await TimeSlot.findOne({ where: { label: 'Jam ke-1', day: 'senin' } });
-
-    await Schedule.create({
-      day: 'senin',
-      academicYearId: year.id,
-      timeSlotId: slot1.id,
-      teacherId: guru.id,
-      lessonId: mapel.id,
-      classId: kelasA.id
-    });
+    await Lesson.create({ name: 'Bahasa Indonesia', hours: 4 });
+    await Class.create({ name: 'Kelas VII A' });
 
     console.log('-----------------------------------');
-    console.log('🚀 SELESAI!');
+    console.log('🚀 SELESAI SINKRONISASI!');
     console.log('User Admin: admin / admin123');
     console.log('User Guru: guru / guru123');
     console.log('Tahun Ajaran Aktif: 2023/2024 Ganjil');
