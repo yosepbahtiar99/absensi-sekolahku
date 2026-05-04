@@ -264,8 +264,8 @@ const AdminActivities = () => {
                 header: 'Pelajaran / Kelas',
                 accessor: (act: any) => (
                   <div className="bg-slate-50 px-4 py-2 rounded-xl inline-block border border-slate-100">
-                    <div className="text-sm font-black text-slate-800">{act.Schedule?.Lesson?.name || '-'}</div>
-                    <div className="text-[11px] font-bold text-primary uppercase tracking-wider">{act.Schedule?.Class?.name || '-'}</div>
+                    <div className="text-sm font-black text-slate-800">{act.snapshotLessonName || act.Schedule?.Lesson?.name || '-'}</div>
+                    <div className="text-[11px] font-bold text-primary uppercase tracking-wider">{act.snapshotClassName || act.Schedule?.Class?.name || '-'}</div>
                   </div>
                 )
               },

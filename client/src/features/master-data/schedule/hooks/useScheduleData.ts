@@ -27,3 +27,14 @@ export const useDeleteSchedule = () => {
     },
   });
 };
+
+export const useCloneSchedule = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fromYearId, toYearId }: { fromYearId: string; toYearId: string }) => 
+      scheduleService.clone(fromYearId, toYearId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['master-schedules'] });
+    },
+  });
+};

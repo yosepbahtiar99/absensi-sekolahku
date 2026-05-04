@@ -15,4 +15,9 @@ export const scheduleService = {
   delete: async (id: string): Promise<void> => {
     await api.delete(`/admin/schedules/${id}`);
   },
+
+  clone: async (fromYearId: string, toYearId: string): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/admin/schedules/clone', { fromYearId, toYearId });
+    return response.data;
+  },
 };

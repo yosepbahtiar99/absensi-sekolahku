@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -11,7 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  CalendarDays
+  CalendarDays,
+  Database,
+  ChevronDown
 } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useUIStore } from '../../../shared/store/uiStore';
@@ -21,18 +24,31 @@ const AdminSidebar = () => {
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const { isSidebarCollapsed, toggleSidebar } = useUIStore();
+  const location = useLocation();
+  const [isMasterOpen, setIsMasterOpen] = useState(false);
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-    { icon: CheckSquare, label: 'Riwayat Kehadiran', path: '/admin/activities' },
-    { icon: CheckSquare, label: 'Approval Guru', path: '/admin/approvals' },
+  // Auto expand Master Data if active
+  useEffect(() => {
+    const isMasterActive = [
+      '/admin/academic-years',
+      '/admin/guru',
+      '/admin/kelas',
+      '/admin/pelajaran',
+      '/admin/time-slots'
+    ].some(path => location.pathname === path);
+    
+    if (isMasterActive) setIsMasterOpen(true);
+  }, [location.pathname]);
+
+  const masterSubMenus = [
+    { icon: CalendarDays, label: 'Master Tahun Ajaran', path: '/admin/academic-years' },
     { icon: Users, label: 'Master Guru', path: '/admin/guru' },
     { icon: GraduationCap, label: 'Master Kelas', path: '/admin/kelas' },
     { icon: BookOpen, label: 'Master Pelajaran', path: '/admin/pelajaran' },
-    { icon: CalendarDays, label: 'Master Tahun Ajaran', path: '/admin/academic-years' },
     { icon: Clock, label: 'Master Jam', path: '/admin/time-slots' },
-    { icon: Calendar, label: 'Atur Jadwal', path: '/admin/schedule' },
   ];
+
+  const isMasterActive = masterSubMenus.some(item => location.pathname === item.path);
 
   return (
     <div 
@@ -77,50 +93,66 @@ const AdminSidebar = () => {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1.5 mt-2 overflow-y-auto custom-scrollbar">
+      <nav className="flex-1 px-4 space-y-1.5 mt-2 overflow-y-auto custom-scrollbar pb-10">
         {!isSidebarCollapsed && (
           <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 mt-2 transition-opacity duration-300 opacity-100">
             Main Menu
           </p>
         )}
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end
-            title={isSidebarCollapsed ? item.label : ""}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center rounded-2xl transition-all duration-300 group border",
-                isSidebarCollapsed ? "justify-center p-3.5" : "gap-3 px-4 py-3.5",
-                isActive
-                  ? "bg-white text-primary border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
-                  : "text-slate-500 border-transparent hover:bg-slate-200/50 hover:text-slate-900"
-              )
-            }
-          >
-            <item.icon size={20} className={cn("transition-transform group-hover:scale-110 shrink-0")} />
-            {!isSidebarCollapsed && (
-              <span className="font-bold text-sm transition-all duration-300 opacity-100 whitespace-nowrap">
-                {item.label}
-              </span>
+        
+        <MenuNavLink to="/admin" icon={LayoutDashboard} label="Dashboard" isCollapsed={isSidebarCollapsed} />
+        <MenuNavLink to="/admin/activities" icon={CheckSquare} label="Riwayat Kehadiran" isCollapsed={isSidebarCollapsed} />
+        <MenuNavLink to="/admin/approvals" icon={CheckSquare} label="Approval Guru" isCollapsed={isSidebarCollapsed} />
+
+        {/* Master Data Collapsible Menu */}
+        <div>
+          <button
+            onClick={() => !isSidebarCollapsed && setIsMasterOpen(!isMasterOpen)}
+            className={cn(
+              "flex items-center w-full rounded-2xl transition-all duration-300 group border mb-1",
+              isSidebarCollapsed ? "justify-center p-3.5" : "gap-3 px-4 py-3.5",
+              isMasterActive
+                ? "bg-white text-primary border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+                : "text-slate-500 border-transparent hover:bg-slate-200/50 hover:text-slate-900"
             )}
-            
-            {/* Active Indicator Dot */}
+          >
+            <Database size={20} className={cn("transition-transform group-hover:scale-110 shrink-0", isMasterActive ? "text-primary" : "text-slate-400")} />
             {!isSidebarCollapsed && (
-              <div className="ml-auto">
-                <NavLink to={item.path} end>
+              <>
+                <span className="font-bold text-sm flex-1 text-left whitespace-nowrap">Master Data</span>
+                <ChevronDown size={16} className={cn("transition-transform duration-300", isMasterOpen ? "rotate-180" : "")} />
+              </>
+            )}
+          </button>
+
+          {!isSidebarCollapsed && isMasterOpen && (
+            <div className="ml-4 pl-4 border-l-2 border-slate-200 space-y-1 animate-in slide-in-from-top-2 duration-300">
+              {masterSubMenus.map((sub) => (
+                <NavLink
+                  key={sub.path}
+                  to={sub.path}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group border",
+                      isActive
+                        ? "bg-white text-primary border-slate-200 shadow-sm font-bold"
+                        : "text-slate-500 border-transparent hover:text-slate-900 hover:bg-white/50"
+                    )
+                  }
+                >
                   {({ isActive }) => (
-                    <div className={cn(
-                      "w-1.5 h-1.5 rounded-full bg-primary transition-all duration-300",
-                      isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
-                    )}></div>
+                    <>
+                      <sub.icon size={20} className={cn("shrink-0", isActive ? "text-primary" : "text-slate-400")} />
+                      <span className="text-sm font-bold whitespace-nowrap">{sub.label}</span>
+                    </>
                   )}
                 </NavLink>
-              </div>
-            )}
-          </NavLink>
-        ))}
+              ))}
+            </div>
+          )}
+        </div>
+
+        <MenuNavLink to="/admin/schedule" icon={Calendar} label="Atur Jadwal" isCollapsed={isSidebarCollapsed} />
       </nav>
 
       {/* Toggle Button */}
@@ -154,9 +186,43 @@ const AdminSidebar = () => {
         </button>
       </div>
     </div>
-
   );
 };
+
+// Helper Component for NavLinks
+const MenuNavLink = ({ to, icon: Icon, label, isCollapsed }: { to: string, icon: any, label: string, isCollapsed: boolean }) => (
+  <NavLink
+    to={to}
+    end
+    title={isCollapsed ? label : ""}
+    className={({ isActive }) =>
+      cn(
+        "flex items-center rounded-2xl transition-all duration-300 group border",
+        isCollapsed ? "justify-center p-3.5" : "gap-3 px-4 py-3.5",
+        isActive
+          ? "bg-white text-primary border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+          : "text-slate-500 border-transparent hover:bg-slate-200/50 hover:text-slate-900"
+      )
+    }
+  >
+    <Icon size={20} className={cn("transition-transform group-hover:scale-110 shrink-0")} />
+    {!isCollapsed && (
+      <span className="font-bold text-sm transition-all duration-300 opacity-100 whitespace-nowrap flex-1">
+        {label}
+      </span>
+    )}
+    {!isCollapsed && (
+      <NavLink to={to} end>
+        {({ isActive }) => (
+          <div className={cn(
+            "w-1.5 h-1.5 rounded-full bg-primary transition-all duration-300",
+            isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
+          )}></div>
+        )}
+      </NavLink>
+    )}
+  </NavLink>
+);
 
 export default AdminSidebar;
 

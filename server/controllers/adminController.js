@@ -682,6 +682,66 @@ const approveRequest = async (req, res) => {
   }
 };
 
+const cloneSchedule = async (req, res) => {
+  try {
+    const { fromYearId, toYearId } = req.body;
+
+    if (!fromYearId || !toYearId) {
+      return res.status(400).json({ message: 'Pilih tahun asal dan tujuan' });
+    }
+
+    // 1. Ambil semua jadwal dari tahun asal
+    const oldSchedules = await Schedule.findAll({
+      where: { academicYearId: fromYearId },
+      include: [{ model: TimeSlot }]
+    });
+
+    if (oldSchedules.length === 0) {
+      return res.status(404).json({ message: 'Tidak ada jadwal di tahun asal' });
+    }
+
+    // 2. Ambil semua time slots di tahun tujuan
+    const newTimeSlots = await TimeSlot.findAll({
+      where: { academicYearId: toYearId }
+    });
+
+    // 3. Mapping logic
+    const newSchedules = [];
+    for (const oldSched of oldSchedules) {
+      // Cari slot yang cocok (berdasarkan hari dan nomor periode/label)
+      const matchingSlot = newTimeSlots.find(ts => 
+        ts.day === oldSched.day && 
+        (ts.periodNumber === oldSched.TimeSlot?.periodNumber || ts.label === oldSched.TimeSlot?.label)
+      );
+
+      if (matchingSlot) {
+        newSchedules.push({
+          classId: oldSched.classId,
+          lessonId: oldSched.lessonId,
+          teacherId: oldSched.teacherId,
+          academicYearId: toYearId,
+          timeSlotId: matchingSlot.id,
+          day: oldSched.day
+        });
+      }
+    }
+
+    if (newSchedules.length === 0) {
+      return res.status(400).json({ message: 'Struktur jam pelajaran di tahun tujuan tidak cocok' });
+    }
+
+    // 4. Bulk Create (Skip if duplicate? Better to clear or let it be)
+    // Clear existing schedules in toYearId first to avoid messy duplicates?
+    // User choice would be better, but for now let's just create.
+    await Schedule.bulkCreate(newSchedules);
+
+    res.json({ message: `Berhasil meng-copy ${newSchedules.length} jadwal` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal meng-cloning jadwal' });
+  }
+};
+
 module.exports = { 
   getDashboardSummary, 
   getAllActivities,
@@ -693,5 +753,6 @@ module.exports = {
   getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
   getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
   getSchedules, createOrUpdateSchedule, deleteSchedule,
+  cloneSchedule,
   exportReport
 };

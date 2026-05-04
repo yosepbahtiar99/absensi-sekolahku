@@ -7,7 +7,7 @@ const {
   getLessons, createLesson, updateLesson, deleteLesson,
   getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
   getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
-  getSchedules, createOrUpdateSchedule, deleteSchedule,
+  getSchedules, createOrUpdateSchedule, deleteSchedule, cloneSchedule,
   exportReport
 } = require('../controllers/adminController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
@@ -54,6 +54,7 @@ router.delete('/time-slots/:id', deleteTimeSlot);
 // Jadwal
 router.get('/schedules', getSchedules);
 router.post('/schedules', createOrUpdateSchedule);
+router.post('/schedules/clone', cloneSchedule);
 router.delete('/schedules/:id', deleteSchedule);
 
 module.exports = router;

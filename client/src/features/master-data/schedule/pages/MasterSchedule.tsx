@@ -10,14 +10,15 @@ import {
 import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { Plus, X, Calendar, Info, GraduationCap } from 'lucide-react';
+import { Plus, X, Calendar, Info, GraduationCap, Copy, ChevronRight, Loader2 } from 'lucide-react';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Button } from '../../../../shared/components/Button';
 import { Card } from '../../../../shared/components/Card';
-import { useSchedules, useUpsertSchedule, useDeleteSchedule } from '../hooks/useScheduleData';
+import { useSchedules, useUpsertSchedule, useDeleteSchedule, useCloneSchedule } from '../hooks/useScheduleData';
 import { useGurus } from '../../guru/hooks/useGuruData';
 import { useClasses } from '../../kelas/hooks/useKelasData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
+import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
 import { useTimeSlots } from '../../time-slot/hooks/useTimeSlotData';
 import { useAcademicYearStore } from '../../../../shared/store/academicYearStore';
 import AdminHeader from '../../../admin/components/AdminHeader';
@@ -29,17 +30,27 @@ import { useNotificationStore } from '../../../../shared/store/notificationStore
 
 const MasterSchedule = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<Partial<ISchedulePayload> | undefined>(undefined);
   const [activeDay, setActiveDay] = useState('senin');
+  const [sourceYearId, setSourceYearId] = useState('');
 
+  const { data: academicYears = [] } = useAcademicYears();
   const { selectedYearId } = useAcademicYearStore();
   const currentYearId = selectedYearId;
 
   const { data: schedData } = useSchedules(currentYearId || undefined);
+  const { mutate: cloneSchedule, isPending: isCloning } = useCloneSchedule();
   const { data: guruRes } = useGurus({ limit: 100 });
   const { data: kelasRes } = useClasses({ limit: 100 });
   const { data: lessonRes } = useLessons({ limit: 100 });
   const { data: timeSlots = [] } = useTimeSlots({ academicYearId: currentYearId || undefined });
+
+  // Filter time slots by active day to ensure correct columns
+  const filteredTimeSlots = useMemo(() => {
+    return timeSlots.filter(ts => ts.day.toLowerCase() === activeDay.toLowerCase())
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }, [timeSlots, activeDay]);
 
   const schedules = schedData; // Schedules is not paginated yet in server, but hook was updated? Wait.
   const gurus = guruRes?.data || [];
@@ -172,10 +183,21 @@ const MasterSchedule = () => {
               </button>
             ))}
           </div>
-          <Button onClick={() => handleOpenModal()} className="shadow-lg shadow-primary/20" disabled={!currentYearId}>
-            <Plus size={20} className="mr-2" />
-            Tambah Jadwal
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsCloneModalOpen(true)} 
+              className="border-slate-200 hover:bg-slate-50"
+              disabled={!currentYearId}
+            >
+              <Copy size={18} className="mr-2" />
+              Copy Jadwal
+            </Button>
+            <Button onClick={() => handleOpenModal()} className="shadow-lg shadow-primary/20" disabled={!currentYearId}>
+              <Plus size={20} className="mr-2" />
+              Tambah Jadwal
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
@@ -196,7 +218,7 @@ const MasterSchedule = () => {
                             <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Kelas \ Jam</span>
                           </div>
                         </th>
-                        {timeSlots.filter(ts => ts.day === activeDay).sort((a,b) => (a.periodNumber || 0) - (b.periodNumber || 0)).map(slot => (
+                        {filteredTimeSlots.map(slot => (
                           <th key={slot.id} className="p-6 border-b border-r border-slate-100 min-w-[240px]">
                             <div className="flex flex-col items-center">
                               <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-1">{slot.label}</span>
@@ -213,7 +235,7 @@ const MasterSchedule = () => {
                             <p className="font-black text-slate-800 text-sm">{cls.name}</p>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ID: {cls.id.slice(0, 8)}</p>
                           </td>
-                          {timeSlots.filter(ts => ts.day === activeDay).sort((a,b) => (a.periodNumber || 0) - (b.periodNumber || 0)).map(slot => {
+                          {filteredTimeSlots.map(slot => {
                             const schedule = schedules?.find(s => s.classId === cls.id && s.timeSlotId === slot.id && s.day === activeDay);
                             
                             const isTeacherConflict = schedule && schedules?.some(s => 
@@ -354,6 +376,70 @@ const MasterSchedule = () => {
               isLoading={upsertMutation.isPending}
             />
           </div>
+        </div>
+      )}
+      {/* Clone Schedule Modal */}
+      {isCloneModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <Card className="w-full max-w-md p-8 shadow-2xl border-none rounded-[2.5rem] animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <Copy className="text-primary" size={24} />
+                  Copy Jadwal
+                </h3>
+                <p className="text-slate-500 font-medium text-xs mt-1">Import jadwal dari periode sebelumnya.</p>
+              </div>
+              <button onClick={() => setIsCloneModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Pilih Tahun Ajaran Asal</label>
+                <select
+                  value={sourceYearId}
+                  onChange={(e) => setSourceYearId(e.target.value)}
+                  className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none appearance-none"
+                >
+                  <option value="">-- Pilih Periode Asal --</option>
+                  {academicYears.filter(y => y.id !== currentYearId).map(y => (
+                    <option key={y.id} value={y.id}>{y.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex gap-3">
+                <Info size={18} className="text-blue-500 shrink-0" />
+                <p className="text-[11px] font-medium text-blue-600 leading-relaxed">
+                  Jadwal akan di-copy berdasarkan <span className="font-black uppercase tracking-tighter">Nomor Periode (Jam ke-n)</span>. Pastikan struktur Jam Pelajaran di periode tujuan sudah sama dengan periode asal.
+                </p>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <Button variant="ghost" className="flex-1 rounded-2xl" onClick={() => setIsCloneModalOpen(false)}>Batal</Button>
+                <Button 
+                  className="flex-1 rounded-2xl shadow-lg shadow-primary/20" 
+                  disabled={!sourceYearId || isCloning}
+                  onClick={() => {
+                    cloneSchedule({ fromYearId: sourceYearId, toYearId: currentYearId! }, {
+                      onSuccess: (res) => {
+                        useNotificationStore.getState().showNotification(res.message, 'success');
+                        setIsCloneModalOpen(false);
+                      },
+                      onError: (err: any) => {
+                        useNotificationStore.getState().showNotification(err.response?.data?.message || 'Gagal copy jadwal', 'error');
+                      }
+                    });
+                  }}
+                >
+                  {isCloning ? <Loader2 className="animate-spin mr-2" size={18} /> : <ChevronRight className="mr-2" size={18} />}
+                  Mulai Copy
+                </Button>
+              </div>
+            </div>
+          </Card>
         </div>
       )}
     </div>

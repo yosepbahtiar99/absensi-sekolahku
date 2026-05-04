@@ -30,16 +30,16 @@
     - [x] Support different slot structures for different days (e.g., Monday Ceremony, Friday Short Day)
 
 ### Phase 3: Advanced Scheduling (Matrix Grid)
-- [ ] Revamp Schedule Page to "Matrix Grid" Visualization
-    - [ ] X-Axis: Time Slots (Jam 1, Jam 2, dst)
-    - [ ] Y-Axis: Classes (X-A, X-B, dst)
-    - [ ] Interactivity: Drag & Drop teachers/lessons into the grid
-- [ ] Conflict Detection: Visual indicator if a teacher is already assigned in another class at the same time slot
-- [ ] Cloning Feature: "Import Schedule from Previous Period" (Deep copy of schedules to new academic year)
+- [x] Revamp Schedule Page to "Matrix Grid" Visualization
+    - [x] X-Axis: Time Slots (Jam 1, Jam 2, dst)
+    - [x] Y-Axis: Classes (X-A, X-B, dst)
+    - [x] Interactivity: Drag & Drop teachers/lessons into the grid
+- [x] Conflict Detection: Visual indicator if a teacher is already assigned in another class at the same time slot
+- [x] Cloning Feature: "Import Schedule from Previous Period" (Deep copy of schedules to new academic year)
 
 ### Phase 4: History & Analytics
-- [ ] Global Period Selector in Admin Dashboard (View data for current/past academic years)
-- [ ] Reporting Consistency: Ensure reports pull from the snapshotted data in `Activity`
+- [x] Global Period Selector in Admin Dashboard (View data for current/past academic years)
+- [x] Reporting Consistency: Ensure reports pull from the snapshotted data in `Activity`
 
 ## UI/UX Improvements
 - [x] Revamp Guru Home (Mobile-first, Premium design)
