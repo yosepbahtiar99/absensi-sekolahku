@@ -234,7 +234,7 @@ const MasterSchedule = () => {
                     onClick={() => setActiveDay(day)}
                     className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                       activeDay === day 
-                        ? 'bg-primary text-white shadow-xl shadow-primary/30' 
+                        ? 'bg-primary text-white shadow-md shadow-primary/30' 
                         : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'
                     }`}
                   >
