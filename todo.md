@@ -58,7 +58,7 @@
     - Idle detection (5 menit).
     - Play Video 1 (Intro, 1x) -> Seamless transition -> Video 2 (Loop).
     - Overlay paling atas layar tanpa background tambahan.
-- [ ] Implementasi Mekanisme Refresh Token: Untuk keamanan dan user experience yang lebih baik (jangan langsung logout kalau token expired).
+- [x] Implementasi Mekanisme Refresh Token: Untuk keamanan dan user experience yang lebih baik (jangan langsung logout kalau token expired). (Done ✅)
 - [x] Refactor Backend Architecture: Bersihkan struktur kodingan (pisahkan models, routes, controllers, middleware, dan utils) agar lebih modular dan maintainable. (Done ✅)
 
 

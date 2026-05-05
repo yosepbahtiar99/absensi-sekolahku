@@ -1,8 +1,10 @@
 import { User, Settings, LogOut, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';
+import { useLogout } from '../../auth/hooks/useLogout';
 
 const GuruProfile = () => {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
+  const { logout } = useLogout();
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

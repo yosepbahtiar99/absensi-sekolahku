@@ -18,11 +18,12 @@ import {
   Layers
 } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';
+import { useLogout } from '../../auth/hooks/useLogout';
 import { useUIStore } from '../../../shared/store/uiStore';
 import { cn } from '../../../shared/lib/utils';
 
 const AdminSidebar = () => {
-  const logout = useAuthStore((state) => state.logout);
+  const { logout } = useLogout();
   const user = useAuthStore((state) => state.user);
   const { isSidebarCollapsed, toggleSidebar } = useUIStore();
   const location = useLocation();
