@@ -4,6 +4,7 @@ import { RefreshCw, Check, ArrowRight, X, Image as ImageIcon, Loader2 } from 'lu
 import { useScheduleById } from '../hooks/useAttendanceData';
 import { useSubmitAttendance } from '../hooks/useSubmitAttendance';
 import { attendanceService } from '../services/attendance.service';
+import { useNotificationStore } from '../../../shared/store/notificationStore';
 import { cn } from '../../../shared/lib/utils';
 
 const AttendancePage = () => {
@@ -11,6 +12,7 @@ const AttendancePage = () => {
   const navigate = useNavigate();
   const { data: schedule, isLoading: isScheduleLoading } = useScheduleById(scheduleId!);
   const { mutate, isPending } = useSubmitAttendance();
+  const { showNotification } = useNotificationStore();
 
   // Route Guard: Mentalin balik ke home kalau jadwal nggak valid/udah absen
   useEffect(() => {
@@ -91,7 +93,7 @@ const AttendancePage = () => {
       } catch (err) {
         if (!isCancelled) {
           console.error("Camera error:", err);
-          alert("Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.");
+          showNotification("Gagal mengakses kamera. Pastikan izin kamera sudah diberikan.", "error");
         }
       }
     };
@@ -179,12 +181,12 @@ const AttendancePage = () => {
         onError: (error: any) => {
           console.error("Submission error:", error);
           const message = error.response?.data?.message || "Gagal menyimpan absensi.";
-          alert(`Error: ${message}`);
+          showNotification(`Error: ${message}`, "error");
         }
       });
     } catch (error: any) {
       console.error("Upload error:", error);
-      alert("Gagal mengupload foto. Silakan coba lagi.");
+      showNotification("Gagal mengupload foto. Silakan coba lagi.", "error");
     } finally {
       setIsUploading(false);
     }

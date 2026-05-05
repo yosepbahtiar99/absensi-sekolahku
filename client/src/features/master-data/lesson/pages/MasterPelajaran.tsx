@@ -5,6 +5,7 @@ import { Plus, Edit2, Trash2, BookOpen, Search, X } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
 import LessonForm from '../forms/LessonForm';
 import type { IPelajaran } from '../interfaces/lesson.interface';
+import { useConfirmStore } from '../../../../shared/store/confirmStore';
 
 import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
@@ -22,6 +23,7 @@ const MasterPelajaran = () => {
   const createMutation = useCreateLesson();
   const updateMutation = useUpdateLesson();
   const deleteMutation = useDeleteLesson();
+  const confirm = useConfirmStore(state => state.confirm);
 
   const handleOpenModal = (lesson?: IPelajaran) => {
     setSelectedLesson(lesson);
@@ -45,8 +47,16 @@ const MasterPelajaran = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus mata pelajaran ini?')) {
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Hapus Mata Pelajaran',
+      message: 'Apakah Anda yakin ingin menghapus mata pelajaran ini? Data jadwal yang menggunakan mapel ini akan ikut terhapus.',
+      variant: 'danger',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal'
+    });
+    
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };

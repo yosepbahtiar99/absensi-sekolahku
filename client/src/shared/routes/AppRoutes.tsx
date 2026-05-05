@@ -22,11 +22,13 @@ import MasterSchedule from '../../features/master-data/schedule/pages/MasterSche
 import CurriculumPage from '../../features/master-data/curriculum/pages/CurriculumPage';
 import MasterGradeLevel from '../../features/master-data/grade-level/pages/MasterGradeLevel';
 import GlobalNotification from '../components/GlobalNotification';
+import GlobalConfirmModal from '../components/GlobalConfirmModal';
 
 const AppRoutes = () => {
   return (
     <>
       <GlobalNotification />
+      <GlobalConfirmModal />
       <Routes>
       <Route path="/login" element={<LoginPage />} />
       

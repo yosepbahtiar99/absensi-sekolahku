@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAcademicYears, useCreateAcademicYear, useUpdateAcademicYear, useDeleteAcademicYear } from '../hooks/useAcademicYearData';
+import { useConfirmStore } from '../../../../shared/store/confirmStore';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Plus, Edit2, Trash2, CalendarDays, X, CheckCircle2, Circle } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
@@ -17,6 +18,7 @@ const MasterAcademicYear = () => {
   const createMutation = useCreateAcademicYear();
   const updateMutation = useUpdateAcademicYear();
   const deleteMutation = useDeleteAcademicYear();
+  const confirm = useConfirmStore(state => state.confirm);
 
   const handleOpenModal = (year?: IAcademicYear) => {
     setSelectedYear(year);
@@ -40,8 +42,16 @@ const MasterAcademicYear = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus tahun ajaran ini? Semua data terkait (jadwal, dsb) mungkin akan terpengaruh.')) {
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Hapus Tahun Ajaran',
+      message: 'Apakah Anda yakin ingin menghapus tahun ajaran ini? Semua data terkait (jadwal, kurikulum, dsb) akan hilang.',
+      variant: 'danger',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal'
+    });
+    
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };

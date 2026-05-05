@@ -5,6 +5,7 @@ import { Plus, Edit2, Trash2, GraduationCap, Search, X } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
 import KelasForm from '../forms/KelasForm';
 import type { IKelas } from '../interfaces/kelas.interface';
+import { useConfirmStore } from '../../../../shared/store/confirmStore';
 
 import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
@@ -22,6 +23,7 @@ const MasterKelas = () => {
   const createMutation = useCreateClass();
   const updateMutation = useUpdateClass();
   const deleteMutation = useDeleteClass();
+  const confirm = useConfirmStore(state => state.confirm);
 
   const handleOpenModal = (kelas?: IKelas) => {
     setSelectedKelas(kelas);
@@ -45,8 +47,16 @@ const MasterKelas = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus kelas ini?')) {
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Hapus Kelas',
+      message: 'Apakah Anda yakin ingin menghapus kelas ini? Semua data jadwal yang terkait akan ikut terhapus.',
+      variant: 'danger',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal'
+    });
+    
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };

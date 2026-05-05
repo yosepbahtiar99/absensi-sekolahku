@@ -5,6 +5,7 @@ import { Plus, Edit2, Trash2, Search, X, UserPlus } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
 import GuruForm from '../forms/GuruForm';
 import type { IGuru } from '../interfaces/guru.interface';
+import { useConfirmStore } from '../../../../shared/store/confirmStore';
 
 import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
@@ -22,6 +23,7 @@ const MasterGuru = () => {
   const createMutation = useCreateGuru();
   const updateMutation = useUpdateGuru();
   const deleteMutation = useDeleteGuru();
+  const confirm = useConfirmStore(state => state.confirm);
 
   const handleOpenModal = (guru?: IGuru) => {
     setSelectedGuru(guru);
@@ -45,8 +47,16 @@ const MasterGuru = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus guru ini?')) {
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Hapus Guru',
+      message: 'Apakah Anda yakin ingin menghapus guru ini? Semua data terkait guru ini akan hilang.',
+      variant: 'danger',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal'
+    });
+    
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };

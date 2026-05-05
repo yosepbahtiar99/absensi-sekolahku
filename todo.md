@@ -49,8 +49,11 @@
 - [x] Create `GradeLevel` Master Model (Dynamic levels instead of hardcoded 7-12)
 - [x] Create UI for Managing Grade Levels
 - [x] Refactor Class & Curriculum to use `GradeLevel` associations
-- [ ] Add validation to prevent/warn when plotting over-quota lessons
+- [x] Add validation to prevent/warn when plotting over-quota lessons (Done: Frontend Warn & Backend Prevent)
 
+## Pending Enhancements 🚀
+- [ ] Implement fitur disable/enable per guru (default enabled) untuk pengaturan perekaman foto absen. Jika disabled, skip capture photo dan activity langsung tersimpan tanpa foto.
+- [ ] Review/Cek kembali fitur approval kelas custom.
 
 
 ## UI/UX Improvements

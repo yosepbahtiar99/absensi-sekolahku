@@ -10,6 +10,7 @@ import { useCurriculums, useCreateCurriculum, useDeleteCurriculum } from '../hoo
 import { useLessons } from '../../lesson/hooks/useLessonData';
 import { useGradeLevels } from '../../grade-level/hooks/useGradeLevelData';
 import { useNotificationStore } from '../../../../shared/store/notificationStore';
+import { useConfirmStore } from '../../../../shared/store/confirmStore';
 
 const CurriculumPage = () => {
   const { selectedYearId } = useAcademicYearStore();
@@ -36,6 +37,7 @@ const CurriculumPage = () => {
 
   const createMutation = useCreateCurriculum();
   const deleteMutation = useDeleteCurriculum();
+  const confirm = useConfirmStore(state => state.confirm);
 
   const handleAdd = () => {
     if (!selectedYearId || !newLessonId || !selectedGradeId) return;
@@ -56,8 +58,16 @@ const CurriculumPage = () => {
     });
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Hapus mapel ini dari kurikulum?')) {
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Hapus Kurikulum',
+      message: 'Apakah Anda yakin ingin menghapus mapel ini dari kurikulum?',
+      variant: 'danger',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal'
+    });
+    
+    if (confirmed) {
       deleteMutation.mutate(id, {
         onSuccess: () => showNotification('Kurikulum dihapus', 'success')
       });

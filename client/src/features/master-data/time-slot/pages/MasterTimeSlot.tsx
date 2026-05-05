@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTimeSlots, useCreateTimeSlot, useUpdateTimeSlot, useDeleteTimeSlot } from '../hooks/useTimeSlotData';
+import { useConfirmStore } from '../../../../shared/store/confirmStore';
 import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Plus, Edit2, Trash2, Clock, X, Filter } from 'lucide-react';
@@ -26,6 +27,7 @@ const MasterTimeSlot = () => {
   const createMutation = useCreateTimeSlot();
   const updateMutation = useUpdateTimeSlot();
   const deleteMutation = useDeleteTimeSlot();
+  const confirm = useConfirmStore(state => state.confirm);
 
   const handleOpenModal = (slot?: ITimeSlot) => {
     setSelectedSlot(slot);
@@ -49,8 +51,16 @@ const MasterTimeSlot = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Hapus slot jam pelajaran ini?')) {
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Hapus Slot Jam',
+      message: 'Apakah Anda yakin ingin menghapus slot jam pelajaran ini?',
+      variant: 'danger',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal'
+    });
+    
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };

@@ -42,6 +42,7 @@ import ScheduleFormModal from '../components/ScheduleFormModal';
 import CloneScheduleModal from '../components/CloneScheduleModal';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { useNotificationStore } from '../../../../shared/store/notificationStore';
+import { useConfirmStore } from '../../../../shared/store/confirmStore';
 import { Button } from '../../../../shared/components/Button';
 
 const MasterSchedule = () => {
@@ -118,6 +119,7 @@ const MasterSchedule = () => {
   );
 
   const { showNotification } = useNotificationStore();
+  const confirm = useConfirmStore(state => state.confirm);
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -126,7 +128,7 @@ const MasterSchedule = () => {
     else setActiveItem({ type: 'lesson', ...lessons.find(l => l.id === id) });
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { over, active } = event;
     setActiveItem(null);
     if (!over) return;
@@ -150,7 +152,14 @@ const MasterSchedule = () => {
     if (activeType === 'lesson' && lessonStats[activeId]) {
       const stat = lessonStats[activeId];
       if (!existing && stat.remaining <= 0) {
-        if (!window.confirm(`${activeItem.name} sudah memenuhi kuota (${stat.required} JP). Tetap tambahkan?`)) return;
+        const confirmed = await confirm({
+          title: 'Kuota Terpenuhi',
+          message: `${activeItem.name} sudah memenuhi kuota (${stat.required} JP) untuk kelas ini. Tetap tambahkan?`,
+          variant: 'warning',
+          confirmText: 'Tetap Tambah',
+          cancelText: 'Batal'
+        });
+        if (!confirmed) return;
       }
     }
 
@@ -432,12 +441,19 @@ const MasterSchedule = () => {
             lessons={lessons}
             isLoading={upsertMutation.isPending}
             onClose={() => setIsModalOpen(false)}
-            onSubmit={(values) => {
+            onSubmit={async (values) => {
               if (lessonStats[values.lessonId]) {
                 const stat = lessonStats[values.lessonId];
                 const isChangingToSame = schedules.find(s => s.classId === values.classId && s.timeSlotId === values.timeSlotId && s.day === values.day)?.lessonId === values.lessonId;
                 if (!isChangingToSame && stat.remaining <= 0) {
-                  if (!window.confirm(`Kuota Mapel sudah terpenuhi. Tetap simpan?`)) return;
+                  const confirmed = await confirm({
+                    title: 'Kuota Terpenuhi',
+                    message: `Kuota Mapel sudah terpenuhi (${stat.required} JP). Tetap simpan?`,
+                    variant: 'warning',
+                    confirmText: 'Tetap Simpan',
+                    cancelText: 'Batal'
+                  });
+                  if (!confirmed) return;
                 }
               }
               upsertMutation.mutate(values, {

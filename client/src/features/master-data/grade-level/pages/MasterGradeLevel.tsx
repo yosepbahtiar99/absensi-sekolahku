@@ -6,6 +6,7 @@ import { Button } from '../../../../shared/components/Button';
 import { Card } from '../../../../shared/components/Card';
 import { Input } from '../../../../shared/components/Input';
 import { useGradeLevels, useCreateGradeLevel, useUpdateGradeLevel, useDeleteGradeLevel } from '../hooks/useGradeLevelData';
+import { useConfirmStore } from '../../../../shared/store/confirmStore';
 import { useNotificationStore } from '../../../../shared/store/notificationStore';
 
 const MasterGradeLevel = () => {
@@ -20,6 +21,7 @@ const MasterGradeLevel = () => {
   const createMutation = useCreateGradeLevel();
   const updateMutation = useUpdateGradeLevel();
   const deleteMutation = useDeleteGradeLevel();
+  const confirm = useConfirmStore(state => state.confirm);
 
   const handleAdd = () => {
     if (!newName) return;
@@ -41,8 +43,16 @@ const MasterGradeLevel = () => {
     });
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Hapus tingkat ini? Semua kelas yang terhubung mungkin akan bermasalah.')) {
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Hapus Tingkat',
+      message: 'Apakah Anda yakin ingin menghapus tingkat ini? Semua kelas yang terhubung mungkin akan bermasalah.',
+      variant: 'danger',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal'
+    });
+    
+    if (confirmed) {
       deleteMutation.mutate(id, {
         onSuccess: () => showNotification('Tingkat dihapus', 'success')
       });
