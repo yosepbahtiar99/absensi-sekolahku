@@ -54,7 +54,7 @@
 ## Pending Enhancements 🚀
 - [x] Implement fitur disable/enable per guru (default enabled) untuk pengaturan perekaman foto absen. Jika disabled, skip capture photo dan activity langsung tersimpan tanpa foto. (Done ✅)
 - [ ] Review/Cek kembali fitur approval kelas custom.
-- [ ] Refactor Backend Architecture: Bersihkan struktur kodingan (pisahkan models, routes, controllers, middleware, dan utils) agar lebih modular dan maintainable.
+- [x] Refactor Backend Architecture: Bersihkan struktur kodingan (pisahkan models, routes, controllers, middleware, dan utils) agar lebih modular dan maintainable. (Done ✅)
 
 
 ## UI/UX Improvements

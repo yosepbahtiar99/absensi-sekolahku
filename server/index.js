@@ -17,15 +17,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
-const authRoutes = require('./routes/auth');
-const teacherRoutes = require('./routes/teacher');
-const uploadRoutes = require('./routes/upload');
-const adminRoutes = require('./routes/admin');
+const routes = require('./routes');
+app.use('/api', routes);
 
-app.use('/api/auth', authRoutes);
-app.use('/api/teacher', teacherRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/admin', adminRoutes);
+// Error Handling Middleware
+const errorMiddleware = require('./middleware/errorMiddleware');
+app.use(errorMiddleware);
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -33,6 +30,15 @@ app.get('/', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+const { sequelize } = require('./models');
+
+sequelize.authenticate()
+  .then(() => {
+    console.log('Database connected...');
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
