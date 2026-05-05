@@ -54,6 +54,11 @@
 ## Pending Enhancements 🚀
 - [x] Implement fitur disable/enable per guru (default enabled) untuk pengaturan perekaman foto absen. Jika disabled, skip capture photo dan activity langsung tersimpan tanpa foto. (Done ✅)
 - [ ] Review/Cek kembali fitur approval kelas custom.
+- [ ] Implementasi Admin Screensaver (WebM):
+    - Idle detection (5 menit).
+    - Play Video 1 (Intro, 1x) -> Seamless transition -> Video 2 (Loop).
+    - Overlay paling atas layar tanpa background tambahan.
+- [ ] Implementasi Mekanisme Refresh Token: Untuk keamanan dan user experience yang lebih baik (jangan langsung logout kalau token expired).
 - [x] Refactor Backend Architecture: Bersihkan struktur kodingan (pisahkan models, routes, controllers, middleware, dan utils) agar lebih modular dan maintainable. (Done ✅)
 
 
