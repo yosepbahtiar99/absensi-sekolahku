@@ -1,5 +1,6 @@
 import React from 'react';
 import { Formik, Form, ErrorMessage } from 'formik';
+import { cn } from '../../../../shared/lib/utils';
 import * as Yup from 'yup';
 import { Button } from '../../../../shared/components/Button';
 import { Input } from '../../../../shared/components/Input';
@@ -31,11 +32,12 @@ const GuruForm: React.FC<GuruFormProps> = ({ initialValues, onSubmit, isLoading,
         name: initialValues?.name || '',
         username: initialValues?.username || '',
         password: '',
+        isPhotoRequired: initialValues?.isPhotoRequired ?? true,
       }}
       validationSchema={guruSchema}
       onSubmit={onSubmit}
     >
-      {({ errors, touched, values, handleChange }) => (
+      {({ errors, touched, values, handleChange, setFieldValue }) => (
         <Form className="space-y-6">
           <div className="space-y-4">
             <div>
@@ -75,6 +77,30 @@ const GuruForm: React.FC<GuruFormProps> = ({ initialValues, onSubmit, isLoading,
                 className={errors.password && touched.password ? "border-red-500" : ""}
               />
               <ErrorMessage name="password" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
+            </div>
+
+            <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between">
+              <div className="pr-4">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-800 block">Wajib Foto Absen</label>
+                <p className="text-[10px] font-bold text-slate-400 mt-0.5 leading-relaxed">
+                  Jika aktif, guru wajib mengambil foto selfie & kelas saat melakukan absen.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFieldValue('isPhotoRequired', !values.isPhotoRequired)}
+                className={cn(
+                  "relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full transition-all duration-300 outline-none ring-offset-2 focus:ring-2 focus:ring-primary/20",
+                  values.isPhotoRequired ? "bg-primary shadow-lg shadow-primary/20" : "bg-slate-200"
+                )}
+              >
+                <span
+                  className={cn(
+                    "inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform duration-300",
+                    values.isPhotoRequired ? "translate-x-7" : "translate-x-1"
+                  )}
+                />
+              </button>
             </div>
           </div>
 

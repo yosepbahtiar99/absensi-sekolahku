@@ -25,6 +25,7 @@ const User = sequelize.define('User', {
   username: { type: DataTypes.STRING, unique: true, allowNull: false },
   password: { type: DataTypes.STRING, allowNull: false },
   role: { type: DataTypes.ENUM('admin', 'guru'), defaultValue: 'guru' },
+  isPhotoRequired: { type: DataTypes.BOOLEAN, defaultValue: true },
 });
 
 const Activity = sequelize.define('Activity', {

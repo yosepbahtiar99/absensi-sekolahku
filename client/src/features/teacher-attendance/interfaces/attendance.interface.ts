@@ -13,6 +13,7 @@ export interface ISchedule {
     status: string;
     timestamp: string;
   };
+  teacher?: { isPhotoRequired: boolean };
 }
 
 export interface IAttendancePayload {

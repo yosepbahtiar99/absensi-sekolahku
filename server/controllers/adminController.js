@@ -166,9 +166,15 @@ const getGurus = async (req, res) => {
 
 const createGuru = async (req, res) => {
   try {
-    const { name, username, password } = req.body;
+    const { name, username, password, isPhotoRequired } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const guru = await User.create({ name, username, password: hashedPassword, role: 'guru' });
+    const guru = await User.create({ 
+      name, 
+      username, 
+      password: hashedPassword, 
+      role: 'guru',
+      isPhotoRequired: isPhotoRequired ?? true
+    });
     res.json(guru);
   } catch (error) {
     res.status(500).json({ message: 'Gagal tambah guru' });
@@ -178,8 +184,8 @@ const createGuru = async (req, res) => {
 const updateGuru = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, username, password } = req.body;
-    const data = { name, username };
+    const { name, username, password, isPhotoRequired } = req.body;
+    const data = { name, username, isPhotoRequired };
     if (password) data.password = await bcrypt.hash(password, 10);
     await User.update(data, { where: { id, role: 'guru' } });
     res.json({ message: 'Guru berhasil diupdate' });

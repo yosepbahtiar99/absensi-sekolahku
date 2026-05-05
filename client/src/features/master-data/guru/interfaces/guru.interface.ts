@@ -4,10 +4,12 @@ export interface IGuru {
   name: string;
   nip?: string;
   email?: string;
+  isPhotoRequired: boolean;
 }
 
 export interface IGuruPayload {
   username: string;
   name: string;
   password?: string;
+  isPhotoRequired?: boolean;
 }

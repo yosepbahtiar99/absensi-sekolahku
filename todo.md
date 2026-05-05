@@ -52,8 +52,9 @@
 - [x] Add validation to prevent/warn when plotting over-quota lessons (Done: Frontend Warn & Backend Prevent)
 
 ## Pending Enhancements 🚀
-- [ ] Implement fitur disable/enable per guru (default enabled) untuk pengaturan perekaman foto absen. Jika disabled, skip capture photo dan activity langsung tersimpan tanpa foto.
+- [x] Implement fitur disable/enable per guru (default enabled) untuk pengaturan perekaman foto absen. Jika disabled, skip capture photo dan activity langsung tersimpan tanpa foto. (Done ✅)
 - [ ] Review/Cek kembali fitur approval kelas custom.
+- [ ] Refactor Backend Architecture: Bersihkan struktur kodingan (pisahkan models, routes, controllers, middleware, dan utils) agar lebih modular dan maintainable.
 
 
 ## UI/UX Improvements

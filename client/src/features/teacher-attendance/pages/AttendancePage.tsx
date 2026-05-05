@@ -13,6 +13,7 @@ const AttendancePage = () => {
   const { data: schedule, isLoading: isScheduleLoading } = useScheduleById(scheduleId!);
   const { mutate, isPending } = useSubmitAttendance();
   const { showNotification } = useNotificationStore();
+  const isPhotoRequired = schedule?.teacher?.isPhotoRequired ?? true;
 
   // Route Guard: Mentalin balik ke home kalau jadwal nggak valid/udah absen
   useEffect(() => {
@@ -62,6 +63,7 @@ const AttendancePage = () => {
     let isCancelled = false;
 
     const startCamera = async () => {
+      if (!isPhotoRequired) return;
       try {
         console.log("Initializing camera...", activeCamera);
         // Stop previous stream if any
@@ -155,27 +157,29 @@ const AttendancePage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!photoSelfie || !photoClass) return;
+    if (isPhotoRequired && (!photoSelfie || !photoClass)) return;
 
     setIsUploading(true);
     try {
       // 1. Upload Selfie
-      const selfieFile = dataURLtoFile(photoSelfie, 'selfie.jpg');
-      const selfieRes = await attendanceService.uploadPhoto(selfieFile);
+      const selfieRes = isPhotoRequired && photoSelfie 
+        ? await attendanceService.uploadPhoto(dataURLtoFile(photoSelfie, 'selfie.jpg'))
+        : null;
 
       // 2. Upload Photo Class
-      const classFile = dataURLtoFile(photoClass, 'class.jpg');
-      const classRes = await attendanceService.uploadPhoto(classFile);
+      const classRes = isPhotoRequired && photoClass
+        ? await attendanceService.uploadPhoto(dataURLtoFile(photoClass, 'class.jpg'))
+        : null;
 
       // 3. Submit Attendance with filenames
       mutate({
         scheduleId: scheduleId!,
-        photoSelfie: selfieRes.filename,
-        photoClass: classRes.filename,
+        photoSelfie: selfieRes?.filename || '',
+        photoClass: classRes?.filename || '',
         status: 'masuk'
       }, {
         onSuccess: () => {
-          stopCamera(stream);
+          if (isPhotoRequired) stopCamera(stream);
           navigate('/home');
         },
         onError: (error: any) => {
@@ -235,78 +239,97 @@ const AttendancePage = () => {
           <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl"></div>
         </div>
 
-        {/* Capture Indicator */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4">
-          <div className="bg-primary/20 backdrop-blur-md px-6 py-2 rounded-full border border-primary/30 flex items-center gap-2">
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-              {activeCamera === 'selfie' ? 'Ambil Foto Selfie' : 'Ambil Foto Kelas'}
-            </span>
-          </div>
+          {!isPhotoRequired ? (
+            <div className="flex flex-col items-center animate-in zoom-in duration-700">
+              <div className="w-24 h-24 rounded-full bg-primary/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center text-primary mb-6">
+                <Check size={48} strokeWidth={3} />
+              </div>
+              <h3 className="text-2xl font-black tracking-tight text-center">Siap Absen!</h3>
+              <p className="text-white/50 text-sm font-medium mt-2 text-center max-w-[200px]">
+                Akun Anda tidak memerlukan verifikasi foto. Silakan klik tombol di bawah.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-primary/20 backdrop-blur-md px-6 py-2 rounded-full border border-primary/30 flex items-center gap-2">
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                {activeCamera === 'selfie' ? 'Ambil Foto Selfie' : 'Ambil Foto Kelas'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Footer Controls */}
       <div className="bg-[#0A0F11] pt-4 pb-12 px-8 flex flex-col items-center gap-8 relative z-30">
         {/* Thumbnails */}
-        <div className="flex gap-6">
-          <div className="relative group">
-            <div className={cn(
-              "w-20 h-20 rounded-2xl border-2 overflow-hidden transition-all duration-300",
-              photoSelfie ? "border-emerald-500 shadow-lg shadow-emerald-500/20" : "border-white/10 bg-white/5"
-            )}>
-              {photoSelfie ? (
-                <img src={photoSelfie} className="w-full h-full object-cover" alt="Selfie" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center opacity-30"><ImageIcon size={24} /></div>
-              )}
+        {isPhotoRequired && (
+          <div className="flex gap-6">
+            <div className="relative group">
+              <div className={cn(
+                "w-20 h-20 rounded-2xl border-2 overflow-hidden transition-all duration-300",
+                photoSelfie ? "border-emerald-500 shadow-lg shadow-emerald-500/20" : "border-white/10 bg-white/5"
+              )}>
+                {photoSelfie ? (
+                  <img src={photoSelfie} className="w-full h-full object-cover" alt="Selfie" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center opacity-30"><ImageIcon size={24} /></div>
+                )}
+              </div>
+              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-wider text-white/40">Selfie</span>
+              {photoSelfie && <div className="absolute -top-2 -right-2 bg-emerald-500 rounded-full p-1"><Check size={12} /></div>}
             </div>
-            <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-wider text-white/40">Selfie</span>
-            {photoSelfie && <div className="absolute -top-2 -right-2 bg-emerald-500 rounded-full p-1"><Check size={12} /></div>}
-          </div>
 
-          <div className="relative group">
-            <div className={cn(
-              "w-20 h-20 rounded-2xl border-2 overflow-hidden transition-all duration-300",
-              photoClass ? "border-emerald-500 shadow-lg shadow-emerald-500/20" : "border-white/10 bg-white/5"
-            )}>
-              {photoClass ? (
-                <img src={photoClass} className="w-full h-full object-cover" alt="Class" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center opacity-30"><ImageIcon size={24} /></div>
-              )}
+            <div className="relative group">
+              <div className={cn(
+                "w-20 h-20 rounded-2xl border-2 overflow-hidden transition-all duration-300",
+                photoClass ? "border-emerald-500 shadow-lg shadow-emerald-500/20" : "border-white/10 bg-white/5"
+              )}>
+                {photoClass ? (
+                  <img src={photoClass} className="w-full h-full object-cover" alt="Class" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center opacity-30"><ImageIcon size={24} /></div>
+                )}
+              </div>
+              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-wider text-white/40">Kelas</span>
+              {photoClass && <div className="absolute -top-2 -right-2 bg-emerald-500 rounded-full p-1"><Check size={12} /></div>}
             </div>
-            <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-wider text-white/40">Kelas</span>
-            {photoClass && <div className="absolute -top-2 -right-2 bg-emerald-500 rounded-full p-1"><Check size={12} /></div>}
           </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
         <div className="w-full flex items-center justify-between gap-6 max-w-sm">
-          <button 
-            onClick={() => { setPhotoSelfie(null); setPhotoClass(null); setActiveCamera('selfie'); }} 
-            className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 transition-transform active:scale-90"
-          >
-            <RefreshCw size={24} />
-          </button>
+          {isPhotoRequired && (
+            <button 
+              onClick={() => { setPhotoSelfie(null); setPhotoClass(null); setActiveCamera('selfie'); }} 
+              className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/60 transition-transform active:scale-90"
+            >
+              <RefreshCw size={24} />
+            </button>
+          )}
           
           <button 
             onClick={capturePhoto} 
-            disabled={!!photoClass}
+            disabled={!!photoClass || !isPhotoRequired}
             className={cn(
               "w-24 h-24 rounded-full border-4 flex items-center justify-center transition-all duration-300 active:scale-90",
-              photoClass ? "border-white/20 opacity-50" : "border-white border-white/20 bg-white shadow-xl shadow-white/20"
+              (!isPhotoRequired || photoClass) ? "border-white/10 bg-white/5 opacity-50" : "border-white border-white/20 bg-white shadow-xl shadow-white/20"
             )}
           >
-             <div className="w-18 h-18 rounded-full border-2 border-[#0A0F11]"></div>
+             {isPhotoRequired ? (
+               <div className="w-18 h-18 rounded-full border-2 border-[#0A0F11]"></div>
+             ) : (
+               <Check size={32} className="text-white/20" />
+             )}
           </button>
 
           <button 
             onClick={handleSubmit} 
-            disabled={!photoSelfie || !photoClass || isPending || isUploading}
+            disabled={(isPhotoRequired && (!photoSelfie || !photoClass)) || isPending || isUploading}
             className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300",
-              (!photoSelfie || !photoClass || isPending || isUploading) 
+              ((isPhotoRequired && (!photoSelfie || !photoClass)) || isPending || isUploading) 
                 ? "bg-white/5 text-white/20 cursor-not-allowed" 
                 : "bg-primary text-white shadow-lg shadow-primary/30 active:scale-90"
             )}

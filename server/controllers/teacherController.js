@@ -162,6 +162,7 @@ const getScheduleDetail = async (req, res) => {
       include: [
         { model: Class, attributes: ['name'] },
         { model: Lesson, attributes: ['name'] },
+        { model: User, as: 'teacher', attributes: ['isPhotoRequired'] },
         { model: TimeSlot, attributes: ['label', 'startTime', 'endTime'] },
         { 
           model: Activity,
