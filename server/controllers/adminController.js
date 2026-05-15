@@ -818,88 +818,202 @@ const exportSchedule = async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat'];
 
+    // 1. Group time slots by day and sort them chronologically
+    const slotsPerDay = {};
+    days.forEach(day => {
+      slotsPerDay[day] = timeSlots
+        .filter(ts => ts.day === day)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    });
+
+    // 2. Generate a pattern fingerprint for each day based on start-end times
+    const dayFingerprints = {};
+    days.forEach(day => {
+      const daySlots = slotsPerDay[day];
+      dayFingerprints[day] = daySlots
+        .map(ts => `${ts.startTime.substring(0, 5)}-${ts.endTime.substring(0, 5)}`)
+        .join('|');
+    });
+
+    // 3. Group active days by matching fingerprints
+    const activeDays = days.filter(day => slotsPerDay[day].length > 0);
+    const groups = [];
+    activeDays.forEach(day => {
+      const fp = dayFingerprints[day];
+      const existing = groups.find(g => g.fingerprint === fp);
+      if (existing) {
+        existing.days.push(day);
+      } else {
+        groups.push({
+          fingerprint: fp,
+          days: [day],
+          slots: slotsPerDay[day]
+        });
+      }
+    });
+
+    const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
     for (const cls of classes) {
       const sheet = workbook.addWorksheet(cls.name.replace(/[\\\/\?\*\[\]]/g, '')); // Clean sheet name
 
-      // 1. Title Header
-      sheet.mergeCells('A1:F1');
-      const titleCell = sheet.getCell('A1');
-      titleCell.value = `JADWAL PELAJARAN - ${cls.name}`;
-      titleCell.font = { bold: true, size: 16 };
-      titleCell.alignment = { horizontal: 'center' };
+      if (groups.length === 0) {
+        sheet.mergeCells('A1:C1');
+        const emptyCell = sheet.getCell('A1');
+        emptyCell.value = `BELUM ADA JADWAL - ${cls.name}`;
+        emptyCell.font = { bold: true, size: 14 };
+        emptyCell.alignment = { horizontal: 'center' };
+        continue;
+      }
 
-      sheet.mergeCells('A2:F2');
-      const subTitleCell = sheet.getCell('A2');
-      subTitleCell.value = `TAHUN AJARAN: ${year?.name || '-'}`;
-      subTitleCell.font = { bold: true, size: 11 };
-      subTitleCell.alignment = { horizontal: 'center' };
-
-      // 2. Table Header (Days)
-      const headerRow = sheet.getRow(4);
-      headerRow.values = ['Waktu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
-      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      headerRow.eachCell((cell) => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0891B2' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = {
-          top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
-        };
+      // 4. Calculate total spanning columns for the main titles
+      let totalColumns = 0;
+      groups.forEach((group, idx) => {
+        totalColumns += 1 + group.days.length; // 1 (Waktu) + list of days
+        if (idx < groups.length - 1) {
+          totalColumns += 1; // 1 (Spacer column)
+        }
       });
 
-      // 3. Unique time slots (sorted)
-      // Since different days might have different slots, we collect all unique time intervals
-      const uniqueTimes = [...new Set(timeSlots.map(ts => `${ts.startTime.substring(0,5)} - ${ts.endTime.substring(0,5)}`))].sort();
+      // 5. Main Title Header
+      sheet.mergeCells(1, 1, 1, totalColumns);
+      const titleCell = sheet.getCell(1, 1);
+      titleCell.value = `JADWAL PELAJARAN - ${cls.name}`;
+      titleCell.font = { bold: true, size: 16 };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
-      uniqueTimes.forEach((timeStr, idx) => {
-        const row = sheet.getRow(5 + idx);
-        row.getCell(1).value = timeStr;
-        row.getCell(1).font = { bold: true };
-        row.getCell(1).alignment = { horizontal: 'center' };
+      sheet.mergeCells(2, 1, 2, totalColumns);
+      const subTitleCell = sheet.getCell(2, 1);
+      subTitleCell.value = `TAHUN AJARAN: ${year?.name || '-'}`;
+      subTitleCell.font = { bold: true, size: 11 };
+      subTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
-        days.forEach((day, dayIdx) => {
-          const slotForThisTime = timeSlots.find(ts => 
-            ts.day === day && 
-            `${ts.startTime.substring(0,5)} - ${ts.endTime.substring(0,5)}` === timeStr
-          );
+      sheet.getRow(1).height = 25;
+      sheet.getRow(2).height = 20;
 
-          if (slotForThisTime) {
-            const sched = schedules.find(s => s.classId === cls.id && s.timeSlotId === slotForThisTime.id && s.day === day);
-            const cell = row.getCell(2 + dayIdx);
-            
-            if (sched) {
-              cell.value = `${sched.Lesson?.name}\n(${sched.teacher?.name})`;
-              cell.alignment = { wrapText: true, horizontal: 'center', vertical: 'middle' };
-              cell.font = { size: 9 };
-            } else {
-              // Special labels for empty slots (e.g. Break, Ceremony) if they exist in timeSlots
-              if (slotForThisTime.label.toLowerCase() !== 'jam ke-' && !slotForThisTime.label.startsWith('Jam ke')) {
-                cell.value = slotForThisTime.label;
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-                cell.font = { italic: true, size: 8, color: { argb: 'FF64748B' } };
-                cell.alignment = { horizontal: 'center', vertical: 'middle' };
-              }
-            }
-          } else {
-            // No slot for this time on this day
-            const cell = row.getCell(2 + dayIdx);
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-          }
+      // 6. Render table groups horizontally
+      let currentCol = 1;
+
+      groups.forEach((group) => {
+        const startCol = currentCol;
+
+        // --- A. Render Headers ---
+        const headerRow = sheet.getRow(4);
+        
+        // Time Header
+        const timeHeaderCell = headerRow.getCell(startCol);
+        timeHeaderCell.value = 'Waktu';
+        sheet.getColumn(startCol).width = 18;
+
+        // Days Headers
+        group.days.forEach((day, dIdx) => {
+          const dayCol = startCol + 1 + dIdx;
+          const dayHeaderCell = headerRow.getCell(dayCol);
+          dayHeaderCell.value = capitalize(day);
+          sheet.getColumn(dayCol).width = 24;
         });
 
-        row.eachCell({ includeEmpty: true }, (cell) => {
+        // Apply Table Header Styles (Cyan theme)
+        for (let c = startCol; c < startCol + 1 + group.days.length; c++) {
+          const cell = headerRow.getCell(c);
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0891B2' } };
+          cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
           cell.border = {
             top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
           };
-        });
-      });
+        }
 
-      // Column widths
-      sheet.getColumn(1).width = 20;
-      sheet.getColumn(2).width = 25;
-      sheet.getColumn(3).width = 25;
-      sheet.getColumn(4).width = 25;
-      sheet.getColumn(5).width = 25;
-      sheet.getColumn(6).width = 25;
+        // --- B. Render Rows & Data ---
+        group.slots.forEach((slot, sIdx) => {
+          const rowIdx = 5 + sIdx;
+          const row = sheet.getRow(rowIdx);
+          row.height = 35; // Comfortable row height for wrapped teacher names
+
+          // Waktu Cell
+          const timeStr = `${slot.startTime.substring(0, 5)} - ${slot.endTime.substring(0, 5)}`;
+          const timeCell = row.getCell(startCol);
+          timeCell.value = timeStr;
+          timeCell.font = { bold: true, size: 9 };
+          timeCell.alignment = { horizontal: 'center', vertical: 'middle' };
+          timeCell.border = {
+            top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
+          };
+
+          // Schedule for each Day
+          group.days.forEach((day, dIdx) => {
+            const dayCol = startCol + 1 + dIdx;
+            const cell = row.getCell(dayCol);
+
+            // Locate slot record corresponding specifically to this day with the same interval
+            const dayTimeSlots = slotsPerDay[day];
+            const actualSlot = dayTimeSlots.find(ts => 
+              ts.startTime.substring(0, 5) === slot.startTime.substring(0, 5) && 
+              ts.endTime.substring(0, 5) === slot.endTime.substring(0, 5)
+            );
+
+            cell.border = {
+              top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
+            };
+            cell.alignment = { wrapText: true, horizontal: 'center', vertical: 'middle' };
+
+            if (actualSlot) {
+              const sched = schedules.find(s => s.classId === cls.id && s.timeSlotId === actualSlot.id && s.day === day);
+              
+              if (sched) {
+                cell.value = `${sched.Lesson?.name}\n(${sched.teacher?.name})`;
+                cell.font = { size: 9 };
+              } else {
+                // Handle custom labels like "Istirahat", "Upacara"
+                if (actualSlot.label && actualSlot.label.toLowerCase() !== 'jam ke-' && !actualSlot.label.startsWith('Jam ke')) {
+                  cell.value = actualSlot.label;
+                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                  cell.font = { italic: true, size: 8, color: { argb: 'FF64748B' } };
+                }
+              }
+            }
+          });
+        });
+
+        // --- C. Apply Vertical Merging for Consecutive Matching Lessons ---
+        group.days.forEach((day, dIdx) => {
+          const dayCol = startCol + 1 + dIdx;
+          const startRow = 5;
+          const endRow = 5 + group.slots.length - 1;
+
+          let mergeStart = startRow;
+          for (let r = startRow; r <= endRow; r++) {
+            const currentVal = sheet.getCell(r, dayCol).value;
+            const nextVal = (r < endRow) ? sheet.getCell(r + 1, dayCol).value : null;
+
+            // Merge logic: same cell value, non-empty
+            if (currentVal && currentVal === nextVal) {
+              // Keep grouping the block
+            } else {
+              if (r > mergeStart) {
+                sheet.mergeCells(mergeStart, dayCol, r, dayCol);
+                
+                // Secure styles on the newly merged block
+                for (let mr = mergeStart; mr <= r; mr++) {
+                  const mCell = sheet.getCell(mr, dayCol);
+                  mCell.border = {
+                    top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
+                  };
+                  mCell.alignment = { wrapText: true, horizontal: 'center', vertical: 'middle' };
+                }
+              }
+              mergeStart = r + 1;
+            }
+          }
+        });
+
+        // Move pointer past the current group
+        currentCol += 1 + group.days.length;
+
+        // Insert small spacer column between group blocks
+        sheet.getColumn(currentCol).width = 4;
+        currentCol += 1; 
+      });
     }
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
