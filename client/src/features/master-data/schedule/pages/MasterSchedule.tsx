@@ -386,9 +386,9 @@ const MasterSchedule = () => {
                       />
                     </div>
                   </div>
-                  <div className="flex-1 overflow-x-auto flex gap-3 pb-2 no-scrollbar">
+                  <div className="flex-1 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 pb-2 pr-1 custom-scrollbar content-start">
                     {filteredGurus.map(guru => (
-                      <div key={guru.id} className="min-w-[160px]">
+                      <div key={guru.id} className="w-full">
                         <DraggableAssetItem id={`guru:${guru.id}`} type="guru" name={guru.name} />
                       </div>
                     ))}
@@ -412,11 +412,11 @@ const MasterSchedule = () => {
                       />
                     </div>
                   </div>
-                  <div className="flex-1 overflow-x-auto flex gap-3 pb-4 no-scrollbar">
+                  <div className="flex-1 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-2 pb-2 pr-1 custom-scrollbar content-start">
                     {filteredLessons.map(lesson => {
                       const stat = lessonStats[lesson.id];
                       return (
-                        <div key={lesson.id} className="min-w-[180px]">
+                        <div key={lesson.id} className="w-full">
                           <DraggableAssetItem 
                             id={`lesson:${lesson.id}`} 
                             type="lesson" 
