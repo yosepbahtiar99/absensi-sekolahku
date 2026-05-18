@@ -196,7 +196,24 @@ const updateGuru = async (req, res) => {
 
 const deleteGuru = async (req, res) => {
   try {
-    await User.destroy({ where: { id: req.params.id, role: 'guru' } });
+    const { id } = req.params;
+    // Check if guru is referenced in Schedule
+    const hasSchedule = await Schedule.findOne({ where: { teacherId: id } });
+    if (hasSchedule) {
+      return res.status(400).json({ message: 'Guru tidak bisa dihapus karena terdaftar di jadwal pelajaran yang aktif.' });
+    }
+    // Check if guru is referenced in Activity (attendance logs)
+    const hasActivity = await Activity.findOne({ where: { userId: id } });
+    if (hasActivity) {
+      return res.status(400).json({ message: 'Guru tidak bisa dihapus karena memiliki riwayat aktivitas absensi.' });
+    }
+    // Check if guru is referenced in ApprovalRequest
+    const hasApproval = await ApprovalRequest.findOne({ where: { userId: id } });
+    if (hasApproval) {
+      return res.status(400).json({ message: 'Guru tidak bisa dihapus karena memiliki riwayat pengajuan izin/approval.' });
+    }
+
+    await User.destroy({ where: { id, role: 'guru' } });
     res.json({ message: 'Guru berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal hapus guru' });
@@ -261,7 +278,14 @@ const updateClass = async (req, res) => {
 
 const deleteClass = async (req, res) => {
   try {
-    await Class.destroy({ where: { id: req.params.id } });
+    const { id } = req.params;
+    // Check if class is referenced in Schedule
+    const hasSchedule = await Schedule.findOne({ where: { classId: id } });
+    if (hasSchedule) {
+      return res.status(400).json({ message: 'Kelas tidak bisa dihapus karena terdaftar di jadwal pelajaran.' });
+    }
+
+    await Class.destroy({ where: { id } });
     res.json({ message: 'Kelas berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal hapus kelas' });
@@ -322,7 +346,19 @@ const updateLesson = async (req, res) => {
 
 const deleteLesson = async (req, res) => {
   try {
-    await Lesson.destroy({ where: { id: req.params.id } });
+    const { id } = req.params;
+    // Check if lesson is referenced in Curriculum
+    const hasCurriculum = await Curriculum.findOne({ where: { lessonId: id } });
+    if (hasCurriculum) {
+      return res.status(400).json({ message: 'Pelajaran tidak bisa dihapus karena digunakan dalam kurikulum tingkat kelas.' });
+    }
+    // Check if lesson is referenced in Schedule
+    const hasSchedule = await Schedule.findOne({ where: { lessonId: id } });
+    if (hasSchedule) {
+      return res.status(400).json({ message: 'Pelajaran tidak bisa dihapus karena terdaftar di jadwal pelajaran.' });
+    }
+
+    await Lesson.destroy({ where: { id } });
     res.json({ message: 'Pelajaran berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal hapus pelajaran' });
@@ -368,7 +404,34 @@ const updateAcademicYear = async (req, res) => {
 
 const deleteAcademicYear = async (req, res) => {
   try {
-    await AcademicYear.destroy({ where: { id: req.params.id } });
+    const { id } = req.params;
+    // Check if the academic year is active
+    const year = await AcademicYear.findByPk(id);
+    if (year && year.isActive) {
+      return res.status(400).json({ message: 'Tahun ajaran aktif tidak bisa dihapus.' });
+    }
+    // Check if year is referenced in TimeSlot
+    const hasTimeSlot = await TimeSlot.findOne({ where: { academicYearId: id } });
+    if (hasTimeSlot) {
+      return res.status(400).json({ message: 'Tahun ajaran tidak bisa dihapus karena memiliki data slot jam.' });
+    }
+    // Check if year is referenced in Schedule
+    const hasSchedule = await Schedule.findOne({ where: { academicYearId: id } });
+    if (hasSchedule) {
+      return res.status(400).json({ message: 'Tahun ajaran tidak bisa dihapus karena memiliki data jadwal.' });
+    }
+    // Check if year is referenced in Curriculum
+    const hasCurriculum = await Curriculum.findOne({ where: { academicYearId: id } });
+    if (hasCurriculum) {
+      return res.status(400).json({ message: 'Tahun ajaran tidak bisa dihapus karena memiliki data kurikulum.' });
+    }
+    // Check if year is referenced in Activity
+    const hasActivity = await Activity.findOne({ where: { academicYearId: id } });
+    if (hasActivity) {
+      return res.status(400).json({ message: 'Tahun ajaran tidak bisa dihapus karena memiliki riwayat aktivitas absensi.' });
+    }
+
+    await AcademicYear.destroy({ where: { id } });
     res.json({ message: 'Tahun ajaran berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal hapus tahun ajaran' });
@@ -413,7 +476,14 @@ const updateTimeSlot = async (req, res) => {
 
 const deleteTimeSlot = async (req, res) => {
   try {
-    await TimeSlot.destroy({ where: { id: req.params.id } });
+    const { id } = req.params;
+    // Check if time slot is referenced in Schedule
+    const hasSchedule = await Schedule.findOne({ where: { timeSlotId: id } });
+    if (hasSchedule) {
+      return res.status(400).json({ message: 'Slot jam tidak bisa dihapus karena sudah digunakan dalam jadwal pelajaran.' });
+    }
+
+    await TimeSlot.destroy({ where: { id } });
     res.json({ message: 'Slot jam berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal hapus slot jam' });
@@ -475,7 +545,26 @@ const updateCurriculum = async (req, res) => {
 
 const deleteCurriculum = async (req, res) => {
   try {
-    await Curriculum.destroy({ where: { id: req.params.id } });
+    const { id } = req.params;
+    const curr = await Curriculum.findByPk(id);
+    if (curr) {
+      // Find classes for this gradeLevel
+      const classesInGrade = await Class.findAll({ where: { gradeLevelId: curr.gradeLevelId } });
+      const classIds = classesInGrade.map(c => c.id);
+      
+      const hasSchedule = await Schedule.findOne({
+        where: {
+          academicYearId: curr.academicYearId,
+          lessonId: curr.lessonId,
+          classId: classIds
+        }
+      });
+      if (hasSchedule) {
+        return res.status(400).json({ message: 'Kurikulum tidak bisa dihapus karena ada jadwal pelajaran aktif yang menggunakan mapel ini.' });
+      }
+    }
+
+    await Curriculum.destroy({ where: { id } });
     res.json({ message: 'Kurikulum berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal hapus kurikulum' });

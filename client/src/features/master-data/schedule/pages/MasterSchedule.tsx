@@ -286,7 +286,21 @@ const MasterSchedule = () => {
                               key={`${cls.id}-${slot.id}`}
                               id={`cell:${cls.id}|${slot.id}`}
                               schedule={schedules.find(s => s.classId === cls.id && s.timeSlotId === slot.id && s.day === activeDay)}
-                              onDelete={(id) => deleteMutation.mutate(id)}
+                              onDelete={async (id) => {
+                                const confirmed = await confirm({
+                                  title: 'Hapus Jadwal Pelajaran',
+                                  message: 'Apakah Anda yakin ingin menghapus jadwal pelajaran ini?',
+                                  variant: 'danger',
+                                  confirmText: 'Ya, Hapus',
+                                  cancelText: 'Batal'
+                                });
+                                if (confirmed) {
+                                  deleteMutation.mutate(id, {
+                                    onSuccess: () => showNotification('Jadwal berhasil dihapus', 'success'),
+                                    onError: (err: any) => showNotification(err.response?.data?.message || 'Gagal menghapus jadwal', 'error')
+                                  });
+                                }
+                              }}
                               onClick={() => handleCellClick(cls.id, slot.id)}
                             />
                           ))}
