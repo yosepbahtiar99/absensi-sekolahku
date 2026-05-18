@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -15,12 +15,19 @@ import {
   CalendarDays,
   Database,
   ChevronDown,
-  Layers
+  Layers,
+  Download,
+  Upload,
+  Terminal,
+  X,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useLogout } from '../../auth/hooks/useLogout';
 import { useUIStore } from '../../../shared/store/uiStore';
 import { cn } from '../../../shared/lib/utils';
+import api from '../../../shared/lib/axios';
 
 const AdminSidebar = () => {
   const { logout } = useLogout();
@@ -28,6 +35,72 @@ const AdminSidebar = () => {
   const { isSidebarCollapsed, toggleSidebar } = useUIStore();
   const location = useLocation();
   const [isMasterOpen, setIsMasterOpen] = useState(false);
+  
+  const [isDevModalOpen, setIsDevModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Trigger modal on Ctrl + Shift + D
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        setIsDevModalOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const response = await api.get('/admin/developer/export-snapshot');
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response.data, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      downloadAnchor.setAttribute("download", `snapshot_sekolahku_${dateStr}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (err: any) {
+      alert('Gagal mengekspor snapshot: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImport = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileReader = new FileReader();
+    fileReader.onload = async (event) => {
+      try {
+        setImportError(null);
+        setImportSuccess(null);
+        setIsImporting(true);
+        const parsedData = JSON.parse(event.target?.result as string);
+        
+        await api.post('/admin/developer/import-snapshot', parsedData);
+        setImportSuccess('Snapshot berhasil di-import! Halaman akan dimuat ulang...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } catch (err: any) {
+        console.error(err);
+        setImportError('Gagal mengimpor snapshot: ' + (err.response?.data?.message || err.message));
+      } finally {
+        setIsImporting(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    fileReader.readAsText(file);
+  };
 
   const masterSubMenus = [
     { icon: CalendarDays, label: 'Master Tahun Ajaran', path: '/admin/academic-years' },
@@ -181,6 +254,98 @@ const AdminSidebar = () => {
           {!isSidebarCollapsed && <span className="transition-all duration-300 opacity-100">Logout Sistem</span>}
         </button>
       </div>
+
+      {/* Secret Developer Snapshot Modal */}
+      {isDevModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2rem] p-8 shadow-2xl border border-slate-100 w-full max-w-md flex flex-col gap-6 relative overflow-hidden animate-in zoom-in-95 duration-200 text-slate-600">
+            {/* Top accent */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary to-cyan-500"></div>
+            
+            {/* Close Button */}
+            <button 
+              onClick={() => {
+                setIsDevModalOpen(false);
+                setImportError(null);
+                setImportSuccess(null);
+              }}
+              className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all active:scale-95"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Header */}
+            <div className="flex gap-4 items-start">
+              <div className="p-3.5 rounded-2xl bg-primary/10 text-primary">
+                <Terminal size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">Developer Sandbox</h3>
+                <p className="text-xs font-semibold text-slate-400 mt-1">Shortcut: <kbd className="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] font-mono border border-slate-200 text-slate-500">Ctrl + Shift + D</kbd></p>
+              </div>
+            </div>
+
+            {/* Warning Alert */}
+            <div className="p-4 bg-amber-50/60 border border-amber-200/50 rounded-2xl flex gap-3 text-amber-800 text-xs font-bold leading-relaxed">
+              <AlertTriangle size={18} className="shrink-0 text-amber-500" />
+              <span>
+                Mengekspor atau mengimpor data akan mereplikasi kondisi database 100%. Harap berhati-hati, proses Import akan <strong className="text-amber-900">MENGHAPUS SEMUA DATA LOKAL</strong> sebelum diganti dengan isi snapshot!
+              </span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3">
+              {/* Export Button */}
+              <button
+                onClick={handleExport}
+                disabled={isExporting || isImporting}
+                className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-cyan-700 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {isExporting ? (
+                  <RefreshCw size={18} className="animate-spin" />
+                ) : (
+                  <Download size={18} />
+                )}
+                {isExporting ? 'Mengekspor...' : 'Export Database State (JSON)'}
+              </button>
+
+              {/* Import Button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isExporting || isImporting}
+                className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-primary/50 hover:bg-slate-50 text-slate-600 hover:text-primary font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {isImporting ? (
+                  <RefreshCw size={18} className="animate-spin" />
+                ) : (
+                  <Upload size={18} />
+                )}
+                {isImporting ? 'Mengimpor...' : 'Restore / Import State (JSON)'}
+              </button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleImport} 
+                accept=".json" 
+                className="hidden" 
+              />
+            </div>
+
+            {/* Error & Success Messages */}
+            {importError && (
+              <div className="p-4 bg-red-50 text-red-700 text-xs font-bold rounded-2xl border border-red-200/50">
+                {importError}
+              </div>
+            )}
+            {importSuccess && (
+              <div className="p-4 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-2xl border border-emerald-200/50 flex gap-2 items-center">
+                <RefreshCw size={14} className="animate-spin text-emerald-500 shrink-0" />
+                <span>{importSuccess}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

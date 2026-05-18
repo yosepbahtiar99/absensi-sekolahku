@@ -10,7 +10,7 @@ const {
   getCurriculums, createCurriculum, updateCurriculum, deleteCurriculum,
   getGradeLevels, createGradeLevel, updateGradeLevel, deleteGradeLevel,
   getSchedules, createOrUpdateSchedule, deleteSchedule, cloneSchedule, exportSchedule,
-  exportReport
+  exportReport, exportSnapshot, importSnapshot
 } = require('../controllers/adminController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
@@ -71,5 +71,9 @@ router.post('/schedules', createOrUpdateSchedule);
 router.post('/schedules/clone', cloneSchedule);
 router.get('/schedules/export', exportSchedule);
 router.delete('/schedules/:id', deleteSchedule);
+
+// Developer Tools
+router.get('/developer/export-snapshot', exportSnapshot);
+router.post('/developer/import-snapshot', importSnapshot);
 
 module.exports = router;

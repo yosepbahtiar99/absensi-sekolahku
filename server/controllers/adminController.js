@@ -1,4 +1,4 @@
-const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot, Curriculum, GradeLevel } = require('../models');
+const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot, Curriculum, GradeLevel, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const ExcelJS = require('exceljs');
@@ -1213,6 +1213,95 @@ const deleteGradeLevel = async (req, res) => {
   }
 };
 
+const exportSnapshot = async (req, res) => {
+  try {
+    const academicYears = await AcademicYear.findAll();
+    const gradeLevels = await GradeLevel.findAll();
+    const classes = await Class.findAll();
+    const lessons = await Lesson.findAll();
+    const timeSlots = await TimeSlot.findAll();
+    const curriculums = await Curriculum.findAll();
+    const schedules = await Schedule.findAll();
+    const users = await User.findAll();
+    const activities = await Activity.findAll();
+    const approvalRequests = await ApprovalRequest.findAll();
+
+    const snapshot = {
+      exportedAt: new Date(),
+      academicYears,
+      gradeLevels,
+      classes,
+      lessons,
+      timeSlots,
+      curriculums,
+      schedules,
+      users,
+      activities,
+      approvalRequests
+    };
+
+    res.json(snapshot);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal mengekspor snapshot database' });
+  }
+};
+
+const importSnapshot = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const {
+      academicYears,
+      gradeLevels,
+      classes,
+      lessons,
+      timeSlots,
+      curriculums,
+      schedules,
+      users,
+      activities,
+      approvalRequests
+    } = req.body;
+
+    // Disable foreign keys temporarily
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0', { transaction });
+
+    // Truncate tables in transaction
+    await ApprovalRequest.destroy({ where: {}, transaction });
+    await Activity.destroy({ where: {}, transaction });
+    await Schedule.destroy({ where: {}, transaction });
+    await Curriculum.destroy({ where: {}, transaction });
+    await TimeSlot.destroy({ where: {}, transaction });
+    await Class.destroy({ where: {}, transaction });
+    await GradeLevel.destroy({ where: {}, transaction });
+    await Lesson.destroy({ where: {}, transaction });
+    await User.destroy({ where: {}, transaction });
+    await AcademicYear.destroy({ where: {}, transaction });
+
+    // Re-populate tables
+    if (academicYears && academicYears.length > 0) await AcademicYear.bulkCreate(academicYears, { transaction });
+    if (users && users.length > 0) await User.bulkCreate(users, { transaction });
+    if (gradeLevels && gradeLevels.length > 0) await GradeLevel.bulkCreate(gradeLevels, { transaction });
+    if (lessons && lessons.length > 0) await Lesson.bulkCreate(lessons, { transaction });
+    if (classes && classes.length > 0) await Class.bulkCreate(classes, { transaction });
+    if (timeSlots && timeSlots.length > 0) await TimeSlot.bulkCreate(timeSlots, { transaction });
+    if (curriculums && curriculums.length > 0) await Curriculum.bulkCreate(curriculums, { transaction });
+    if (schedules && schedules.length > 0) await Schedule.bulkCreate(schedules, { transaction });
+    if (activities && activities.length > 0) await Activity.bulkCreate(activities, { transaction });
+    if (approvalRequests && approvalRequests.length > 0) await ApprovalRequest.bulkCreate(approvalRequests, { transaction });
+
+    // Enable foreign keys back
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1', { transaction });
+    await transaction.commit();
+
+    res.json({ message: 'Snapshot database berhasil di-import!' });
+  } catch (error) {
+    await transaction.rollback();
+    console.error(error);
+    res.status(500).json({ message: 'Gagal mengimpor snapshot database: ' + error.message });
+  }
+};
+
 module.exports = { 
   getDashboardSummary, 
   getAllActivities,
@@ -1227,5 +1316,7 @@ module.exports = {
   getGradeLevels, createGradeLevel, updateGradeLevel, deleteGradeLevel,
   getSchedules, createOrUpdateSchedule, deleteSchedule,
   cloneSchedule, exportSchedule,
-  exportReport
+  exportReport,
+  exportSnapshot,
+  importSnapshot
 };
