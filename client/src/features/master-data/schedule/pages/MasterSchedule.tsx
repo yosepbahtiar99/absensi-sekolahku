@@ -35,7 +35,7 @@ import { useClasses } from '../../kelas/hooks/useKelasData';
 import { useLessons } from '../../lesson/hooks/useLessonData';
 import { useTimeSlots } from '../../time-slot/hooks/useTimeSlotData';
 import { useCurriculums } from '../../curriculum/hooks/useCurriculumData';
-import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
+import { useAcademicYears, useToggleAcademicYearLock } from '../../academic-year/hooks/useAcademicYearData';
 import { useAcademicYearStore } from '../../../../shared/store/academicYearStore';
 import AdminHeader from '../../../admin/components/AdminHeader';
 import DraggableAssetItem from '../components/DraggableAssetItem';
@@ -59,19 +59,6 @@ const MasterSchedule = () => {
   const [guruSearch, setGuruSearch] = useState('');
   const [lessonSearch, setLessonSearch] = useState('');
 
-  const [isLocked, setIsLocked] = useState(() => {
-    return localStorage.getItem('schedule_locked') === 'true';
-  });
-
-  const toggleLock = () => {
-    setIsLocked(prev => {
-      const next = !prev;
-      localStorage.setItem('schedule_locked', String(next));
-      showNotification(next ? 'Jadwal berhasil DIKUNCI' : 'Jadwal berhasil DIBUKA', 'success');
-      return next;
-    });
-  };
-
   const { selectedYearId } = useAcademicYearStore();
   const currentYearId = selectedYearId;
 
@@ -83,6 +70,24 @@ const MasterSchedule = () => {
   const { data: timeSlots = [] } = useTimeSlots({ academicYearId: currentYearId || undefined });
   const { data: curriculumRes = [] } = useCurriculums({ academicYearId: currentYearId || undefined });
   const { data: academicYears = [] } = useAcademicYears();
+
+  const { mutate: toggleLockMutation } = useToggleAcademicYearLock();
+
+  const isLocked = useMemo(() => {
+    return academicYears.find(y => y.id === currentYearId)?.isLocked || false;
+  }, [academicYears, currentYearId]);
+
+  const toggleLock = () => {
+    if (!currentYearId) return;
+    toggleLockMutation(currentYearId, {
+      onSuccess: (data: any) => {
+        showNotification(data.message || 'Status kunci berhasil diubah', 'success');
+      },
+      onError: (err: any) => {
+        showNotification(err.response?.data?.message || 'Gagal mengubah status kunci', 'error');
+      }
+    });
+  };
 
   const filteredTimeSlots = useMemo(() => {
     return timeSlots.filter(ts => ts.day.toLowerCase() === activeDay.toLowerCase())

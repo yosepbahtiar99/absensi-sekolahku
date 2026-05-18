@@ -11,5 +11,6 @@ module.exports = (sequelize) => {
     startDate: { type: DataTypes.DATEONLY },
     endDate: { type: DataTypes.DATEONLY },
     isActive: { type: DataTypes.BOOLEAN, defaultValue: false },
+    isLocked: { type: DataTypes.BOOLEAN, defaultValue: false }
   });
 };

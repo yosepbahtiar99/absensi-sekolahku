@@ -438,6 +438,24 @@ const deleteAcademicYear = async (req, res) => {
   }
 };
 
+const toggleAcademicYearLock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const year = await AcademicYear.findByPk(id);
+    if (!year) {
+      return res.status(404).json({ message: 'Tahun ajaran tidak ditemukan' });
+    }
+    const nextLocked = !year.isLocked;
+    await AcademicYear.update({ isLocked: nextLocked }, { where: { id } });
+    res.json({ 
+      message: nextLocked ? 'Jadwal Tahun Ajaran berhasil DIKUNCI' : 'Jadwal Tahun Ajaran berhasil DIBUKA KUNCI', 
+      isLocked: nextLocked 
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal mengubah status kunci tahun ajaran' });
+  }
+};
+
 // --- TIME SLOT CRUD ---
 const getTimeSlots = async (req, res) => {
   try {
@@ -598,6 +616,12 @@ const createOrUpdateSchedule = async (req, res) => {
   try {
     const { id, day, academicYearId, timeSlotId, teacherId, classId, lessonId } = req.body;
 
+    // 0. Proteksi Kunci Jadwal (Database Lock Check)
+    const year = await AcademicYear.findByPk(academicYearId);
+    if (year && year.isLocked) {
+      return res.status(400).json({ message: 'Jadwal untuk tahun ajaran ini sedang dikunci!' });
+    }
+
     let finalId = id;
     if (!finalId) {
       const existingSlot = await Schedule.findOne({
@@ -674,7 +698,15 @@ const createOrUpdateSchedule = async (req, res) => {
 
 const deleteSchedule = async (req, res) => {
   try {
-    await Schedule.destroy({ where: { id: req.params.id } });
+    const { id } = req.params;
+    const schedule = await Schedule.findByPk(id);
+    if (schedule) {
+      const year = await AcademicYear.findByPk(schedule.academicYearId);
+      if (year && year.isLocked) {
+        return res.status(400).json({ message: 'Jadwal untuk tahun ajaran ini sedang dikunci!' });
+      }
+    }
+    await Schedule.destroy({ where: { id } });
     res.json({ message: 'Jadwal berhasil dihapus' });
   } catch (error) {
     res.status(500).json({ message: 'Gagal hapus jadwal' });
@@ -1310,7 +1342,7 @@ module.exports = {
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
   getLessons, createLesson, updateLesson, deleteLesson,
-  getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
+  getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear, toggleAcademicYearLock,
   getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
   getCurriculums, createCurriculum, updateCurriculum, deleteCurriculum,
   getGradeLevels, createGradeLevel, updateGradeLevel, deleteGradeLevel,

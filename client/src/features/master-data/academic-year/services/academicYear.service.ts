@@ -17,5 +17,9 @@ export const academicYearService = {
   delete: async (id: string): Promise<{ message: string }> => {
     const response = await api.delete<{ message: string }>(`/admin/academic-years/${id}`);
     return response.data;
+  },
+  toggleLock: async (id: string): Promise<{ message: string; isLocked: boolean }> => {
+    const response = await api.put<{ message: string; isLocked: boolean }>(`/admin/academic-years/${id}/toggle-lock`);
+    return response.data;
   }
 };

@@ -5,7 +5,7 @@ const {
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
   getLessons, createLesson, updateLesson, deleteLesson,
-  getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear,
+  getAcademicYears, createAcademicYear, updateAcademicYear, deleteAcademicYear, toggleAcademicYearLock,
   getTimeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot,
   getCurriculums, createCurriculum, updateCurriculum, deleteCurriculum,
   getGradeLevels, createGradeLevel, updateGradeLevel, deleteGradeLevel,
@@ -46,6 +46,7 @@ router.get('/academic-years', getAcademicYears);
 router.post('/academic-years', createAcademicYear);
 router.put('/academic-years/:id', updateAcademicYear);
 router.delete('/academic-years/:id', deleteAcademicYear);
+router.put('/academic-years/:id/toggle-lock', toggleAcademicYearLock);
 
 // Slot Jam Pelajaran
 router.get('/time-slots', getTimeSlots);

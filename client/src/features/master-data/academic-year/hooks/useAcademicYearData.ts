@@ -38,3 +38,13 @@ export const useDeleteAcademicYear = () => {
     }
   });
 };
+
+export const useToggleAcademicYearLock = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => academicYearService.toggleLock(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['academic-years'] });
+    }
+  });
+};

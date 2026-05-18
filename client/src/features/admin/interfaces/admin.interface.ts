@@ -4,6 +4,7 @@ export interface IAcademicYear {
   startDate?: string;
   endDate?: string;
   isActive: boolean;
+  isLocked?: boolean;
 }
 
 export interface IAcademicYearPayload {
