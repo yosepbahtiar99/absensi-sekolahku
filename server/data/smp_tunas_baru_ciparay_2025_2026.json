@@ -1,0 +1,546 @@
+{
+  "school": "SMP TUNAS BARU CIPARAY",
+  "academicYear": "2025/2026",
+  "kepalaSekolah": {
+    "name": "Ana Budiana, S.Pd",
+    "guruCode": 1
+  },
+  "gradeLevels": [
+    { "name": "7", "sequence": 7 },
+    { "name": "8", "sequence": 8 },
+    { "name": "9", "sequence": 9 }
+  ],
+  "classes": [
+    { "name": "Kelas VII A", "grade": "7" },
+    { "name": "Kelas VII B", "grade": "7" },
+    { "name": "Kelas VII C", "grade": "7" },
+    { "name": "Kelas VIII A", "grade": "8" },
+    { "name": "Kelas VIII B", "grade": "8" },
+    { "name": "Kelas VIII C", "grade": "8" },
+    { "name": "Kelas VIII D", "grade": "8" },
+    { "name": "Kelas IX A", "grade": "9" },
+    { "name": "Kelas IX B", "grade": "9" },
+    { "name": "Kelas IX C", "grade": "9" },
+    { "name": "Kelas IX D", "grade": "9" }
+  ],
+  "teachers": [
+    { "code": 1, "name": "Ana Budiana, S.Pd", "subjects": ["IPS"] },
+    { "code": 2, "name": "Euis Hoeriah, S.Pd", "subjects": ["Seni Budaya"] },
+    { "code": 3, "name": "Dede Suryana, S.Pd", "subjects": ["Penjaskes"] },
+    { "code": 4, "name": "Ahadian K., S.Pd", "subjects": ["B.Indonesia"] },
+    { "code": 5, "name": "Tantan, S.Pd.I", "subjects": ["PAI"] },
+    { "code": 6, "name": "Otim Sopariah Kh, S.Pd., Gr.", "subjects": ["B.Inggris"] },
+    { "code": 7, "name": "Astri Wahyu Agustin, S.Si., Gr.", "subjects": ["IPA"] },
+    { "code": 8, "name": "Indah Faridawati, S.Pd.", "subjects": ["PKn", "PAI"] },
+    { "code": 9, "name": "Adisti Adlina Sabila, S.Pd., Gr.", "subjects": ["Bhs Indonesia", "Bhs Sunda"] },
+    { "code": 10, "name": "Kurnia Megantara, A.Md.", "subjects": ["Informatika"] },
+    { "code": 11, "name": "Novi Nur'aeni, S.Pd., Gr.", "subjects": ["PKN"] },
+    { "code": 12, "name": "Mila Mutiara Sastrawijaya, S.Pd., Gr.", "subjects": ["Bhs. Indonesia", "Bhs Sunda"] },
+    { "code": 13, "name": "Yani Suryani, S.Si., Gr.", "subjects": ["Matematika"] },
+    { "code": 14, "name": "Agus Supriatna, S.Si., Gr.", "subjects": ["Matematika"] },
+    { "code": 15, "name": "Ganjar Prasaja, S.Pd., Gr.", "subjects": ["IPS"] },
+    { "code": 16, "name": "Krismayanti, S.Pd., Gr.", "subjects": ["IPS"] },
+    { "code": 17, "name": "Aan Anwari, S.Pd., Gr.", "subjects": ["Penjaskes"] },
+    { "code": 18, "name": "Apip Saepurrohman, S.Ak., Gr.", "subjects": ["Informatika"] },
+    { "code": 19, "name": "Fajar Hidayatulloh, M.Sn., Gr.", "subjects": ["Seni Budaya", "Bhs Sunda"] },
+    { "code": 20, "name": "Risca Amalia, S.Pd.", "subjects": ["B. Inggris"] },
+    { "code": 21, "name": "Dina Adiningsih, S.Si.", "subjects": ["IPA"] },
+    { "code": 22, "name": "Muhammad Fadil Darojatun Aprian, S.Pd.", "subjects": ["Bhs Sunda"] },
+    { "code": "BK", "name": "Aninda Syifa Safitri, S.Psi", "subjects": ["Bimbingan Konseling"] }
+  ],
+  "dailyPiket": {
+    "senin": "Aninda Syifa Safitri, S.Psi",
+    "selasa": "Fikry Ahmad Rivald",
+    "rabu": "Fajar Hidayatulloh, M.Sn., Gr.",
+    "kamis": "Dina Adiningsih, S.Si",
+    "jumat": "Yani Suryani, S.Si",
+    "sabtu": "M. Fadil D. A., S.Pd"
+  },
+  "scheduleMatrix": {
+    "senin": [
+      {
+        "period": 1,
+        "time": "07.00-07.40",
+        "isSpecial": true,
+        "specialLabel": "UPACARA",
+        "assignments": {}
+      },
+      {
+        "period": 2,
+        "time": "07.40-08.20",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 8, "VII B": 20, "VII C": 18,
+          "VIII A": 14, "VIII B": 16, "VIII C": 3, "VIII D": 11,
+          "IX A": 19, "IX B": 15, "IX C": 7, "IX D": 13
+        }
+      },
+      {
+        "period": 3,
+        "time": "08.20-09.00",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 8, "VII B": 20, "VII C": 18,
+          "VIII A": 14, "VIII B": 16, "VIII C": 3, "VIII D": 11,
+          "IX A": 19, "IX B": 15, "IX C": 7, "IX D": 13
+        }
+      },
+      {
+        "period": 4,
+        "time": "09.00-09.40",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 8, "VII B": 20, "VII C": 18,
+          "VIII A": 14, "VIII B": 16, "VIII C": 3, "VIII D": 11,
+          "IX A": 19, "IX B": 15, "IX C": 7, "IX D": 13
+        }
+      },
+      {
+        "period": 0,
+        "time": "09.40-10.00",
+        "isSpecial": true,
+        "specialLabel": "ISTIRAHAT",
+        "assignments": {}
+      },
+      {
+        "period": 5,
+        "time": "10.00-10.40",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 2, "VII B": 16, "VII C": 20,
+          "VIII A": 19, "VIII B": 14, "VIII C": 13, "VIII D": 3,
+          "IX A": 6, "IX B": 7, "IX C": 15, "IX D": 11
+        }
+      },
+      {
+        "period": 6,
+        "time": "10.40-11.20",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 2, "VII B": 16, "VII C": 20,
+          "VIII A": 19, "VIII B": 14, "VIII C": 13, "VIII D": 3,
+          "IX A": 6, "IX B": 7, "IX C": 15, "IX D": 11
+        }
+      },
+      {
+        "period": 7,
+        "time": "11.20-12.00",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 2, "VII B": 16, "VII C": 20,
+          "VIII A": 19, "VIII B": 14, "VIII C": 13, "VIII D": 3,
+          "IX A": 6, "IX B": 7, "IX C": 15, "IX D": 11
+        }
+      }
+    ],
+    "selasa": [
+      {
+        "period": 1,
+        "time": "07.00-07.40",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 7, "VII B": 20, "VII C": 22,
+          "VIII A": 16, "VIII B": 21, "VIII C": 13, "VIII D": 15,
+          "IX A": 17, "IX B": 11, "IX C": 6, "IX D": 4
+        }
+      },
+      {
+        "period": 2,
+        "time": "07.40-08.20",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 7, "VII B": 8, "VII C": 22,
+          "VIII A": 16, "VIII B": 19, "VIII C": 13, "VIII D": 15,
+          "IX A": 17, "IX B": 11, "IX C": 6, "IX D": 4
+        }
+      },
+      {
+        "period": 3,
+        "time": "08.20-09.00",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 16, "VII B": 8, "VII C": 11,
+          "VIII A": 21, "VIII B": 19, "VIII C": 9, "VIII D": 10,
+          "IX A": 17, "IX B": 6, "IX C": 13, "IX D": 7
+        }
+      },
+      {
+        "period": 4,
+        "time": "09.00-09.40",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 16, "VII B": 8, "VII C": 11,
+          "VIII A": 21, "VIII B": 19, "VIII C": 9, "VIII D": 10,
+          "IX A": 22, "IX B": 15, "IX C": 13, "IX D": 7
+        }
+      },
+      {
+        "period": 0,
+        "time": "09.40-10.00",
+        "isSpecial": true,
+        "specialLabel": "ISTIRAHAT",
+        "assignments": {}
+      },
+      {
+        "period": 5,
+        "time": "10.00-10.40",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 20, "VII B": 7, "VII C": 16,
+          "VIII A": 21, "VIII B": 9, "VIII C": 15, "VIII D": 19,
+          "IX A": 22, "IX B": 17, "IX C": 4, "IX D": 13
+        }
+      },
+      {
+        "period": 6,
+        "time": "10.40-11.20",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 20, "VII B": 7, "VII C": 16,
+          "VIII A": 9, "VIII B": 6, "VIII C": 15, "VIII D": 19,
+          "IX A": 13, "IX B": 17, "IX C": 4, "IX D": 22
+        }
+      },
+      {
+        "period": 7,
+        "time": "11.20-12.00",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 11, "VII B": 7, "VII C": 20,
+          "VIII A": 9, "VIII B": 6, "VIII C": 21, "VIII D": 19,
+          "IX A": 13, "IX B": 17, "IX C": 4, "IX D": 22
+        }
+      }
+    ],
+    "rabu": [
+      {
+        "period": 1,
+        "time": "06.45-07.20",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 11, "VII B": 14, "VII C": 12,
+          "VIII A": 21, "VIII B": 22, "VIII C": 6, "VIII D": 13,
+          "IX A": 7, "IX B": 5, "IX C": 4, "IX D": 19
+        }
+      },
+      {
+        "period": 2,
+        "time": "07.20-07.55",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 11, "VII B": 14, "VII C": 12,
+          "VIII A": 21, "VIII B": 22, "VIII C": 6, "VIII D": 13,
+          "IX A": 7, "IX B": 5, "IX C": 4, "IX D": 17
+        }
+      },
+      {
+        "period": 3,
+        "time": "07.55-08.30",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 20, "VII B": 14, "VII C": 12,
+          "VIII A": 22, "VIII B": 9, "VIII C": 6, "VIII D": 13,
+          "IX A": 7, "IX B": 19, "IX C": 4, "IX D": 17
+        }
+      },
+      {
+        "period": 4,
+        "time": "08.30-09.05",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 20, "VII B": 11, "VII C": 14,
+          "VIII A": 22, "VIII B": 9, "VIII C": 19, "VIII D": 21,
+          "IX A": 6, "IX B": 4, "IX C": 5, "IX D": 17
+        }
+      },
+      {
+        "period": 0,
+        "time": "09.05-09.25",
+        "isSpecial": true,
+        "specialLabel": "ISTIRAHAT",
+        "assignments": {}
+      },
+      {
+        "period": 5,
+        "time": "09.25-10.00",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 12, "VII B": 11, "VII C": 7,
+          "VIII A": 6, "VIII B": 5, "VIII C": 19, "VIII D": 21,
+          "IX A": 18, "IX B": 13, "IX C": 17, "IX D": 4
+        }
+      },
+      {
+        "period": 6,
+        "time": "10.00-10.35",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 14, "VII B": 12, "VII C": 7,
+          "VIII A": 6, "VIII B": 5, "VIII C": 19, "VIII D": 9,
+          "IX A": 18, "IX B": 13, "IX C": 17, "IX D": 4
+        }
+      },
+      {
+        "period": 7,
+        "time": "10.35-11.10",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 14, "VII B": 12, "VII C": 7,
+          "VIII A": 6, "VIII B": 5, "VIII C": 21, "VIII D": 9,
+          "IX A": 11, "IX B": 13, "IX C": 17, "IX D": 4
+        }
+      },
+      {
+        "period": 8,
+        "time": "11.10-12.00",
+        "isSpecial": true,
+        "specialLabel": "PROGRAM GURU MENGAJI",
+        "assignments": {}
+      }
+    ],
+    "kamis": [
+      {
+        "period": 1,
+        "time": "07.00-07.40",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 18, "VII B": 7, "VII C": 12,
+          "VIII A": 3, "VIII B": 10, "VIII C": 9, "VIII D": 5,
+          "IX A": 4, "IX B": 22, "IX C": 11, "IX D": 19
+        }
+      },
+      {
+        "period": 2,
+        "time": "07.40-08.20",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 18, "VII B": 2, "VII C": 8,
+          "VIII A": 3, "VIII B": 10, "VIII C": 9, "VIII D": 5,
+          "IX A": 4, "IX B": 22, "IX C": 11, "IX D": 19
+        }
+      },
+      {
+        "period": 3,
+        "time": "08.20-09.00",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 18, "VII B": 2, "VII C": 8,
+          "VIII A": 3, "VIII B": 21, "VIII C": 9, "VIII D": 5,
+          "IX A": 4, "IX B": 19, "IX C": 11, "IX D": 7
+        }
+      },
+      {
+        "period": 4,
+        "time": "09.00-09.40",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 12, "VII B": 2, "VII C": 8,
+          "VIII A": 10, "VIII B": 9, "VIII C": 11, "VIII D": 6,
+          "IX A": 18, "IX B": 19, "IX C": 5, "IX D": 7
+        }
+      },
+      {
+        "period": 0,
+        "time": "09.40-10.00",
+        "isSpecial": true,
+        "specialLabel": "ISTIRAHAT",
+        "assignments": {}
+      },
+      {
+        "period": 5,
+        "time": "10.00-10.40",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 12, "VII B": 18, "VII C": 2,
+          "VIII A": 10, "VIII B": 3, "VIII C": 21, "VIII D": 6,
+          "IX A": 5, "IX B": 4, "IX C": 19, "IX D": 7
+        }
+      },
+      {
+        "period": 6,
+        "time": "10.40-11.20",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 7, "VII B": 18, "VII C": 2,
+          "VIII A": 5, "VIII B": 3, "VIII C": 21, "VIII D": 9,
+          "IX A": 11, "IX B": 4, "IX C": 19, "IX D": 6
+        }
+      },
+      {
+        "period": 7,
+        "time": "11.20-12.00",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 7, "VII B": 18, "VII C": 2,
+          "VIII A": 5, "VIII B": 3, "VIII C": 21, "VIII D": 9,
+          "IX A": 11, "IX B": 4, "IX C": 19, "IX D": 6
+        }
+      }
+    ],
+    "jumat": [
+      {
+        "period": 1,
+        "time": "06.45-07.20",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 16, "VII B": 3, "VII C": 12,
+          "VIII A": 14, "VIII B": 9, "VIII C": 5, "VIII D": 10,
+          "IX A": 4, "IX B": 7, "IX C": 15, "IX D": 6
+        }
+      },
+      {
+        "period": 2,
+        "time": "07.20-07.55",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 16, "VII B": 3, "VII C": 12,
+          "VIII A": 14, "VIII B": 9, "VIII C": 22, "VIII D": 15,
+          "IX A": 4, "IX B": 7, "IX C": 5, "IX D": 6
+        }
+      },
+      {
+        "period": 3,
+        "time": "07.55-08.30",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 12, "VII B": 3, "VII C": 11,
+          "VIII A": 9, "VIII B": 6, "VIII C": 22, "VIII D": 15,
+          "IX A": 4, "IX B": 5, "IX C": 7, "IX D": 18
+        }
+      },
+      {
+        "period": 4,
+        "time": "08.30-09.05",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 12, "VII B": 11, "VII C": 14,
+          "VIII A": 5, "VIII B": 6, "VIII C": 9, "VIII D": 22,
+          "IX A": 15, "IX B": 18, "IX C": 7, "IX D": 13
+        }
+      },
+      {
+        "period": 0,
+        "time": "09.05-09.25",
+        "isSpecial": true,
+        "specialLabel": "ISTIRAHAT",
+        "assignments": {}
+      },
+      {
+        "period": 5,
+        "time": "09.25-10.00",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 3, "VII B": 12, "VII C": 14,
+          "VIII A": 10, "VIII B": 16, "VIII C": 6, "VIII D": 22,
+          "IX A": 13, "IX B": 11, "IX C": 18, "IX D": 4
+        }
+      },
+      {
+        "period": 6,
+        "time": "10.00-10.35",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 3, "VII B": 22, "VII C": 7,
+          "VIII A": 16, "VIII B": 14, "VIII C": 11, "VIII D": 6,
+          "IX A": 13, "IX B": 4, "IX C": 18, "IX D": 15
+        }
+      },
+      {
+        "period": 7,
+        "time": "10.35-11.10",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 3, "VII B": 22, "VII C": 7,
+          "VIII A": 16, "VIII B": 14, "VIII C": 11, "VIII D": 6,
+          "IX A": 13, "IX B": 4, "IX C": 18, "IX D": 15
+        }
+      }
+    ],
+    "sabtu": [
+      {
+        "period": 1,
+        "time": "06.45-07.30",
+        "isSpecial": true,
+        "specialLabel": "SABTU MANGAJI",
+        "assignments": {}
+      },
+      {
+        "period": 2,
+        "time": "07.30-08.05",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 14, "VII B": 12, "VII C": 3,
+          "VIII A": 8, "VIII B": 21, "VIII C": 5, "VIII D": 13,
+          "IX A": 7, "IX B": 18, "IX C": 6, "IX D": 15
+        }
+      },
+      {
+        "period": 3,
+        "time": "08.05-08.40",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 14, "VII B": 12, "VII C": 3,
+          "VIII A": 8, "VIII B": 21, "VIII C": 5, "VIII D": 13,
+          "IX A": 7, "IX B": 18, "IX C": 6, "IX D": 15
+        }
+      },
+      {
+        "period": 4,
+        "time": "08.40-09.15",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 14, "VII B": 12, "VII C": 3,
+          "VIII A": 8, "VIII B": 21, "VIII C": 15, "VIII D": 9,
+          "IX A": 5, "IX B": 13, "IX C": 22, "IX D": 18
+        }
+      },
+      {
+        "period": 5,
+        "time": "09.15-09.50",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 12, "VII B": 7, "VII C": 14,
+          "VIII A": 6, "VIII B": 10, "VIII C": 15, "VIII D": 9,
+          "IX A": 5, "IX B": 13, "IX C": 22, "IX D": 18
+        }
+      },
+      {
+        "period": 0,
+        "time": "09.50-10.10",
+        "isSpecial": true,
+        "specialLabel": "ISTIRAHAT",
+        "assignments": {}
+      },
+      {
+        "period": 6,
+        "time": "10.10-10.45",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 7, "VII B": 16, "VII C": 14,
+          "VIII A": 9, "VIII B": 8, "VIII C": 10, "VIII D": 21,
+          "IX A": 15, "IX B": 6, "IX C": 13, "IX D": 5
+        }
+      },
+      {
+        "period": 7,
+        "time": "10.45-11.20",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 22, "VII B": 14, "VII C": 16,
+          "VIII A": 9, "VIII B": 8, "VIII C": 10, "VIII D": 21,
+          "IX A": 15, "IX B": 6, "IX C": 13, "IX D": 5
+        }
+      },
+      {
+        "period": 8,
+        "time": "11.20-11.55",
+        "isSpecial": false,
+        "assignments": {
+          "VII A": 22, "VII B": 14, "VII C": 16,
+          "VIII A": 9, "VIII B": 8, "VIII C": 10, "VIII D": 21,
+          "IX A": 15, "IX B": 6, "IX C": 13, "IX D": 5
+        }
+      }
+    ]
+  }
+}
