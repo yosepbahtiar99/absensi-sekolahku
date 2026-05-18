@@ -14,7 +14,6 @@ interface LessonFormProps {
 
 const lessonSchema = Yup.object().shape({
   name: Yup.string().required('Nama pelajaran wajib diisi'),
-  hours: Yup.number().required('Jumlah jam wajib diisi').min(1, 'Minimal 1 jam'),
 });
 
 const LessonForm: React.FC<LessonFormProps> = ({ initialValues, onSubmit, isLoading, onCancel }) => {
@@ -43,19 +42,6 @@ const LessonForm: React.FC<LessonFormProps> = ({ initialValues, onSubmit, isLoad
               />
               <ErrorMessage name="name" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
             </div>
-
-            <div>
-              <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Jumlah Jam (Per Minggu)</label>
-              <Input 
-                type="number"
-                name="hours" 
-                value={values.hours} 
-                onChange={handleChange}
-                placeholder="0" 
-                className={errors.hours && touched.hours ? "border-red-500" : ""}
-              />
-              <ErrorMessage name="hours" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
-            </div>
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-slate-50">
@@ -71,3 +57,4 @@ const LessonForm: React.FC<LessonFormProps> = ({ initialValues, onSubmit, isLoad
 };
 
 export default LessonForm;
+

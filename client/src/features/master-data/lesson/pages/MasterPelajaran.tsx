@@ -77,15 +77,6 @@ const MasterPelajaran = () => {
       )
     },
     {
-      header: 'Alokasi Waktu',
-      accessor: (lesson) => (
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-black text-primary">{lesson.hours}</span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase">Jam / Minggu</span>
-        </div>
-      )
-    },
-    {
       header: 'Aksi',
       headerClassName: 'text-right',
       accessor: (lesson) => (
