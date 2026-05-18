@@ -598,6 +598,14 @@ const createOrUpdateSchedule = async (req, res) => {
   try {
     const { id, day, academicYearId, timeSlotId, teacherId, classId, lessonId } = req.body;
 
+    let finalId = id;
+    if (!finalId) {
+      const existingSlot = await Schedule.findOne({
+        where: { day, academicYearId, timeSlotId, classId }
+      });
+      if (existingSlot) finalId = existingSlot.id;
+    }
+
     // 1. Validasi Overlap Guru
     const teacherConflict = await Schedule.findOne({
       where: {
@@ -605,7 +613,7 @@ const createOrUpdateSchedule = async (req, res) => {
         academicYearId,
         timeSlotId,
         teacherId,
-        id: { [Op.ne]: id || 0 }
+        id: { [Op.ne]: finalId || 0 }
       }
     });
     if (teacherConflict) return res.status(400).json({ message: 'Guru sudah ada jadwal lain di slot jam tersebut' });
@@ -617,7 +625,7 @@ const createOrUpdateSchedule = async (req, res) => {
         academicYearId,
         timeSlotId,
         classId,
-        id: { [Op.ne]: id || 0 }
+        id: { [Op.ne]: finalId || 0 }
       }
     });
     if (classConflict) return res.status(400).json({ message: 'Kelas sudah ada pelajaran lain di slot jam tersebut' });
@@ -638,7 +646,7 @@ const createOrUpdateSchedule = async (req, res) => {
           academicYearId,
           classId,
           lessonId,
-          id: { [Op.ne]: id || 0 }
+          id: { [Op.ne]: finalId || 0 }
         }
       });
 
@@ -650,14 +658,6 @@ const createOrUpdateSchedule = async (req, res) => {
     }
 
     const data = { day, academicYearId, timeSlotId, teacherId, classId, lessonId };
-    let finalId = id;
-
-    if (!finalId) {
-      const existingSlot = await Schedule.findOne({
-        where: { day, academicYearId, timeSlotId, classId }
-      });
-      if (existingSlot) finalId = existingSlot.id;
-    }
 
     if (finalId) {
       await Schedule.update(data, { where: { id: finalId } });

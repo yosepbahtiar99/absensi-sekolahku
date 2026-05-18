@@ -25,6 +25,8 @@ import {
   ChevronUp,
   ChevronDown,
   Search,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { useSchedules, useUpsertSchedule, useDeleteSchedule, useCloneSchedule } from '../hooks/useScheduleData';
 import { scheduleService } from '../services/schedule.service';
@@ -56,6 +58,19 @@ const MasterSchedule = () => {
 
   const [guruSearch, setGuruSearch] = useState('');
   const [lessonSearch, setLessonSearch] = useState('');
+
+  const [isLocked, setIsLocked] = useState(() => {
+    return localStorage.getItem('schedule_locked') === 'true';
+  });
+
+  const toggleLock = () => {
+    setIsLocked(prev => {
+      const next = !prev;
+      localStorage.setItem('schedule_locked', String(next));
+      showNotification(next ? 'Jadwal berhasil DIKUNCI' : 'Jadwal berhasil DIBUKA', 'success');
+      return next;
+    });
+  };
 
   const { selectedYearId } = useAcademicYearStore();
   const currentYearId = selectedYearId;
@@ -122,13 +137,19 @@ const MasterSchedule = () => {
   const confirm = useConfirmStore(state => state.confirm);
 
   const handleDragStart = (event: DragStartEvent) => {
+    if (isLocked) return;
     const { active } = event;
     const [type, id] = (active.id as string).split(':');
     if (type === 'guru') setActiveItem({ type: 'guru', ...gurus.find(g => g.id === id) });
-    else setActiveItem({ type: 'lesson', ...lessons.find(l => l.id === id) });
+    else if (type === 'lesson') setActiveItem({ type: 'lesson', ...lessons.find(l => l.id === id) });
+    else if (type === 'schedule') {
+      const sched = schedules.find(s => s.id === id);
+      setActiveItem({ type: 'schedule', ...sched });
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    if (isLocked) return;
     const { over, active } = event;
     setActiveItem(null);
     if (!over) return;
@@ -137,6 +158,48 @@ const MasterSchedule = () => {
 
     const [classId, timeSlotId] = overId.split('|');
     const [activeType, activeId] = (active.id as string).split(':');
+
+    // 1. Jika dragging sebuah jadwal dari cell lain (Cell-to-Cell Drag & Drop)
+    if (activeType === 'schedule') {
+      const draggedSchedule = schedules.find(s => s.id === activeId);
+      if (!draggedSchedule) return;
+
+      const existingOver = schedules.find(s => s.classId === classId && s.timeSlotId === timeSlotId && s.day === activeDay);
+
+      // Jika cell tujuan sudah terisi, lakukan swap (tukar posisi)
+      if (existingOver) {
+        // Update cell tujuan ke koordinat asal
+        const swapPayload = {
+          id: existingOver.id,
+          academicYearId: currentYearId!,
+          classId: draggedSchedule.classId,
+          timeSlotId: draggedSchedule.timeSlotId,
+          day: activeDay,
+          teacherId: existingOver.teacherId,
+          lessonId: existingOver.lessonId
+        };
+        upsertMutation.mutate(swapPayload);
+      }
+
+      // Update jadwal yang di-drag ke koordinat tujuan
+      const movePayload = {
+        id: draggedSchedule.id,
+        academicYearId: currentYearId!,
+        classId,
+        timeSlotId,
+        day: activeDay,
+        teacherId: draggedSchedule.teacherId,
+        lessonId: draggedSchedule.lessonId
+      };
+
+      upsertMutation.mutate(movePayload, {
+        onSuccess: () => showNotification('Jadwal berhasil dipindahkan', 'success'),
+        onError: (err: any) => showNotification(err.response?.data?.message || 'Gagal memindahkan jadwal', 'error')
+      });
+      return;
+    }
+
+    // 2. Drag & Drop standar dari Asset Panel ke Cell
     const existing = schedules?.find(s => s.classId === classId && s.timeSlotId === timeSlotId && s.day === activeDay);
 
     const payload = {
@@ -209,10 +272,27 @@ const MasterSchedule = () => {
           actions={
             <div className="flex gap-3">
               <Button 
+                variant={isLocked ? "destructive" : "outline"} 
+                className="rounded-xl px-6 transition-all duration-300" 
+                onClick={toggleLock}
+              >
+                {isLocked ? (
+                  <>
+                    <Lock size={18} className="mr-2 text-white animate-pulse" />
+                    Buka Kunci
+                  </>
+                ) : (
+                  <>
+                    <Unlock size={18} className="mr-2 text-slate-500" />
+                    Kunci Jadwal
+                  </>
+                )}
+              </Button>
+              <Button 
                 variant="outline" 
                 className="rounded-xl px-6" 
                 onClick={() => setIsCloneModalOpen(true)} 
-                disabled={isCloning}
+                disabled={isCloning || isLocked}
               >
                 {isCloning ? <Loader2 className="animate-spin mr-2" /> : <Copy size={18} className="mr-2" />}
                 Clone
@@ -227,6 +307,26 @@ const MasterSchedule = () => {
             </div>
           }
         />
+
+        {isLocked && (
+          <div className="mx-8 mt-6 p-4 bg-red-50 border border-red-200/50 rounded-2xl flex items-center justify-between shadow-sm animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-red-500 text-white shadow-md shadow-red-500/20">
+                <Lock size={16} />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-black text-slate-800 tracking-tight">Jadwal Sedang Dikunci (Locked)</p>
+                <p className="text-[10px] font-bold text-slate-400 mt-0.5">Semua aksi drag-and-drop, tambah pelajaran, dan penghapusan jadwal dinonaktifkan sementara.</p>
+              </div>
+            </div>
+            <button 
+              onClick={toggleLock}
+              className="px-4 py-2 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 text-[10px] font-black uppercase tracking-widest rounded-xl border border-red-100 shadow-sm transition-all active:scale-95"
+            >
+              Buka Kunci
+            </button>
+          </div>
+        )}
 
         <DndContext 
           sensors={sensors}
@@ -285,6 +385,7 @@ const MasterSchedule = () => {
                             <DroppableGridCell 
                               key={`${cls.id}-${slot.id}`}
                               id={`cell:${cls.id}|${slot.id}`}
+                              isLocked={isLocked}
                               schedule={schedules.find(s => s.classId === cls.id && s.timeSlotId === slot.id && s.day === activeDay)}
                               onDelete={async (id) => {
                                 const confirmed = await confirm({
@@ -389,7 +490,7 @@ const MasterSchedule = () => {
                   <div className="flex-1 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 pb-2 pr-1 custom-scrollbar content-start">
                     {filteredGurus.map(guru => (
                       <div key={guru.id} className="w-full">
-                        <DraggableAssetItem id={`guru:${guru.id}`} type="guru" name={guru.name} />
+                        <DraggableAssetItem id={`guru:${guru.id}`} type="guru" name={guru.name} isLocked={isLocked} />
                       </div>
                     ))}
                   </div>
@@ -423,6 +524,7 @@ const MasterSchedule = () => {
                             name={lesson.name} 
                             badge={stat ? `${stat.assigned}/${stat.required} JP` : undefined}
                             isFulfilled={stat ? stat.remaining <= 0 : false}
+                            isLocked={isLocked}
                           />
                         </div>
                       );
