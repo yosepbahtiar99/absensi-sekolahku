@@ -87,6 +87,9 @@
 - [x] Report Generation (Export to Excel/PDF)
     - [x] Advanced Filtering (Guru, Pelajaran, Kelas, Date Range, Status)
     - [x] Export to Excel with custom styling
+    - [x] Real-time Daily Attendance Monitoring Center (Hadir, Telat, Izin, Alpa, Belum Mulai status auto-correlation)
+    - [x] Personalized Weekly Schedule Export per Guru with live preview and print-friendly PDF support
+
 
 ## Infrastructure & Security
 - [x] Migrate all Primary Keys and Foreign Keys to UUID V4

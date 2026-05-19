@@ -21,7 +21,8 @@ import {
   Terminal,
   X,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  FileText
 } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useLogout } from '../../auth/hooks/useLogout';
@@ -222,6 +223,7 @@ const AdminSidebar = () => {
         </div>
 
         <MenuNavLink to="/admin/schedule" icon={Calendar} label="Atur Jadwal" isCollapsed={isSidebarCollapsed} />
+        <MenuNavLink to="/admin/reports" icon={FileText} label="Laporan Sekolah" isCollapsed={isSidebarCollapsed} />
       </nav>
 
       {/* Toggle Button */}

@@ -10,7 +10,9 @@ const {
   getCurriculums, createCurriculum, updateCurriculum, deleteCurriculum,
   getGradeLevels, createGradeLevel, updateGradeLevel, deleteGradeLevel,
   getSchedules, createOrUpdateSchedule, deleteSchedule, cloneSchedule, exportSchedule,
-  exportReport, exportSnapshot, importSnapshot
+  exportReport, exportSnapshot, importSnapshot,
+  getDailyAttendanceReport, getTeacherScheduleReport,
+  exportDailyAttendanceExcel, exportDailyAttendanceListExcel, exportTeacherScheduleExcel
 } = require('../controllers/adminController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
@@ -22,6 +24,13 @@ router.get('/activities', getAllActivities);
 router.get('/requests', getApprovalRequests);
 router.put('/requests/:id/approve', approveRequest);
 router.get('/export-report', exportReport);
+
+// Laporan (Reports)
+router.get('/reports/daily', getDailyAttendanceReport);
+router.get('/reports/daily/excel', exportDailyAttendanceExcel);
+router.get('/reports/daily/list-excel', exportDailyAttendanceListExcel);
+router.get('/reports/teacher-schedule/:teacherId', getTeacherScheduleReport);
+router.get('/reports/teacher-schedule/:teacherId/excel', exportTeacherScheduleExcel);
 
 // Guru
 router.get('/gurus', getGurus);

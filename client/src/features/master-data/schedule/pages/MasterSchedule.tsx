@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   DndContext, 
   DragOverlay, 
@@ -50,7 +50,14 @@ import { Button } from '../../../../shared/components/Button';
 const MasterSchedule = () => {
   const [activeDay, setActiveDay] = useState('senin');
   const [activeItem, setActiveItem] = useState<any>(null);
-  const [isAssetsOpen, setIsAssetsOpen] = useState(true);
+  const [isAssetsOpen, setIsAssetsOpen] = useState(() => {
+    const saved = localStorage.getItem('master_schedule_assets_open');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('master_schedule_assets_open', JSON.stringify(isAssetsOpen));
+  }, [isAssetsOpen]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<any>(null);

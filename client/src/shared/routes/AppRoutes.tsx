@@ -21,6 +21,7 @@ import MasterTimeSlot from '../../features/master-data/time-slot/pages/MasterTim
 import MasterSchedule from '../../features/master-data/schedule/pages/MasterSchedule';
 import CurriculumPage from '../../features/master-data/curriculum/pages/CurriculumPage';
 import MasterGradeLevel from '../../features/master-data/grade-level/pages/MasterGradeLevel';
+import AdminReports from '../../features/admin/pages/AdminReports';
 import GlobalNotification from '../components/GlobalNotification';
 import GlobalConfirmModal from '../components/GlobalConfirmModal';
 
@@ -102,6 +103,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute role="admin">
             <MasterSchedule />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/reports" 
+        element={
+          <ProtectedRoute role="admin">
+            <AdminReports />
           </ProtectedRoute>
         } 
       />
