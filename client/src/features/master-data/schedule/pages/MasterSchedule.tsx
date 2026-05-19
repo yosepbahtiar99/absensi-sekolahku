@@ -103,7 +103,15 @@ const MasterSchedule = () => {
 
   const schedules = schedData || [];
   const gurus = guruRes?.data || [];
-  const classes = kelasRes?.data || [];
+  const classes = useMemo(() => {
+    const raw = kelasRes?.data || [];
+    return [...raw].sort((a, b) => {
+      const gradeA = (a as any).GradeLevel?.name || '';
+      const gradeB = (b as any).GradeLevel?.name || '';
+      if (gradeA !== gradeB) return gradeA.localeCompare(gradeB);
+      return a.name.localeCompare(b.name);
+    });
+  }, [kelasRes?.data]);
   const lessons = lessonRes?.data || [];
 
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
@@ -370,30 +378,35 @@ const MasterSchedule = () => {
                     <thead>
                       <tr>
                         <th className="sticky left-0 top-0 z-20 bg-slate-50 p-6 border-r border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest text-left">
-                          Kelas / Jam
+                          Jam / Kelas
                         </th>
-                        {filteredTimeSlots.map(slot => (
-                          <th key={slot.id} className="sticky top-0 z-10 bg-slate-50 p-6 border-b border-slate-100 text-center min-w-[220px]">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{slot.label}</p>
-                            <p className="text-xs font-black text-primary mt-1">{slot.startTime.slice(0,5)} - {slot.endTime.slice(0,5)}</p>
+                        {classes.map(cls => (
+                          <th 
+                            key={cls.id} 
+                            className={`sticky top-0 z-10 p-6 border-b border-slate-100 text-center min-w-[220px] transition-colors cursor-pointer ${
+                              selectedClassId === cls.id ? 'bg-primary/5' : 'bg-slate-50 hover:bg-slate-100/50'
+                            }`}
+                            onClick={() => setSelectedClassId(cls.id)}
+                          >
+                            <p className="font-black text-slate-800 text-sm">{cls.name}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{(cls as any).GradeLevel?.name || '-'}</p>
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {classes.map(cls => (
+                      {filteredTimeSlots.map(slot => (
                         <tr 
-                          key={cls.id} 
-                          className={`group hover:bg-slate-50/50 transition-colors ${selectedClassId === cls.id ? 'bg-primary/[0.03]' : ''}`}
-                          onClick={() => setSelectedClassId(cls.id)}
+                          key={slot.id} 
+                          className="group hover:bg-slate-50/50 transition-colors"
                         >
-                          <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/80 backdrop-blur-md p-6 border-r border-b border-slate-100 cursor-pointer">
+                          <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50/80 backdrop-blur-md p-6 border-r border-b border-slate-100">
                             <div>
-                              <p className="font-black text-slate-800 text-sm">{cls.name}</p>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{(cls as any).GradeLevel?.name || '-'}</p>
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{slot.label}</p>
+                              <p className="text-xs font-black text-primary mt-1">{slot.startTime.slice(0,5)} - {slot.endTime.slice(0,5)}</p>
                             </div>
                           </td>
-                          {filteredTimeSlots.map(slot => (
+                          {classes.map(cls => (
                             <DroppableGridCell 
                               key={`${cls.id}-${slot.id}`}
                               id={`cell:${cls.id}|${slot.id}`}
