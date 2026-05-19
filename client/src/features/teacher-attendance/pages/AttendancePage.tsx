@@ -113,28 +113,42 @@ const AttendancePage = () => {
       setIsCapturing(true);
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+
+      // Calculate square size and center offset for 1:1 crop
+      const size = Math.min(video.videoWidth, video.videoHeight);
+      const sx = (video.videoWidth - size) / 2;
+      const sy = (video.videoHeight - size) / 2;
+
+      // Target size for efficient upload size and bandwidth conservation (480x480)
+      const targetSize = 800;
+      canvas.width = targetSize;
+      canvas.height = targetSize;
+
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Mirror if selfie
+        // Mirror horizontally if selfie camera
         if (activeCamera === 'selfie') {
-          ctx.translate(canvas.width, 0);
+          ctx.translate(targetSize, 0);
           ctx.scale(-1, 1);
         }
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Watermark Implementation
+
+        // Draw cropped center portion of video scaled to target size
+        ctx.drawImage(video, sx, sy, size, size, 0, 0, targetSize, targetSize);
+
+        // Reset transformation matrix before rendering watermark to prevent mirrored text
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-        ctx.font = "bold 24px Satoshi, sans-serif";
+
+        // Watermark overlay
+        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+        ctx.font = "bold 13px Satoshi, sans-serif";
         const dateStr = new Date().toLocaleString('id-ID');
         const watermark = `ABSENSI SEKOLAHKU | ${dateStr}`;
         ctx.shadowColor = "rgba(0,0,0,0.5)";
-        ctx.shadowBlur = 4;
-        ctx.fillText(watermark, 40, canvas.height - 40);
-        
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        ctx.shadowBlur = 3;
+        ctx.fillText(watermark, 16, targetSize - 16);
+
+        // Convert canvas image to DataURL with compression (0.6 quality)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
         if (activeCamera === 'selfie') {
           setPhotoSelfie(dataUrl);
           setActiveCamera('class');
@@ -219,46 +233,47 @@ const AttendancePage = () => {
       </div>
 
       {/* Camera Viewport */}
-      <div className="relative flex-1 flex flex-col items-center justify-center overflow-hidden">
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
-          className={cn(
-            "w-full h-full object-cover transition-opacity duration-500",
-            activeCamera === 'selfie' ? "scale-x-[-1]" : "",
-            isCapturing ? "opacity-0" : "opacity-100"
-          )}
-        />
-        
-        {/* Viewport Frame */}
-        <div className="absolute inset-8 border border-white/20 rounded-[2rem] pointer-events-none">
-          <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-xl"></div>
-          <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-xl"></div>
-          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-xl"></div>
-          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl"></div>
-        </div>
-
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4">
-          {!isPhotoRequired ? (
-            <div className="flex flex-col items-center animate-in zoom-in duration-700">
-              <div className="w-24 h-24 rounded-full bg-primary/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center text-primary mb-6">
-                <Check size={48} strokeWidth={3} />
-              </div>
-              <h3 className="text-2xl font-black tracking-tight text-center">Siap Absen!</h3>
-              <p className="text-white/50 text-sm font-medium mt-2 text-center max-w-[200px]">
-                Akun Anda tidak memerlukan verifikasi foto. Silakan klik tombol di bawah.
-              </p>
+      <div className="relative flex-1 flex flex-col items-center justify-center overflow-hidden p-6 pt-24">
+        {isPhotoRequired ? (
+          <div className="w-full max-w-[360px] aspect-square rounded-[2rem] overflow-hidden border-2 border-white/10 relative shadow-2xl bg-black">
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              className={cn(
+                "w-full h-full object-cover transition-opacity duration-500",
+                activeCamera === 'selfie' ? "scale-x-[-1]" : "",
+                isCapturing ? "opacity-0" : "opacity-100"
+              )}
+            />
+            
+            {/* Viewport Frame */}
+            <div className="absolute inset-6 border border-white/10 rounded-[1.25rem] pointer-events-none">
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-primary rounded-tl-lg"></div>
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-primary rounded-tr-lg"></div>
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-primary rounded-bl-lg"></div>
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-primary rounded-br-lg"></div>
             </div>
-          ) : (
-            <div className="bg-primary/20 backdrop-blur-md px-6 py-2 rounded-full border border-primary/30 flex items-center gap-2">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+
+            {/* Badge overlay inside square preview */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
+              <span className="text-[9px] font-black uppercase tracking-wider text-primary">
                 {activeCamera === 'selfie' ? 'Ambil Foto Selfie' : 'Ambil Foto Kelas'}
               </span>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center animate-in zoom-in duration-700">
+            <div className="w-24 h-24 rounded-full bg-primary/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center text-primary mb-6">
+              <Check size={48} strokeWidth={3} />
+            </div>
+            <h3 className="text-2xl font-black tracking-tight text-center">Siap Absen!</h3>
+            <p className="text-white/50 text-sm font-medium mt-2 text-center max-w-[200px]">
+              Akun Anda tidak memerlukan verifikasi foto. Silakan klik tombol di bawah.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Footer Controls */}
