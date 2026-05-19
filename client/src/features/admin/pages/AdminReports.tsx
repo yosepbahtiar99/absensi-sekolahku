@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import api from '../../../shared/lib/axios';
 import {
-  FileText, Calendar, Users, Download, Search, 
-  CheckCircle, Clock, XCircle, AlertCircle, CalendarDays, 
-  ChevronRight, RefreshCw, X, UserCheck, Eye, EyeOff, BookOpen, GraduationCap,
+  FileText, Calendar, Download, Search, 
+  CheckCircle, Clock, XCircle, 
+  RefreshCw, X, UserCheck, Eye, BookOpen, 
   Filter, FileSpreadsheet
 } from 'lucide-react';
 import { DataTable } from '../../../shared/components/DataTable';
@@ -50,11 +50,6 @@ interface DailyReportResponse {
   };
 }
 
-interface IGuru {
-  id: string;
-  name: string;
-  username: string;
-}
 
 const AdminReports = () => {
   const todayStr = new Date().toISOString().split('T')[0];
