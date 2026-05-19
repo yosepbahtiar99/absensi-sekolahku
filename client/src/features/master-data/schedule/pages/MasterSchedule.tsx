@@ -273,6 +273,18 @@ const MasterSchedule = () => {
     setSelectedClassId(classId);
   };
 
+  const handleExportExcel = async () => {
+    if (!currentYearId) return;
+    try {
+      showNotification('Menyiapkan file Excel, matriks jadwal sedang diunduh...', 'info');
+      await scheduleService.exportExcel(currentYearId);
+      showNotification('Matriks jadwal berhasil diunduh', 'success');
+    } catch (err) {
+      console.error(err);
+      showNotification('Gagal mengunduh matriks jadwal', 'error');
+    }
+  };
+
   const filteredGurus = useMemo(() => 
     gurus.filter(g => g.name.toLowerCase().includes(guruSearch.toLowerCase())), 
   [gurus, guruSearch]);
@@ -318,7 +330,7 @@ const MasterSchedule = () => {
                 Clone
               </Button>
               <Button 
-                onClick={() => currentYearId && scheduleService.exportExcel(currentYearId)}
+                onClick={handleExportExcel}
                 className="rounded-xl px-6 shadow-lg shadow-primary/20"
               >
                 <Download size={18} className="mr-2" />

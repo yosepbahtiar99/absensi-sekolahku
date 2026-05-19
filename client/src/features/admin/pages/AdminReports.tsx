@@ -11,6 +11,7 @@ import { DataTable } from '../../../shared/components/DataTable';
 import { useGurus } from '../../master-data/guru/hooks/useGuruData';
 import { useClasses } from '../../master-data/kelas/hooks/useKelasData';
 import { useLessons } from '../../master-data/lesson/hooks/useLessonData';
+import { useNotificationStore } from '../../../shared/store/notificationStore';
 
 interface DailyReportSummary {
   totalScheduled: number;
@@ -56,8 +57,6 @@ interface IGuru {
 }
 
 const AdminReports = () => {
-  const [activeTab, setActiveTab] = useState<'daily' | 'teacher'>('daily');
-  
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Daily Report Pagination & Filter States
@@ -83,12 +82,10 @@ const AdminReports = () => {
   const [tempStartDate, setTempStartDate] = useState(todayStr);
   const [tempEndDate, setTempEndDate] = useState(todayStr);
 
+  const { showNotification } = useNotificationStore();
+
   const [dailyData, setDailyData] = useState<DailyReportResponse | null>(null);
   const [isDailyLoading, setIsDailyLoading] = useState(false);
-
-  // Teacher Report State (Tab 2)
-  const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
-  const [isTeacherDropdownOpen, setIsTeacherDropdownOpen] = useState(false);
 
   // Photo Viewer Modal
   const [viewPhotoUrl, setViewPhotoUrl] = useState<string | null>(null);
@@ -126,10 +123,8 @@ const AdminReports = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'daily') {
-      fetchDailyReport();
-    }
-  }, [page, limit, search, teacherId, classId, lessonId, status, startDate, endDate, activeTab]);
+    fetchDailyReport();
+  }, [page, limit, search, teacherId, classId, lessonId, status, startDate, endDate]);
 
   const handleApplyFilters = () => {
     setTeacherId(tempTeacherId);
@@ -209,6 +204,7 @@ const AdminReports = () => {
 
   const handleDownloadDailyListExcel = async () => {
     try {
+      showNotification('Menyiapkan file Excel, laporan sedang diunduh...', 'info');
       const params = new URLSearchParams({
         startDate,
         endDate,
@@ -228,14 +224,17 @@ const AdminReports = () => {
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
+      showNotification('Laporan Data List berhasil diunduh', 'success');
     } catch (err) {
       console.error('Gagal mengunduh Excel Data List:', err);
+      showNotification('Gagal mengunduh laporan Data List', 'error');
     }
   };
 
 
   const handleDownloadDailyExcel = async () => {
     try {
+      showNotification('Menyiapkan file Excel, matriks sedang diunduh...', 'info');
       const response = await api.get(`/admin/reports/daily/excel?date=${startDate}`, {
         responseType: 'blob'
       });
@@ -246,29 +245,14 @@ const AdminReports = () => {
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
+      showNotification('Laporan Matriks berhasil diunduh', 'success');
     } catch (err) {
       console.error('Gagal mengunduh Excel:', err);
+      showNotification('Gagal mengunduh laporan Matriks', 'error');
     }
   };
 
-  const handleDownloadTeacherExcel = async () => {
-    if (!selectedTeacherId) return;
-    try {
-      const response = await api.get(`/admin/reports/teacher-schedule/${selectedTeacherId}/excel`, {
-        responseType: 'blob'
-      });
-      const teacherName = teachers.find(t => t.id === selectedTeacherId)?.name || 'guru';
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `jadwal_${teacherName.toLowerCase().replace(/\s+/g, '_')}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-    } catch (err) {
-      console.error('Gagal mengunduh Excel:', err);
-    }
-  };
+
 
   const getFullPhotoUrl = (relativePath: string) => {
     const baseUrl = api.defaults.baseURL || '';
@@ -298,42 +282,7 @@ const AdminReports = () => {
           </div>
         </header>
 
-        {/* Tab Selector - Hidden on print */}
-        <div className="flex border-b border-slate-200/80 mb-6 gap-6 print:hidden">
-          <button
-            onClick={() => setActiveTab('daily')}
-            className={`pb-4 text-sm font-black transition-all relative ${
-              activeTab === 'daily' 
-                ? 'text-primary' 
-                : 'text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            Laporan Kehadiran Harian
-            {activeTab === 'daily' && (
-              <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full"></span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('teacher')}
-            className={`pb-4 text-sm font-black transition-all relative ${
-              activeTab === 'teacher' 
-                ? 'text-primary' 
-                : 'text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            Eksport Jadwal Per Guru
-            {activeTab === 'teacher' && (
-              <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full"></span>
-            )}
-          </button>
-        </div>
-
-        {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-h-0 print:overflow-visible">
-          
-          {/* TAB 1: DAILY ATTENDANCE */}
-          {activeTab === 'daily' && (
-            <div className="flex-1 flex flex-col min-h-0 print:overflow-visible">
               
               {/* Daily Filter Bar - Hidden on print */}
               <div className="mb-6 flex justify-between items-end print:hidden">
@@ -651,109 +600,6 @@ const AdminReports = () => {
                   <p className="text-[10px] font-medium text-slate-500 mt-1">Staf Tata Usaha / Admin</p>
                 </div>
               </div>
-
-            </div>
-          )}
-
-          {/* TAB 2: TEACHER SCHEDULE */}
-          {activeTab === 'teacher' && (
-            <div className="flex-1 flex flex-col min-h-0 print:overflow-visible">
-              
-              {/* Teacher Selector Bar - Hidden on print */}
-              <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col sm:flex-row gap-4 items-center mb-6 print:hidden">
-                <div className="relative w-full sm:w-80 z-30">
-                  {/* Trigger Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsTeacherDropdownOpen(!isTeacherDropdownOpen)}
-                    className="flex items-center justify-between gap-2 bg-slate-50 hover:bg-slate-100/50 border border-slate-200/60 focus:border-primary/30 focus:ring-2 focus:ring-primary/10 rounded-xl px-4 py-2.5 w-full text-left font-bold text-sm text-slate-700 transition-all duration-300 active:scale-95"
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <Users size={18} className="text-slate-400 shrink-0" />
-                      <span className="truncate">
-                        {teachers.find(t => t.id === selectedTeacherId)?.name || 'Pilih Guru Pengajar...'}
-                      </span>
-                    </div>
-                    <ChevronRight 
-                      size={16} 
-                      className={`text-slate-400 shrink-0 transition-transform duration-300 ${
-                        isTeacherDropdownOpen ? 'rotate-90' : ''
-                      }`} 
-                    />
-                  </button>
-
-                  {/* Dropdown Menu Overlay */}
-                  {isTeacherDropdownOpen && (
-                    <>
-                      {/* Click outside overlay */}
-                      <div 
-                        className="fixed inset-0 z-20 bg-transparent" 
-                        onClick={() => setIsTeacherDropdownOpen(false)}
-                      />
-                      
-                      {/* Menu Card */}
-                      <div className="absolute left-0 right-0 mt-2 z-50 bg-white border border-slate-100 shadow-xl rounded-2xl p-1.5 max-h-64 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
-                        {teachers.length === 0 ? (
-                          <div className="px-4 py-3 text-slate-400 text-xs font-bold text-center">
-                            Tidak ada data guru
-                          </div>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedTeacherId('');
-                                setIsTeacherDropdownOpen(false);
-                              }}
-                              className={`w-full flex items-center px-4 py-2.5 rounded-xl text-left text-xs font-black uppercase tracking-wider transition-colors ${
-                                !selectedTeacherId 
-                                  ? 'bg-primary/5 text-primary' 
-                                  : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
-                              }`}
-                            >
-                              Pilih Guru Pengajar...
-                            </button>
-                            
-                            {teachers.map(teacher => (
-                              <button
-                                key={teacher.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedTeacherId(teacher.id);
-                                  setIsTeacherDropdownOpen(false);
-                                }}
-                                className={`w-full flex items-center px-4 py-2.5 rounded-xl text-left text-sm font-bold transition-all duration-150 ${
-                                  selectedTeacherId === teacher.id
-                                    ? 'bg-primary/5 text-primary'
-                                    : 'text-slate-700 hover:bg-slate-50 hover:pl-5'
-                                }`}
-                              >
-                                {teacher.name}
-                              </button>
-                            ))}
-                          </>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {selectedTeacherId && (
-                  <div className="flex gap-2 shrink-0 print:hidden">
-                    <button 
-                      onClick={handleDownloadTeacherExcel}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm active:scale-95 transition-all"
-                    >
-                      <Download size={16} />
-                      Unduh Excel Jadwal
-                    </button>
-                  </div>
-                )}
-              </div>
-
-
-            </div>
-          )}
 
         </div>
       </main>

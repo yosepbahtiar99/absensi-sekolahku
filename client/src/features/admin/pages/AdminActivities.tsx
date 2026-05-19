@@ -8,6 +8,7 @@ import { DataTable } from '../../../shared/components/DataTable';
 import AdminHeader from '../components/AdminHeader';
 import AdminSidebar from '../components/AdminSidebar';
 import { useAcademicYearStore } from '../../../shared/store/academicYearStore';
+import { useNotificationStore } from '../../../shared/store/notificationStore';
 import { Search, Clock, Filter, FileSpreadsheet } from 'lucide-react';
 
 const AdminActivities = () => {
@@ -36,6 +37,7 @@ const AdminActivities = () => {
   const [tempEndDate, setTempEndDate] = useState(today);
 
   const { selectedYearId } = useAcademicYearStore();
+  const { showNotification } = useNotificationStore();
 
   const { data: response, isLoading } = useAdminActivities({ 
     search, page, limit, teacherId, classId, lessonId, status, startDate, endDate, academicYearId: selectedYearId || undefined 
@@ -78,9 +80,12 @@ const AdminActivities = () => {
 
   const handleExport = async () => {
     try {
+      showNotification('Menyiapkan file Excel, riwayat aktivitas sedang diunduh...', 'info');
       await adminService.exportReport({ teacherId, classId, lessonId, status, startDate, endDate });
+      showNotification('Riwayat aktivitas berhasil diunduh', 'success');
     } catch (error) {
       console.error('Export failed', error);
+      showNotification('Gagal mengunduh riwayat aktivitas', 'error');
     }
   };
 

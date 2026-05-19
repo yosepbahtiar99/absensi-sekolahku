@@ -36,6 +36,7 @@ const AdminSidebar = () => {
   const { isSidebarCollapsed, toggleSidebar } = useUIStore();
   const location = useLocation();
   const [isMasterOpen, setIsMasterOpen] = useState(false);
+  const [isReportsOpen, setIsReportsOpen] = useState(false);
   
   const [isDevModalOpen, setIsDevModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -115,10 +116,17 @@ const AdminSidebar = () => {
 
   const isMasterActive = masterSubMenus.some(item => location.pathname === item.path);
 
-  // Auto expand Master Data if active
+  const reportsSubMenus = [
+    { icon: FileText, label: 'Kehadiran Harian', path: '/admin/reports/daily' },
+    { icon: Download, label: 'Jadwal Per Guru', path: '/admin/reports/teacher' },
+  ];
+  const isReportsActive = location.pathname.startsWith('/admin/reports');
+
+  // Auto expand submenus if active
   useEffect(() => {
     if (isMasterActive) setIsMasterOpen(true);
-  }, [isMasterActive]);
+    if (isReportsActive) setIsReportsOpen(true);
+  }, [isMasterActive, isReportsActive]);
 
   return (
     <div 
@@ -223,7 +231,54 @@ const AdminSidebar = () => {
         </div>
 
         <MenuNavLink to="/admin/schedule" icon={Calendar} label="Atur Jadwal" isCollapsed={isSidebarCollapsed} />
-        <MenuNavLink to="/admin/reports" icon={FileText} label="Laporan Sekolah" isCollapsed={isSidebarCollapsed} />
+        
+        {/* Reports Collapsible Menu */}
+        <div>
+          <button
+            onClick={() => !isSidebarCollapsed && setIsReportsOpen(!isReportsOpen)}
+            className={cn(
+              "flex items-center w-full rounded-2xl transition-all duration-300 group border mb-1",
+              isSidebarCollapsed ? "justify-center p-3.5" : "gap-3 px-4 py-3.5",
+              isReportsActive
+                ? "bg-white text-primary border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+                : "text-slate-500 border-transparent hover:bg-slate-200/50 hover:text-slate-900"
+            )}
+          >
+            <FileText size={20} className={cn("transition-transform group-hover:scale-110 shrink-0", isReportsActive ? "text-primary" : "text-slate-400")} />
+            {!isSidebarCollapsed && (
+              <>
+                <span className="font-bold text-sm flex-1 text-left whitespace-nowrap">Laporan Sekolah</span>
+                <ChevronDown size={16} className={cn("transition-transform duration-300", isReportsOpen ? "rotate-180" : "")} />
+              </>
+            )}
+          </button>
+
+          {!isSidebarCollapsed && isReportsOpen && (
+            <div className="ml-4 pl-4 border-l-2 border-slate-200 space-y-1 animate-in slide-in-from-top-2 duration-300">
+              {reportsSubMenus.map((sub) => (
+                <NavLink
+                  key={sub.path}
+                  to={sub.path}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group border",
+                      isActive
+                        ? "bg-white text-primary border-slate-200 shadow-sm font-bold"
+                        : "text-slate-500 border-transparent hover:text-slate-900 hover:bg-white/50"
+                    )
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <sub.icon size={20} className={cn("shrink-0", isActive ? "text-primary" : "text-slate-400")} />
+                      <span className="text-sm font-bold whitespace-nowrap">{sub.label}</span>
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* Toggle Button */}

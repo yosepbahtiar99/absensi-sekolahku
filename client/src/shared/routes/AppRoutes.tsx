@@ -22,6 +22,7 @@ import MasterSchedule from '../../features/master-data/schedule/pages/MasterSche
 import CurriculumPage from '../../features/master-data/curriculum/pages/CurriculumPage';
 import MasterGradeLevel from '../../features/master-data/grade-level/pages/MasterGradeLevel';
 import AdminReports from '../../features/admin/pages/AdminReports';
+import AdminTeacherReports from '../../features/admin/pages/AdminTeacherReports';
 import GlobalNotification from '../components/GlobalNotification';
 import GlobalConfirmModal from '../components/GlobalConfirmModal';
 
@@ -107,12 +108,24 @@ const AppRoutes = () => {
         } 
       />
       <Route 
-        path="/admin/reports" 
+        path="/admin/reports/daily" 
         element={
           <ProtectedRoute role="admin">
             <AdminReports />
           </ProtectedRoute>
         } 
+      />
+      <Route 
+        path="/admin/reports/teacher" 
+        element={
+          <ProtectedRoute role="admin">
+            <AdminTeacherReports />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/reports" 
+        element={<Navigate to="/admin/reports/daily" replace />} 
       />
       <Route 
         path="/admin/pelajaran" 
