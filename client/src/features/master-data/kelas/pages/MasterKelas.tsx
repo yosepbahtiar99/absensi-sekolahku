@@ -6,10 +6,12 @@ import { Button } from '../../../../shared/components/Button';
 import KelasForm from '../forms/KelasForm';
 import type { IKelas } from '../interfaces/kelas.interface';
 import { useConfirmStore } from '../../../../shared/store/confirmStore';
+import { useNotificationStore } from '../../../../shared/store/notificationStore';
 
 import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
 const MasterKelas = () => {
+  const { showNotification } = useNotificationStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedKelas, setSelectedKelas] = useState<IKelas | undefined>(undefined);
   const [page, setPage] = useState(1);
@@ -38,11 +40,25 @@ const MasterKelas = () => {
   const handleSubmit = (values: any) => {
     if (selectedKelas) {
       updateMutation.mutate({ id: selectedKelas.id, data: values }, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Data kelas berhasil diperbarui', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal memperbarui kelas';
+          showNotification(msg, 'error');
+        }
       });
     } else {
       createMutation.mutate(values, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Kelas baru berhasil ditambahkan', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menambahkan kelas';
+          showNotification(msg, 'error');
+        }
       });
     }
   };
@@ -57,7 +73,15 @@ const MasterKelas = () => {
     });
     
     if (confirmed) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          showNotification('Kelas berhasil dihapus', 'success');
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menghapus kelas';
+          showNotification(msg, 'error');
+        }
+      });
     }
   };
 

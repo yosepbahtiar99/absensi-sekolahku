@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTimeSlots, useCreateTimeSlot, useUpdateTimeSlot, useDeleteTimeSlot } from '../hooks/useTimeSlotData';
 import { useConfirmStore } from '../../../../shared/store/confirmStore';
+import { useNotificationStore } from '../../../../shared/store/notificationStore';
 import { useAcademicYears } from '../../academic-year/hooks/useAcademicYearData';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Plus, Edit2, Trash2, Clock, X, Filter } from 'lucide-react';
@@ -10,6 +11,7 @@ import type { ITimeSlot } from '../../../admin/interfaces/admin.interface';
 import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
 const MasterTimeSlot = () => {
+  const { showNotification } = useNotificationStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<ITimeSlot | undefined>(undefined);
   
@@ -42,11 +44,25 @@ const MasterTimeSlot = () => {
   const handleSubmit = (values: any) => {
     if (selectedSlot) {
       updateMutation.mutate({ id: selectedSlot.id, data: values }, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Slot jam pelajaran berhasil diperbarui', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal memperbarui slot jam';
+          showNotification(msg, 'error');
+        }
       });
     } else {
       createMutation.mutate(values, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Slot jam pelajaran berhasil ditambahkan', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menambahkan slot jam';
+          showNotification(msg, 'error');
+        }
       });
     }
   };
@@ -61,7 +77,15 @@ const MasterTimeSlot = () => {
     });
     
     if (confirmed) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          showNotification('Slot jam pelajaran berhasil dihapus', 'success');
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menghapus slot jam';
+          showNotification(msg, 'error');
+        }
+      });
     }
   };
 

@@ -69,7 +69,11 @@ const CurriculumPage = () => {
     
     if (confirmed) {
       deleteMutation.mutate(id, {
-        onSuccess: () => showNotification('Kurikulum dihapus', 'success')
+        onSuccess: () => showNotification('Kurikulum dihapus', 'success'),
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menghapus kurikulum';
+          showNotification(msg, 'error');
+        }
       });
     }
   };

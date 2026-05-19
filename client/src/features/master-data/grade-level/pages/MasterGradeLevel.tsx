@@ -30,6 +30,10 @@ const MasterGradeLevel = () => {
         showNotification('Tingkat berhasil ditambahkan', 'success');
         setNewName('');
         setNewSequence(grades.length + 1);
+      },
+      onError: (err: any) => {
+        const msg = err.response?.data?.message || 'Gagal menambahkan tingkat kelas';
+        showNotification(msg, 'error');
       }
     });
   };
@@ -39,6 +43,10 @@ const MasterGradeLevel = () => {
       onSuccess: () => {
         showNotification('Tingkat diperbarui', 'success');
         setEditingId(null);
+      },
+      onError: (err: any) => {
+        const msg = err.response?.data?.message || 'Gagal memperbarui tingkat kelas';
+        showNotification(msg, 'error');
       }
     });
   };
@@ -54,7 +62,11 @@ const MasterGradeLevel = () => {
     
     if (confirmed) {
       deleteMutation.mutate(id, {
-        onSuccess: () => showNotification('Tingkat dihapus', 'success')
+        onSuccess: () => showNotification('Tingkat dihapus', 'success'),
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menghapus tingkat kelas';
+          showNotification(msg, 'error');
+        }
       });
     }
   };

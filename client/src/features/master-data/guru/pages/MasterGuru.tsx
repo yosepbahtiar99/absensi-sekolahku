@@ -6,10 +6,12 @@ import { Button } from '../../../../shared/components/Button';
 import GuruForm from '../forms/GuruForm';
 import type { IGuru } from '../interfaces/guru.interface';
 import { useConfirmStore } from '../../../../shared/store/confirmStore';
+import { useNotificationStore } from '../../../../shared/store/notificationStore';
 
 import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
 const MasterGuru = () => {
+  const { showNotification } = useNotificationStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedGuru, setSelectedGuru] = useState<IGuru | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,11 +40,25 @@ const MasterGuru = () => {
   const handleSubmit = (values: any) => {
     if (selectedGuru) {
       updateMutation.mutate({ id: selectedGuru.id, data: values }, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Data guru berhasil diperbarui', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal memperbarui data guru';
+          showNotification(msg, 'error');
+        }
       });
     } else {
       createMutation.mutate(values, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Guru baru berhasil ditambahkan', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menambahkan guru';
+          showNotification(msg, 'error');
+        }
       });
     }
   };
@@ -57,7 +73,15 @@ const MasterGuru = () => {
     });
     
     if (confirmed) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          showNotification('Guru berhasil dihapus', 'success');
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menghapus guru';
+          showNotification(msg, 'error');
+        }
+      });
     }
   };
 

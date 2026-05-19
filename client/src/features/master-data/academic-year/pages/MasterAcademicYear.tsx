@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAcademicYears, useCreateAcademicYear, useUpdateAcademicYear, useDeleteAcademicYear } from '../hooks/useAcademicYearData';
 import { useConfirmStore } from '../../../../shared/store/confirmStore';
+import { useNotificationStore } from '../../../../shared/store/notificationStore';
 import AdminSidebar from '../../../admin/components/AdminSidebar';
 import { Plus, Edit2, Trash2, CalendarDays, X, CheckCircle2, Circle } from 'lucide-react';
 import { Button } from '../../../../shared/components/Button';
@@ -11,6 +12,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
 const MasterAcademicYear = () => {
+  const { showNotification } = useNotificationStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<IAcademicYear | undefined>(undefined);
 
@@ -33,11 +35,25 @@ const MasterAcademicYear = () => {
   const handleSubmit = (values: any) => {
     if (selectedYear) {
       updateMutation.mutate({ id: selectedYear.id, data: values }, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Tahun ajaran berhasil diperbarui', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal memperbarui tahun ajaran';
+          showNotification(msg, 'error');
+        }
       });
     } else {
       createMutation.mutate(values, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Tahun ajaran baru berhasil ditambahkan', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menambahkan tahun ajaran';
+          showNotification(msg, 'error');
+        }
       });
     }
   };
@@ -52,7 +68,15 @@ const MasterAcademicYear = () => {
     });
     
     if (confirmed) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          showNotification('Tahun ajaran berhasil dihapus', 'success');
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menghapus tahun ajaran';
+          showNotification(msg, 'error');
+        }
+      });
     }
   };
 

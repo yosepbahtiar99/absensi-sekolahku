@@ -6,10 +6,12 @@ import { Button } from '../../../../shared/components/Button';
 import LessonForm from '../forms/LessonForm';
 import type { IPelajaran } from '../interfaces/lesson.interface';
 import { useConfirmStore } from '../../../../shared/store/confirmStore';
+import { useNotificationStore } from '../../../../shared/store/notificationStore';
 
 import { DataTable, type Column } from '../../../../shared/components/DataTable';
 
 const MasterPelajaran = () => {
+  const { showNotification } = useNotificationStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<IPelajaran | undefined>(undefined);
   const [page, setPage] = useState(1);
@@ -38,11 +40,25 @@ const MasterPelajaran = () => {
   const handleSubmit = (values: any) => {
     if (selectedLesson) {
       updateMutation.mutate({ id: selectedLesson.id, data: values }, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Mata pelajaran berhasil diperbarui', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal memperbarui mata pelajaran';
+          showNotification(msg, 'error');
+        }
       });
     } else {
       createMutation.mutate(values, {
-        onSuccess: handleCloseModal
+        onSuccess: () => {
+          showNotification('Mata pelajaran baru berhasil ditambahkan', 'success');
+          handleCloseModal();
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menambahkan mata pelajaran';
+          showNotification(msg, 'error');
+        }
       });
     }
   };
@@ -57,7 +73,15 @@ const MasterPelajaran = () => {
     });
     
     if (confirmed) {
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          showNotification('Mata pelajaran berhasil dihapus', 'success');
+        },
+        onError: (err: any) => {
+          const msg = err.response?.data?.message || 'Gagal menghapus mata pelajaran';
+          showNotification(msg, 'error');
+        }
+      });
     }
   };
 
