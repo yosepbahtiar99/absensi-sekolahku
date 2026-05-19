@@ -1,12 +1,45 @@
 const { User, Schedule, Class, Lesson, Activity, ApprovalRequest, AcademicYear, TimeSlot } = require('../models');
 const { Op } = require('sequelize');
 
+// Timezone Helper: Get current day name and date bounds in Asia/Jakarta (WIB)
+const getJakartaDayInfo = () => {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'long'
+  });
+  const parts = formatter.formatToParts(new Date());
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  const weekday = parts.find(p => p.type === 'weekday').value.toLowerCase();
+
+  // Mapping weekday to Indonesian
+  const dayMap = {
+    sunday: 'minggu',
+    monday: 'senin',
+    tuesday: 'selasa',
+    wednesday: 'rabu',
+    thursday: 'kamis',
+    friday: 'jumat',
+    saturday: 'sabtu'
+  };
+  const todayName = dayMap[weekday] || 'senin';
+
+  // Construct absolute UTC dates for 00:00:00 WIB and 23:59:59 WIB
+  const start = new Date(`${year}-${month}-${day}T00:00:00+07:00`);
+  const end = new Date(`${year}-${month}-${day}T23:59:59+07:00`);
+
+  return { year, month, day, todayName, start, end };
+};
+
 const getMySchedule = async (req, res) => {
   try {
     const teacherId = req.user.id;
     const { day } = req.query; 
-    const days = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
-    const todayName = days[new Date().getDay()];
+    const { todayName, start, end } = getJakartaDayInfo();
     const selectedDay = day || todayName;
 
     // Get Active Academic Year
@@ -27,8 +60,8 @@ const getMySchedule = async (req, res) => {
           model: Activity, 
           where: { 
             timestamp: {
-              [Op.gte]: new Date().setHours(0,0,0,0),
-              [Op.lte]: new Date().setHours(23,59,59,999)
+              [Op.gte]: start,
+              [Op.lte]: end
             }
           },
           required: false 
@@ -78,13 +111,14 @@ const submitAttendance = async (req, res) => {
     if (!schedule) return res.status(404).json({ message: 'Jadwal tidak ditemukan' });
 
     // Cek apakah sudah absen hari ini
+    const { year, month, day: dayStr, start, end } = getJakartaDayInfo();
     const existingActivity = await Activity.findOne({
       where: {
         scheduleId,
         userId,
         timestamp: {
-          [Op.gte]: new Date().setHours(0,0,0,0),
-          [Op.lte]: new Date().setHours(23,59,59,999)
+          [Op.gte]: start,
+          [Op.lte]: end
         }
       }
     });
@@ -103,7 +137,6 @@ const submitAttendance = async (req, res) => {
 
     // Logika Telat (Toleransi 15 Menit)
     // Cek keterlambatan
-    const now = new Date();
     const scheduleStartTime = schedule.TimeSlot?.startTime || schedule.startTime;
     const scheduleEndTime = schedule.TimeSlot?.endTime || schedule.endTime;
     
@@ -111,14 +144,9 @@ const submitAttendance = async (req, res) => {
       return res.status(400).json({ message: 'Jam pelaksanaan tidak terdefinisi' });
     }
 
-    const [schedHour, schedMinute] = scheduleStartTime.split(':').map(Number);
-    const [endHour, endMinute] = scheduleEndTime.split(':').map(Number);
-
-    const startTimeDate = new Date();
-    startTimeDate.setHours(schedHour, schedMinute, 0);
-
-    const endTimeDate = new Date();
-    endTimeDate.setHours(endHour, endMinute, 0);
+    const startTimeDate = new Date(`${year}-${month}-${dayStr}T${scheduleStartTime}+07:00`);
+    const endTimeDate = new Date(`${year}-${month}-${dayStr}T${scheduleEndTime}+07:00`);
+    const now = new Date();
 
     if (now < startTimeDate) {
       return res.status(400).json({ message: 'Jadwal belum dimulai bro!' });
@@ -158,6 +186,7 @@ const submitAttendance = async (req, res) => {
 const getScheduleDetail = async (req, res) => {
   try {
     const { id } = req.params;
+    const { start, end } = getJakartaDayInfo();
     const scheduleData = await Schedule.findByPk(id, {
       include: [
         { model: Class, attributes: ['name'] },
@@ -168,8 +197,8 @@ const getScheduleDetail = async (req, res) => {
           model: Activity,
           where: {
             timestamp: {
-              [Op.gte]: new Date().setHours(0,0,0,0),
-              [Op.lte]: new Date().setHours(23,59,59,999)
+              [Op.gte]: start,
+              [Op.lte]: end
             }
           },
           required: false
