@@ -146,34 +146,14 @@ const AdminSidebar = () => {
           {!isSidebarCollapsed && (
             <div className="transition-all duration-300 opacity-100 translate-x-0">
               <h1 className="text-lg font-black text-slate-900 tracking-tight">
-                Admin
+                Admin Sekolah
               </h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">System Active</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Profile Mini */}
-        <div className={cn(
-          "bg-white border border-slate-200/60 shadow-sm rounded-2xl flex items-center transition-all duration-300 overflow-hidden",
-          isSidebarCollapsed ? "p-2 justify-center" : "p-4 gap-3 mb-4"
-        )}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-cyan-700 flex items-center justify-center text-white font-bold shrink-0 shadow-inner">
-            {user?.name?.charAt(0)}
-          </div>
-          {!isSidebarCollapsed && (
-            <div className="flex-1 min-w-0 transition-all duration-300 opacity-100">
-              <p className="text-sm font-bold text-slate-900 truncate">{user?.name}</p>
-              <p className="text-[10px] font-medium text-slate-400 truncate uppercase tracking-tighter">Administrator</p>
             </div>
           )}
         </div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1.5 mt-2 overflow-y-auto custom-scrollbar pb-10">
+      <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar pb-10">
         {!isSidebarCollapsed && (
           <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 mt-2 transition-opacity duration-300 opacity-100">
             Main Menu
