@@ -46,6 +46,7 @@ const getMySchedule = async (req, res) => {
     const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
     if (!activeYear) return res.json([]);
 
+    // Fetch teacher schedules for the day
     const schedules = await Schedule.findAll({
       where: {
         teacherId,
@@ -69,12 +70,66 @@ const getMySchedule = async (req, res) => {
       ]
     });
 
-    const result = schedules.map(s => {
+    // Fetch all time slots for the day
+    const timeSlots = await TimeSlot.findAll({
+      where: {
+        day: selectedDay,
+        academicYearId: activeYear.id
+      },
+      order: [['startTime', 'ASC']]
+    });
+
+    const matchedScheduleIds = new Set();
+
+    const result = timeSlots.map(ts => {
+      // Find a schedule matching this timeSlot id or matching startTime
+      const scheduleForSlot = schedules.find(s => 
+        s.timeSlotId === ts.id || 
+        (s.startTime && s.startTime.substring(0, 5) === ts.startTime.substring(0, 5))
+      );
+
+      if (scheduleForSlot) {
+        matchedScheduleIds.add(scheduleForSlot.id);
+        const data = scheduleForSlot.toJSON();
+        const startTime = data.TimeSlot?.startTime || data.startTime || ts.startTime;
+        const endTime = data.TimeSlot?.endTime || data.endTime || ts.endTime;
+        const Attendance = data.Activities && data.Activities.length > 0 ? data.Activities[0] : null;
+        
+        return {
+          ...data,
+          startTime,
+          endTime,
+          Attendance,
+          Activities: undefined,
+          isBreak: false
+        };
+      } else {
+        return {
+          id: `break-${ts.id}`,
+          day: selectedDay,
+          startTime: ts.startTime,
+          endTime: ts.endTime,
+          academicYearId: activeYear.id,
+          timeSlotId: ts.id,
+          TimeSlot: {
+            label: ts.label,
+            startTime: ts.startTime,
+            endTime: ts.endTime
+          },
+          isBreak: true,
+          Lesson: null,
+          Class: null,
+          Attendance: null
+        };
+      }
+    });
+
+    // Append any schedules that were not matched to any TimeSlot
+    const unmatchedSchedules = schedules.filter(s => !matchedScheduleIds.has(s.id));
+    const unmatchedResult = unmatchedSchedules.map(s => {
       const data = s.toJSON();
-      // Use time from TimeSlot if available
       const startTime = data.TimeSlot?.startTime || data.startTime;
       const endTime = data.TimeSlot?.endTime || data.endTime;
-      
       const Attendance = data.Activities && data.Activities.length > 0 ? data.Activities[0] : null;
       
       return {
@@ -82,11 +137,16 @@ const getMySchedule = async (req, res) => {
         startTime,
         endTime,
         Attendance,
-        Activities: undefined
+        Activities: undefined,
+        isBreak: false
       };
-    }).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+    });
 
-    res.json(result);
+    const finalResult = [...result, ...unmatchedResult].sort((a, b) => 
+      (a.startTime || '').localeCompare(b.startTime || '')
+    );
+
+    res.json(finalResult);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Gagal mengambil jadwal' });

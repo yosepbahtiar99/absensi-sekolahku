@@ -250,10 +250,7 @@ const AdminReports = () => {
 
 
   const getFullPhotoUrl = (relativePath: string) => {
-    const baseUrl = api.defaults.baseURL || '';
-    // If the base URL ends with /api and relativePath starts with /uploads, trim accordingly
-    const cleanBaseUrl = baseUrl.replace(/\/api\/?$/, '');
-    return `${cleanBaseUrl}${relativePath}`;
+    return `${import.meta.env.VITE_UPLOAD_URL}/${relativePath}`;
   };
 
   return (

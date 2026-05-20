@@ -1,19 +1,25 @@
 export interface ISchedule {
   id: string;
-  classId: string;
-  lessonId: string;
-  teacherId: string;
+  classId?: string;
+  lessonId?: string;
+  teacherId?: string;
   day: string;
   startTime: string;
   endTime: string;
-  Class: { name: string };
-  Lesson: { name: string };
+  Class: { name: string } | null;
+  Lesson: { name: string } | null;
   Attendance?: {
     id: string;
     status: string;
     timestamp: string;
-  };
-  teacher?: { isPhotoRequired: boolean };
+  } | null;
+  teacher?: { isPhotoRequired: boolean } | null;
+  isBreak?: boolean;
+  TimeSlot?: {
+    label: string;
+    startTime: string;
+    endTime: string;
+  } | null;
 }
 
 export interface IAttendancePayload {

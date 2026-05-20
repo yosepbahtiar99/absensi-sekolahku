@@ -114,11 +114,11 @@ const GuruHome = () => {
                       "font-bold text-lg leading-tight transition-colors",
                       hasAbsen ? 'text-slate-300 line-through' : 'text-slate-800 group-hover:text-primary'
                     )}>
-                      {item.Lesson.name}
+                      {item.Lesson?.name}
                     </h3>
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
                       <MapPin size={12} className="text-primary/60" />
-                      <span>{item.Class.name}</span>
+                      <span>{item.Class?.name}</span>
                     </div>
                   </div>
 
@@ -189,8 +189,8 @@ const GuruHome = () => {
                 <span className="text-[10px] font-black">{item.endTime.substring(0, 5)}</span>
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-slate-800 text-lg group-hover:text-primary transition-colors">{item.Lesson.name}</h4>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">{item.Class.name}</p>
+                <h4 className="font-bold text-slate-800 text-lg group-hover:text-primary transition-colors">{item.Lesson?.name || 'Jam Kosong'}</h4>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">{item.Class?.name || (item.TimeSlot?.label || "Waktu Luang")}</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300">
                 <Clock size={18} />

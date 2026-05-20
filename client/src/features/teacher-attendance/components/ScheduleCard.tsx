@@ -28,7 +28,7 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({ schedule, isCurrent }) => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-              {schedule.Class.name}
+              {schedule.Class?.name}
             </span>
             {isCurrent && (
               <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md animate-pulse">
@@ -38,7 +38,7 @@ const ScheduleCard: React.FC<ScheduleCardProps> = ({ schedule, isCurrent }) => {
             )}
           </div>
           <h3 className="text-xl font-black text-slate-800 group-hover:text-primary transition-colors">
-            {schedule.Lesson.name}
+            {schedule.Lesson?.name}
           </h3>
         </div>
         <div className="bg-slate-50 p-3 rounded-2xl group-hover:bg-primary/5 transition-colors">

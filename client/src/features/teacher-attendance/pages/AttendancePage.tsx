@@ -227,8 +227,8 @@ const AttendancePage = () => {
         </button>
         <div className="bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl p-5 text-right pointer-events-auto">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-1">Sedang Berlangsung</p>
-          <h2 className="text-lg font-black leading-tight">{schedule?.Lesson.name}</h2>
-          <p className="text-xs font-bold text-white/60">{schedule?.Class.name}</p>
+          <h2 className="text-lg font-black leading-tight">{schedule?.Lesson?.name}</h2>
+          <p className="text-xs font-bold text-white/60">{schedule?.Class?.name}</p>
         </div>
       </div>
 

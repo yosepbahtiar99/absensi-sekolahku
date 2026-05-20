@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useTodaySchedules } from '../hooks/useAttendanceData';
@@ -11,14 +12,23 @@ const GuruLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 10000); // update every 10s
+    return () => clearInterval(timer);
+  }, []);
+
   // Main Data for Header Stats
   const { data: todaySchedules } = useTodaySchedules();
   
-  const completedSchedulesCount = todaySchedules?.filter(s => s.Attendance).length || 0;
-  const totalSchedulesCount = todaySchedules?.length || 0;
+  const completedSchedulesCount = todaySchedules?.filter(s => !s.isBreak && s.Attendance).length || 0;
+  const totalSchedulesCount = todaySchedules?.filter(s => !s.isBreak).length || 0;
 
   const getCurrentTime = () => {
-    return new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    return currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   };
 
   const navItems = [
@@ -31,12 +41,12 @@ const GuruLayout = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-40">
+    <div className="h-screen bg-[#F8FAFC] flex flex-col overflow-hidden">
       {/* Dynamic Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary to-cyan-700 text-white pt-12 pb-20 px-6 rounded-b-[3.5rem] shadow-2xl shadow-primary/20">
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary to-cyan-700 text-white pt-12 pb-20 px-6 rounded-b-[3.5rem] shadow-2xl shadow-primary/20 shrink-0">
         <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-[-20%] left-[-10%] w-48 h-48 bg-cyan-400/20 rounded-full blur-2xl"></div>
-
+ 
         <div className="flex justify-between items-start relative z-10">
           <div className="space-y-1">
             <p className="text-cyan-100/80 text-xs font-bold tracking-[0.2em] uppercase">Guru</p>
@@ -46,7 +56,7 @@ const GuruLayout = () => {
             <Bell size={24} />
           </button>
         </div>
-
+ 
         <div className="mt-8 relative z-10">
           <div className="bg-white/15 backdrop-blur-xl border border-white/20 p-5 rounded-[2rem] flex items-center justify-between shadow-inner">
             <div className="flex items-center gap-4">
@@ -68,9 +78,9 @@ const GuruLayout = () => {
           </div>
         </div>
       </div>
-
+ 
       {/* Stats Summary - Mini Bento */}
-      <div className="px-6 -mt-10 grid grid-cols-2 gap-4 relative z-20">
+      <div className="px-6 -mt-10 grid grid-cols-2 gap-4 relative z-20 shrink-0">
         <div className="bg-white p-5 rounded-[2rem] shadow-xl shadow-black/5 border border-slate-50 flex items-center gap-4">
           <div className="bg-orange-50 p-3 rounded-2xl">
             <LayoutGrid size={22} className="text-orange-500" />
@@ -90,9 +100,9 @@ const GuruLayout = () => {
           </div>
         </div>
       </div>
-
+ 
       {/* Main Content */}
-      <main className="p-6">
+      <main className="flex-1 overflow-y-auto p-6 pb-36 min-h-0">
         <Outlet />
       </main>
 
