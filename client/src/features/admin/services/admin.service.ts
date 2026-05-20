@@ -78,6 +78,7 @@ export const adminService = {
 
 export interface ISystemSettings {
   attendance_flow: 'disabled' | 'strict' | 'block';
+  late_tolerance: number;
 }
 
 export interface IWallboardTimeSlot {

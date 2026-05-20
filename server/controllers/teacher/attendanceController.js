@@ -65,9 +65,13 @@ const submitAttendance = async (req, res) => {
       return res.status(400).json({ message: 'Jadwal sudah berakhir bro!' });
     }
 
+    // Fetch late tolerance setting
+    const lateSettingObj = await SystemSetting.findOne({ where: { key: 'late_tolerance' } });
+    const lateTolerance = lateSettingObj ? parseInt(lateSettingObj.value, 10) : 15;
+
     let status = 'masuk';
     const diffInMinutes = (now.getTime() - startTimeDate.getTime()) / (1000 * 60);
-    if (diffInMinutes > 15) status = 'telat';
+    if (diffInMinutes > lateTolerance) status = 'telat';
 
     const activity = await Activity.create({
       userId,

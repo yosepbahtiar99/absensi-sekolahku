@@ -12,6 +12,9 @@ const getSettings = async (req, res) => {
     if (!config.attendance_flow) {
       config.attendance_flow = 'disabled';
     }
+    
+    // Parse and set default for late_tolerance
+    config.late_tolerance = config.late_tolerance ? parseInt(config.late_tolerance, 10) : 15;
 
     res.json(config);
   } catch (error) {
@@ -22,16 +25,30 @@ const getSettings = async (req, res) => {
 
 const updateSettings = async (req, res) => {
   try {
-    const { attendance_flow } = req.body;
+    const { attendance_flow, late_tolerance } = req.body;
     
     if (attendance_flow && !['disabled', 'strict', 'block'].includes(attendance_flow)) {
       return res.status(400).json({ message: 'Aliran absensi tidak valid' });
+    }
+
+    if (late_tolerance !== undefined) {
+      const parsedLate = parseInt(late_tolerance, 10);
+      if (isNaN(parsedLate) || parsedLate < 0 || parsedLate > 120) {
+        return res.status(400).json({ message: 'Toleransi keterlambatan harus berupa angka antara 0 sampai 120 menit' });
+      }
     }
 
     if (attendance_flow) {
       await SystemSetting.upsert({
         key: 'attendance_flow',
         value: attendance_flow
+      });
+    }
+
+    if (late_tolerance !== undefined) {
+      await SystemSetting.upsert({
+        key: 'late_tolerance',
+        value: String(late_tolerance)
       });
     }
 

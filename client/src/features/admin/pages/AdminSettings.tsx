@@ -11,7 +11,9 @@ import {
   Layers, 
   Grid, 
   Save, 
-  Info 
+  Info,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 const AdminSettings: React.FC = () => {
@@ -19,22 +21,35 @@ const AdminSettings: React.FC = () => {
   const updateSettingsMutation = useUpdateSystemSettings();
 
   const [selectedFlow, setSelectedFlow] = useState<'disabled' | 'strict' | 'block'>('disabled');
+  const [lateTolerance, setLateTolerance] = useState<number>(15);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Accordion toggle states
+  const [isFlowOpen, setIsFlowOpen] = useState(false);
+  const [isToleranceOpen, setIsToleranceOpen] = useState(false);
 
   // Sync state with query data when loaded
   useEffect(() => {
-    if (settings && settings.attendance_flow) {
-      setSelectedFlow(settings.attendance_flow);
+    if (settings) {
+      if (settings.attendance_flow) {
+        setSelectedFlow(settings.attendance_flow);
+      }
+      if (settings.late_tolerance !== undefined) {
+        setLateTolerance(settings.late_tolerance);
+      }
     }
   }, [settings]);
 
   const handleSave = () => {
     setSuccessMessage(null);
     updateSettingsMutation.mutate(
-      { attendance_flow: selectedFlow },
+      { 
+        attendance_flow: selectedFlow,
+        late_tolerance: lateTolerance
+      },
       {
         onSuccess: () => {
-          setSuccessMessage('Pengaturan aliran absensi berhasil disimpan!');
+          setSuccessMessage('Pengaturan sistem berhasil disimpan!');
           setTimeout(() => setSuccessMessage(null), 4000);
         }
       }
@@ -105,8 +120,8 @@ const AdminSettings: React.FC = () => {
               {/* Top Bar with Save Button */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-5">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Aliran Absensi Guru</h2>
-                  <p className="text-slate-500 text-xs mt-0.5">Pilih model otomatisasi pengisian absensi</p>
+                  <h2 className="text-xl font-bold text-slate-800">Konfigurasi Absensi</h2>
+                  <p className="text-slate-500 text-xs mt-0.5">Kelola alur kehadiran dan batas keterlambatan sekolah</p>
                 </div>
                 <button
                   onClick={handleSave}
@@ -130,94 +145,185 @@ const AdminSettings: React.FC = () => {
                 </div>
               )}
 
-              {/* Main Options Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {options.map((opt) => {
-                  const Icon = opt.icon;
-                  const isSelected = selectedFlow === opt.id;
-                  
-                  return (
-                    <div
-                      key={opt.id}
-                      onClick={() => setSelectedFlow(opt.id as any)}
-                      className={`relative flex flex-col justify-between border-2 rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:shadow-md ${
-                        isSelected 
-                          ? 'border-cyan-600 bg-white ring-4 ring-cyan-50' 
-                          : 'border-slate-100 bg-white hover:border-slate-200'
-                      }`}
-                    >
-                      {/* Radio Indicator */}
-                      <div className="absolute top-6 right-6 flex items-center justify-center h-6 w-6 rounded-full border border-slate-200">
-                        {isSelected && (
-                          <div className="h-3 w-3 rounded-full bg-cyan-600" />
-                        )}
-                      </div>
-
-                      <div>
-                        {/* Icon Container */}
-                        <div className={`p-3.5 rounded-2xl w-fit ${isSelected ? opt.iconSelectedBg : opt.iconBg}`}>
-                          <Icon className="h-6 w-6" />
-                        </div>
-
-                        {/* Title and Badge */}
-                        <div className="mt-6 space-y-1">
-                          <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${opt.badgeColor}`}>
-                            {opt.badge}
-                          </span>
-                          <h3 className="text-lg font-bold text-slate-800">{opt.title}</h3>
-                        </div>
-
-                        {/* Description */}
-                        <p className="text-slate-500 text-sm mt-3 leading-relaxed">
-                          {opt.description}
-                        </p>
-                      </div>
-
-                      {/* Extra details (optional) */}
-                      {opt.details && (
-                        <div className="mt-5 p-3.5 bg-slate-50 border border-slate-100 rounded-2xl flex items-start gap-2 text-xs text-slate-500 leading-normal">
-                          <Info className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
-                          <span>{opt.details}</span>
-                        </div>
-                      )}
+              {/* ACCORDION 1: TOLERANSI KETERLAMBATAN */}
+              <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.01)] transition-all">
+                {/* Accordion Header */}
+                <div 
+                  onClick={() => setIsToleranceOpen(!isToleranceOpen)}
+                  className="p-8 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors select-none"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+                      <Clock className="h-6 w-6" />
                     </div>
-                  );
-                })}
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800">Toleransi Keterlambatan</h3>
+                      <p className="text-slate-400 text-xs mt-0.5">Atur durasi toleransi keterlambatan check-in guru.</p>
+                    </div>
+                  </div>
+                  <div className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors">
+                    {isToleranceOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                  </div>
+                </div>
+
+                {/* Accordion Content Wrapper */}
+                <div className={`grid transition-all duration-300 ease-in-out ${isToleranceOpen ? 'grid-rows-[1fr] opacity-100 border-t border-slate-100 p-8 pt-6' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}>
+                  <div className="overflow-hidden space-y-6 pt-2">
+                    <div className="flex items-center gap-4 max-w-xs">
+                      <button
+                        type="button"
+                        onClick={() => setLateTolerance(prev => Math.max(0, prev - 1))}
+                        className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all text-slate-600 font-bold text-lg select-none"
+                      >
+                        -
+                      </button>
+                      
+                      <div className="relative flex-1">
+                        <input
+                          type="number"
+                          min={0}
+                          max={120}
+                          value={lateTolerance}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            setLateTolerance(isNaN(val) ? 0 : Math.min(120, Math.max(0, val)));
+                          }}
+                          className="h-12 w-full text-center font-bold text-slate-800 border border-slate-200 rounded-xl focus:border-cyan-600 focus:ring-4 focus:ring-cyan-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none select-none">
+                          Menit
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setLateTolerance(prev => Math.min(120, prev + 1))}
+                        className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all text-slate-600 font-bold text-lg select-none"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      * Batas waktu keterlambatan dihitung dari waktu KBM jam pelajaran dimulai. Nilai toleransi dapat diatur antara 0 s.d 120 menit. Jika diset 0, maka keterlambatan sekecil apapun akan langsung dicatat sebagai status "Telat".
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {/* Recommendation Panel */}
-              <div className="bg-slate-50 border border-slate-200 rounded-[2rem] p-8">
-                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                  <Info className="h-4 w-4 text-cyan-600" />
-                  Penjelasan Teknis & Contoh Kasus KBM
-                </h4>
-                <div className="mt-4 text-xs text-slate-600 space-y-3 leading-relaxed">
-                  <p>
-                    Misalkan <strong>Pak Budi</strong> mengajar mata pelajaran <strong>Matematika</strong> di kelas <strong>X-A</strong> pada jadwal berikut:
-                  </p>
-                  <ul className="list-disc list-inside pl-2 space-y-1 font-mono text-slate-700">
-                    <li>Jam ke-2 (08:00 - 08:45)</li>
-                    <li>Jam ke-3 (08:45 - 09:30)</li>
-                    <li>Jam ke-4 (09:30 - 10:15) -- ISTIRAHAT</li>
-                    <li>Jam ke-5 (10:15 - 11:00)</li>
-                  </ul>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                    <div className="p-4 bg-white border border-slate-200 rounded-2xl">
-                      <span className="font-bold text-slate-700 block mb-1">Jika memilih Bawaan:</span>
-                      Pak Budi harus absen 3x secara mandiri, yaitu pada Jam ke-2, Jam ke-3, dan Jam ke-5.
+              {/* ACCORDION 2: ALIRAN ABSENSI GURU */}
+              <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.01)] transition-all">
+                {/* Accordion Header */}
+                <div 
+                  onClick={() => setIsFlowOpen(!isFlowOpen)}
+                  className="p-8 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors select-none"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-cyan-50 text-cyan-600 rounded-2xl">
+                      <Layers className="h-6 w-6" />
                     </div>
-                    <div className="p-4 bg-white border border-slate-200 rounded-2xl">
-                      <span className="font-bold text-slate-700 block mb-1">Jika memilih Strict:</span>
-                      Pak Budi absen pada Jam ke-2. Sistem otomatis mengabsenkan Jam ke-3. Pak Budi harus absen lagi secara manual pada Jam ke-5 (setelah istirahat selesai).
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800">Aliran Absensi Guru (Auto-Inherit)</h3>
+                      <p className="text-slate-400 text-xs mt-0.5">Atur apakah guru otomatis diabsenkan untuk jam pelajaran berurutan.</p>
                     </div>
-                    <div className="p-4 bg-white border border-slate-200 rounded-2xl">
-                      <span className="font-bold text-slate-700 block mb-1">Jika memilih Block:</span>
-                      Pak Budi cukup absen pada Jam ke-2. Sistem langsung mengabsenkan Jam ke-3 dan Jam ke-5 sekaligus secara otomatis.
+                  </div>
+                  <div className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors">
+                    {isFlowOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                  </div>
+                </div>
+
+                {/* Accordion Content Wrapper */}
+                <div className={`grid transition-all duration-300 ease-in-out ${isFlowOpen ? 'grid-rows-[1fr] opacity-100 border-t border-slate-100 p-8 pt-6' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}>
+                  <div className="overflow-hidden space-y-8">
+                    {/* Main Options Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                      {options.map((opt) => {
+                        const Icon = opt.icon;
+                        const isSelected = selectedFlow === opt.id;
+                        
+                        return (
+                          <div
+                            key={opt.id}
+                            onClick={() => setSelectedFlow(opt.id as any)}
+                            className={`relative flex flex-col justify-between border-2 rounded-3xl p-6 cursor-pointer transition-all duration-300 hover:shadow-md ${
+                              isSelected 
+                                ? 'border-cyan-600 bg-white ring-4 ring-cyan-50' 
+                                : 'border-slate-100 bg-white hover:border-slate-200'
+                            }`}
+                          >
+                            <div className="absolute top-6 right-6 flex items-center justify-center h-6 w-6 rounded-full border border-slate-200">
+                              {isSelected && (
+                                <div className="h-3 w-3 rounded-full bg-cyan-600" />
+                              )}
+                            </div>
+
+                            <div>
+                              <div className={`p-3.5 rounded-2xl w-fit ${isSelected ? opt.iconSelectedBg : opt.iconBg}`}>
+                                <Icon className="h-6 w-6" />
+                              </div>
+
+                              <div className="mt-6 space-y-1">
+                                <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${opt.badgeColor}`}>
+                                  {opt.badge}
+                                </span>
+                                <h3 className="text-lg font-bold text-slate-800">{opt.title}</h3>
+                              </div>
+
+                              <p className="text-slate-500 text-sm mt-3 leading-relaxed">
+                                {opt.description}
+                              </p>
+                            </div>
+
+                            {opt.details && (
+                              <div className="mt-5 p-3.5 bg-slate-50 border border-slate-100 rounded-2xl flex items-start gap-2 text-xs text-slate-500 leading-normal">
+                                <Info className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
+                                <span>{opt.details}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Recommendation Panel */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-[2rem] p-8">
+                      <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <Info className="h-4 w-4 text-cyan-600" />
+                        Penjelasan Teknis & Contoh Kasus KBM
+                      </h4>
+                      <div className="mt-4 text-xs text-slate-600 space-y-3 leading-relaxed">
+                        <p>
+                          Misalkan <strong>Pak Budi</strong> mengajar mata pelajaran <strong>Matematika</strong> di kelas <strong>X-A</strong> pada jadwal berikut:
+                        </p>
+                        <ul className="list-disc list-inside pl-2 space-y-1 font-mono text-slate-700">
+                          <li>Jam ke-2 (08:00 - 08:45)</li>
+                          <li>Jam ke-3 (08:45 - 09:30)</li>
+                          <li>Jam ke-4 (09:30 - 10:15) -- ISTIRAHAT</li>
+                          <li>Jam ke-5 (10:15 - 11:00)</li>
+                        </ul>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                          <div className="p-4 bg-white border border-slate-200 rounded-2xl">
+                            <span className="font-bold text-slate-700 block mb-1">Jika memilih Bawaan:</span>
+                            Pak Budi harus absen 3x secara mandiri, yaitu pada Jam ke-2, Jam ke-3, dan Jam ke-5.
+                          </div>
+                          <div className="p-4 bg-white border border-slate-200 rounded-2xl">
+                            <span className="font-bold text-slate-700 block mb-1">Jika memilih Strict:</span>
+                            Pak Budi absen pada Jam ke-2. Sistem otomatis mengabsenkan Jam ke-3. Pak Budi harus absen lagi secara manual pada Jam ke-5 (setelah istirahat selesai).
+                          </div>
+                          <div className="p-4 bg-white border border-slate-200 rounded-2xl">
+                            <span className="font-bold text-slate-700 block mb-1">Jika memilih Block:</span>
+                            Pak Budi cukup absen pada Jam ke-2. Sistem langsung mengabsenkan Jam ke-3 dan Jam ke-5 sekaligus secara otomatis.
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+
+              
+
             </div>
           )}
         </div>
