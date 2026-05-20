@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, Bell, User as UserIcon } from 'lucide-react';
+import { CalendarDays, Bell } from 'lucide-react';
 import { useAcademicYears } from '../../master-data/academic-year/hooks/useAcademicYearData';
 import { useAcademicYearStore } from '../../../shared/store/academicYearStore';
 import { SelectField } from '../../../shared/components/SelectField';
