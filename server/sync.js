@@ -1,4 +1,4 @@
-const { sequelize, User, Lesson, Class, Schedule, AcademicYear, TimeSlot, Curriculum, GradeLevel } = require('./models');
+const { sequelize, User, Lesson, Class, Schedule, AcademicYear, TimeSlot, Curriculum, GradeLevel, SystemSetting } = require('./models');
 const bcrypt = require('bcryptjs');
 
 async function syncDB() {
@@ -109,6 +109,13 @@ async function syncDB() {
       lessonId: indo.id,
       requiredHours: 4
     });
+    // 8. Buat Pengaturan Sistem Default
+    if (SystemSetting) {
+      await SystemSetting.create({ key: 'attendance_flow', value: 'disabled' });
+      await SystemSetting.create({ key: 'late_tolerance', value: '15' });
+      console.log('✅ Pengaturan Sistem Default Berhasil Dibuat!');
+    }
+
     console.log('✅ Data Master & Kurikulum Berhasil Dibuat!');
 
     console.log('-----------------------------------');
