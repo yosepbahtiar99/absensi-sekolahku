@@ -23,7 +23,8 @@ import {
   AlertTriangle,
   RefreshCw,
   FileText,
-  Tv
+  Tv,
+  Settings
 } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useLogout } from '../../auth/hooks/useLogout';
@@ -281,6 +282,7 @@ const AdminSidebar = () => {
             </div>
           )}
         </div>
+        <MenuNavLink to="/admin/settings" icon={Settings} label="Pengaturan" isCollapsed={isSidebarCollapsed} />
       </nav>
 
       {/* Toggle Button */}

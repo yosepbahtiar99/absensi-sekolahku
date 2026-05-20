@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '../services/admin.service';
+import type { ISystemSettings } from '../services/admin.service';
 
 export const useAdminSummary = (academicYearId?: string) => {
   return useQuery({
@@ -39,5 +40,22 @@ export const useDailyMatrixData = (date?: string) => {
   return useQuery({
     queryKey: ['daily-matrix-data', date],
     queryFn: () => adminService.getDailyMatrixData(date),
+  });
+};
+
+export const useSystemSettings = () => {
+  return useQuery({
+    queryKey: ['system-settings'],
+    queryFn: () => adminService.getSettings(),
+  });
+};
+
+export const useUpdateSystemSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (settings: ISystemSettings) => adminService.updateSettings(settings),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-settings'] });
+    },
   });
 };

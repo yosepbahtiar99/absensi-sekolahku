@@ -24,6 +24,7 @@ import CurriculumPage from '../../features/master-data/curriculum/pages/Curricul
 import MasterGradeLevel from '../../features/master-data/grade-level/pages/MasterGradeLevel';
 import AdminReports from '../../features/admin/pages/AdminReports';
 import AdminTeacherReports from '../../features/admin/pages/AdminTeacherReports';
+import AdminSettings from '../../features/admin/pages/AdminSettings';
 import GlobalNotification from '../components/GlobalNotification';
 import GlobalConfirmModal from '../components/GlobalConfirmModal';
 
@@ -89,6 +90,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute role="admin">
             <AdminApprovals />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/settings" 
+        element={
+          <ProtectedRoute role="admin">
+            <AdminSettings />
           </ProtectedRoute>
         } 
       />

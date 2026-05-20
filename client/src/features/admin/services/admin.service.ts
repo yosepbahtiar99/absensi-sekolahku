@@ -64,7 +64,21 @@ export const adminService = {
     const response = await api.get<IWallboardData>('/admin/reports/daily/matrix-data', { params: { date } });
     return response.data;
   },
+
+  getSettings: async (): Promise<ISystemSettings> => {
+    const response = await api.get<ISystemSettings>('/admin/settings');
+    return response.data;
+  },
+
+  updateSettings: async (settings: ISystemSettings): Promise<{ message: string }> => {
+    const response = await api.put<{ message: string }>('/admin/settings', settings);
+    return response.data;
+  },
 };
+
+export interface ISystemSettings {
+  attendance_flow: 'disabled' | 'strict' | 'block';
+}
 
 export interface IWallboardTimeSlot {
   id: string;

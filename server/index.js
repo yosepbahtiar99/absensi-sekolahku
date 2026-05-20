@@ -55,6 +55,9 @@ const { sequelize } = require('./models');
 sequelize.authenticate()
   .then(() => {
     console.log('Database connected...');
+    return sequelize.sync();
+  })
+  .then(() => {
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

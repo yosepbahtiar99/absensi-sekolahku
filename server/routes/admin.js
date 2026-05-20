@@ -13,7 +13,7 @@ const {
   exportReport, exportSnapshot, importSnapshot,
   getDailyAttendanceReport, getTeacherScheduleReport,
   exportDailyAttendanceExcel, exportDailyAttendanceListExcel, exportTeacherScheduleExcel,
-  getDailyAttendanceMatrixData
+  getDailyAttendanceMatrixData, getSettings, updateSettings
 } = require('../controllers/adminController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
@@ -83,6 +83,10 @@ router.post('/schedules', createOrUpdateSchedule);
 router.post('/schedules/clone', cloneSchedule);
 router.get('/schedules/export', exportSchedule);
 router.delete('/schedules/:id', deleteSchedule);
+
+// Settings
+router.get('/settings', getSettings);
+router.put('/settings', updateSettings);
 
 // Developer Tools
 router.get('/developer/export-snapshot', exportSnapshot);

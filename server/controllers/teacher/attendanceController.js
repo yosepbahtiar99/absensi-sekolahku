@@ -1,4 +1,4 @@
-const { Schedule, Class, Lesson, Activity, User, TimeSlot } = require('../../models');
+const { Schedule, Class, Lesson, Activity, User, TimeSlot, SystemSetting } = require('../../models');
 const { Op } = require('sequelize');
 const { getJakartaDayInfo } = require('./scheduleController');
 
@@ -84,6 +84,102 @@ const submitAttendance = async (req, res) => {
       snapshotLessonName: schedule.Lesson?.name || 'Unknown Lesson',
       snapshotTeacherName: (await User.findByPk(userId))?.name || 'Unknown Teacher'
     });
+
+    // Auto-Inheritance Logic
+    const flowSettingObj = await SystemSetting.findOne({ where: { key: 'attendance_flow' } });
+    const flowSetting = flowSettingObj ? flowSettingObj.value : 'disabled';
+
+    if (flowSetting !== 'disabled' && !isCustom && type !== 'tidak_hadir') {
+      const dayMap = {
+        sunday: 'minggu',
+        monday: 'senin',
+        tuesday: 'selasa',
+        wednesday: 'rabu',
+        thursday: 'kamis',
+        friday: 'jumat',
+        saturday: 'sabtu'
+      };
+      const weekdayName = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Jakarta',
+        weekday: 'long'
+      }).format(now).toLowerCase();
+      const todayName = dayMap[weekdayName] || 'senin';
+
+      const sameSchedules = await Schedule.findAll({
+        where: {
+          teacherId: userId,
+          day: todayName,
+          academicYearId: schedule.academicYearId,
+          classId: schedule.classId,
+          lessonId: schedule.lessonId,
+          id: { [Op.ne]: scheduleId }
+        },
+        include: [{ model: TimeSlot }]
+      });
+
+      if (sameSchedules.length > 0) {
+        const getStartTime = (s) => s.TimeSlot?.startTime || s.startTime || '00:00:00';
+        const getPeriod = (s) => s.TimeSlot?.periodNumber ?? 0;
+
+        const currentStart = getStartTime(schedule);
+        const currentPeriod = getPeriod(schedule);
+
+        // Filter schedules starting AFTER the current schedule
+        const futureSchedules = sameSchedules.filter(s => getStartTime(s) > currentStart);
+
+        if (futureSchedules.length > 0) {
+          futureSchedules.sort((a, b) => getStartTime(a).localeCompare(getStartTime(b)));
+
+          let inheritSchedules = [];
+
+          if (flowSetting === 'block') {
+            inheritSchedules = futureSchedules;
+          } else if (flowSetting === 'strict') {
+            let lastPeriod = currentPeriod;
+            for (const nextSched of futureSchedules) {
+              const nextPeriod = getPeriod(nextSched);
+              if (nextPeriod === lastPeriod + 1) {
+                inheritSchedules.push(nextSched);
+                lastPeriod = nextPeriod;
+              } else {
+                break;
+              }
+            }
+          }
+
+          // Create activity records for inherited schedules
+          for (const nextSched of inheritSchedules) {
+            const hasActivity = await Activity.findOne({
+              where: {
+                scheduleId: nextSched.id,
+                userId,
+                timestamp: {
+                  [Op.gte]: start,
+                  [Op.lte]: end
+                }
+              }
+            });
+
+            if (!hasActivity) {
+              await Activity.create({
+                userId,
+                scheduleId: nextSched.id,
+                academicYearId: nextSched.academicYearId,
+                photoSelfie,
+                photoClass,
+                status,
+                type: type || 'pembelajaran',
+                isCustom: false,
+                timestamp: now,
+                snapshotClassName: nextSched.Class?.name || schedule.Class?.name || 'Unknown Class',
+                snapshotLessonName: nextSched.Lesson?.name || schedule.Lesson?.name || 'Unknown Lesson',
+                snapshotTeacherName: activity.snapshotTeacherName
+              });
+            }
+          }
+        }
+      }
+    }
 
     res.json({ message: 'Absensi berhasil disimpan', activity });
   } catch (error) {
