@@ -12,7 +12,8 @@ const {
   getSchedules, createOrUpdateSchedule, deleteSchedule, cloneSchedule, exportSchedule,
   exportReport, exportSnapshot, importSnapshot,
   getDailyAttendanceReport, getTeacherScheduleReport,
-  exportDailyAttendanceExcel, exportDailyAttendanceListExcel, exportTeacherScheduleExcel
+  exportDailyAttendanceExcel, exportDailyAttendanceListExcel, exportTeacherScheduleExcel,
+  getDailyAttendanceMatrixData
 } = require('../controllers/adminController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
@@ -29,6 +30,7 @@ router.get('/export-report', exportReport);
 router.get('/reports/daily', getDailyAttendanceReport);
 router.get('/reports/daily/excel', exportDailyAttendanceExcel);
 router.get('/reports/daily/list-excel', exportDailyAttendanceListExcel);
+router.get('/reports/daily/matrix-data', getDailyAttendanceMatrixData);
 router.get('/reports/teacher-schedule/:teacherId', getTeacherScheduleReport);
 router.get('/reports/teacher-schedule/:teacherId/excel', exportTeacherScheduleExcel);
 

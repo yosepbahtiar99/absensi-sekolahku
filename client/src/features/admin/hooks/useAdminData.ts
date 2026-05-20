@@ -34,3 +34,10 @@ export const useApproveRequest = () => {
     },
   });
 };
+
+export const useDailyMatrixData = (date?: string) => {
+  return useQuery({
+    queryKey: ['daily-matrix-data', date],
+    queryFn: () => adminService.getDailyMatrixData(date),
+  });
+};

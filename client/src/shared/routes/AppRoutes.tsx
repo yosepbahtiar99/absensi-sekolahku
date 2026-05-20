@@ -13,6 +13,7 @@ import AttendancePage from '../../features/teacher-attendance/pages/AttendancePa
 import AdminDashboard from '../../features/admin/pages/AdminDashboard';
 import AdminActivities from '../../features/admin/pages/AdminActivities';
 import AdminApprovals from '../../features/admin/pages/AdminApprovals';
+import AdminWallboard from '../../features/admin/pages/AdminWallboard';
 import MasterGuru from '../../features/master-data/guru/pages/MasterGuru';
 import MasterKelas from '../../features/master-data/kelas/pages/MasterKelas';
 import MasterPelajaran from '../../features/master-data/lesson/pages/MasterPelajaran';
@@ -64,6 +65,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute role="admin">
             <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/wallboard" 
+        element={
+          <ProtectedRoute role="admin">
+            <AdminWallboard />
           </ProtectedRoute>
         } 
       />

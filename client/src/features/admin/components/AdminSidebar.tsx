@@ -22,7 +22,8 @@ import {
   X,
   AlertTriangle,
   RefreshCw,
-  FileText
+  FileText,
+  Tv
 } from 'lucide-react';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useLogout } from '../../auth/hooks/useLogout';
@@ -179,6 +180,7 @@ const AdminSidebar = () => {
         )}
         
         <MenuNavLink to="/admin" icon={LayoutDashboard} label="Dashboard" isCollapsed={isSidebarCollapsed} />
+        <MenuNavLink to="/admin/wallboard" icon={Tv} label="Wallboard Guru" isCollapsed={isSidebarCollapsed} />
         <MenuNavLink to="/admin/activities" icon={CheckSquare} label="Riwayat Kehadiran" isCollapsed={isSidebarCollapsed} />
         <MenuNavLink to="/admin/approvals" icon={CheckSquare} label="Approval Guru" isCollapsed={isSidebarCollapsed} />
 

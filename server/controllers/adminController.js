@@ -2188,6 +2188,162 @@ const exportDailyAttendanceListExcel = async (req, res) => {
   }
 };
 
+const getDailyAttendanceMatrixData = async (req, res) => {
+  try {
+    const { date } = req.query; // optional date, default to today
+
+    let targetDateStr = date;
+    if (!targetDateStr) {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Jakarta',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const parts = formatter.formatToParts(new Date());
+      const year = parts.find(p => p.type === 'year').value;
+      const month = parts.find(p => p.type === 'month').value;
+      const day = parts.find(p => p.type === 'day').value;
+      targetDateStr = `${year}-${month}-${day}`;
+    }
+
+    const parts = targetDateStr.split('-');
+    const yearStr = parts[0];
+    const monthStr = parts[1];
+    const dayStr = parts[2];
+
+    const start = new Date(`${yearStr}-${monthStr}-${dayStr}T00:00:00+07:00`);
+    const end = new Date(`${yearStr}-${monthStr}-${dayStr}T23:59:59+07:00`);
+
+    const dateObj = new Date(`${yearStr}-${monthStr}-${dayStr}T12:00:00+07:00`);
+    const dayFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Jakarta',
+      weekday: 'long'
+    });
+    const weekdayName = dayFormatter.formatToParts(dateObj).find(p => p.type === 'weekday').value.toLowerCase();
+    
+    const dayMap = {
+      sunday: 'minggu',
+      monday: 'senin',
+      tuesday: 'selasa',
+      wednesday: 'rabu',
+      thursday: 'kamis',
+      friday: 'jumat',
+      saturday: 'sabtu'
+    };
+    const indonesianDayName = dayMap[weekdayName] || 'senin';
+
+    const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
+    if (!activeYear) return res.status(404).json({ message: 'Tahun ajaran aktif tidak ditemukan' });
+
+    // Fetch TimeSlots for today
+    const timeSlots = await TimeSlot.findAll({
+      where: {
+        academicYearId: activeYear.id,
+        day: indonesianDayName
+      },
+      order: [['startTime', 'ASC']]
+    });
+
+    // Fetch Schedules for today
+    const schedules = await Schedule.findAll({
+      where: {
+        day: indonesianDayName,
+        academicYearId: activeYear.id
+      },
+      include: [
+        { model: Class, attributes: ['id', 'name'] },
+        { model: Lesson, attributes: ['id', 'name'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name'] },
+        { model: TimeSlot, attributes: ['id', 'label', 'startTime', 'endTime'] }
+      ]
+    });
+
+    // Fetch Activities for today
+    const activities = await Activity.findAll({
+      where: {
+        timestamp: {
+          [Op.gte]: start,
+          [Op.lte]: end
+        }
+      }
+    });
+
+    // Get unique teachers scheduled today
+    const teacherMap = new Map();
+    schedules.forEach(s => {
+      if (s.teacher && !teacherMap.has(s.teacher.id)) {
+        teacherMap.set(s.teacher.id, s.teacher.name);
+      }
+    });
+    const scheduledTeachers = Array.from(teacherMap.entries()).map(([id, name]) => ({ id, name }));
+    scheduledTeachers.sort((a, b) => a.name.localeCompare(b.name));
+
+    const now = new Date();
+
+    // Map the matrix row by row
+    const matrix = scheduledTeachers.map(teacher => {
+      const teacherSlots = {};
+      
+      timeSlots.forEach(slot => {
+        const schedule = schedules.find(s => s.teacherId === teacher.id && (s.timeSlotId === slot.id || s.TimeSlot?.id === slot.id));
+        if (!schedule) {
+          teacherSlots[slot.id] = null; // No schedule
+          return;
+        }
+
+        const activity = activities.find(a => a.scheduleId === schedule.id);
+        const hasGeneralLeave = activities.some(a => a.userId === teacher.id && a.status === 'tidak_hadir');
+
+        const scheduleStartTime = slot.startTime;
+        const scheduleEndTime = slot.endTime;
+        const startTimeDate = new Date(`${yearStr}-${monthStr}-${dayStr}T${scheduleStartTime}+07:00`);
+        const endTimeDate = new Date(`${yearStr}-${monthStr}-${dayStr}T${scheduleEndTime}+07:00`);
+
+        let status = 'belum_mulai';
+        if (activity) {
+          if (activity.status === 'masuk') status = 'hadir';
+          else if (activity.status === 'telat') status = 'telat';
+          else if (activity.status === 'tidak_hadir') status = 'izin';
+        } else if (hasGeneralLeave) {
+          status = 'izin';
+        } else {
+          if (now > endTimeDate) status = 'alpa';
+          else if (now >= startTimeDate && now <= endTimeDate) status = 'belum_absen';
+          else status = 'belum_mulai';
+        }
+
+        teacherSlots[slot.id] = {
+          scheduleId: schedule.id,
+          classId: schedule.Class?.id,
+          className: schedule.Class?.name,
+          lessonId: schedule.Lesson?.id,
+          lessonName: schedule.Lesson?.name,
+          status,
+          checkInTime: activity?.timestamp || null
+        };
+      });
+
+      return {
+        teacherId: teacher.id,
+        teacherName: teacher.name,
+        slots: teacherSlots
+      };
+    });
+
+    res.json({
+      date: targetDateStr,
+      dayName: indonesianDayName,
+      academicYearName: activeYear.name,
+      timeSlots,
+      matrix
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal mengambil data matriks kehadiran harian' });
+  }
+};
+
 module.exports = { 
   getDashboardSummary, 
   getAllActivities,
@@ -2209,5 +2365,6 @@ module.exports = {
   getTeacherScheduleReport,
   exportDailyAttendanceExcel,
   exportDailyAttendanceListExcel,
-  exportTeacherScheduleExcel
+  exportTeacherScheduleExcel,
+  getDailyAttendanceMatrixData
 };

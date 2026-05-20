@@ -59,4 +59,41 @@ export const adminService = {
     link.click();
     link.remove();
   },
+
+  getDailyMatrixData: async (date?: string): Promise<IWallboardData> => {
+    const response = await api.get<IWallboardData>('/admin/reports/daily/matrix-data', { params: { date } });
+    return response.data;
+  },
 };
+
+export interface IWallboardTimeSlot {
+  id: string;
+  label: string;
+  startTime: string;
+  endTime: string;
+  periodNumber: number;
+}
+
+export interface IWallboardMatrixCell {
+  scheduleId: string;
+  classId: string;
+  className: string;
+  lessonId: string;
+  lessonName: string;
+  status: 'hadir' | 'telat' | 'izin' | 'alpa' | 'belum_absen' | 'belum_mulai';
+  checkInTime: string | null;
+}
+
+export interface IWallboardTeacherRow {
+  teacherId: string;
+  teacherName: string;
+  slots: Record<string, IWallboardMatrixCell | null>;
+}
+
+export interface IWallboardData {
+  date: string;
+  dayName: string;
+  academicYearName: string;
+  timeSlots: IWallboardTimeSlot[];
+  matrix: IWallboardTeacherRow[];
+}
