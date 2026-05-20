@@ -291,7 +291,7 @@ const AdminWallboard = () => {
               <Tv size={28} />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-800 tracking-tight">WALLBOARD KEHADIRAN GURU</h1>
+              <h1 className="text-2xl font-black text-slate-800 tracking-tight">Wallboard Kehadiran Guru</h1>
               <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-0.5">
                 {data?.academicYearName ? `Tahun Ajaran: ${data.academicYearName}` : 'SMP TUNAS BARU CIPARAY'}
               </p>
@@ -304,7 +304,6 @@ const AdminWallboard = () => {
             <div className="bg-white border border-slate-200 px-5 py-2.5 rounded-2xl flex items-center gap-4 shadow-sm">
               <div className="flex flex-col text-right">
                 <span className="text-xs font-black text-cyan-600 tracking-wider leading-none uppercase">{dateFormatted}</span>
-                <span className="text-[10px] font-semibold text-slate-400 mt-1">{data?.dayName ? `Hari KBM: ${data.dayName.toUpperCase()}` : ''}</span>
               </div>
               <div className="h-8 w-px bg-slate-200"></div>
               <div className="flex items-center gap-2">
@@ -415,7 +414,7 @@ const AdminWallboard = () => {
                             <th 
                               key={slot.id} 
                               id={`slot-header-${slot.id}`}
-                              className={`p-4 text-center text-xs font-black uppercase tracking-wider border-b w-48 transition-all ${
+                              className={`p-2.5 text-center text-xs font-black uppercase tracking-wider border-b w-48 transition-all ${
                                 isActive 
                                   ? 'bg-emerald-50/70 border-x-2 border-x-emerald-500/80 border-b-emerald-500/80 text-emerald-800' 
                                   : 'bg-slate-50 border-slate-200 border-l border-slate-100 text-slate-500'
@@ -430,7 +429,7 @@ const AdminWallboard = () => {
                                 )}
                                 <span>{slot.label}</span>
                               </div>
-                              <div className={`text-[10px] font-bold tracking-normal mt-1 font-mono ${isActive ? 'text-emerald-600' : 'text-cyan-600'}`}>
+                              <div className={`text-sm font-black tracking-normal mt-1 font-mono ${isActive ? 'text-emerald-600' : 'text-cyan-600'}`}>
                                 {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
                               </div>
                             </th>
