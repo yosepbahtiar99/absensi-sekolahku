@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTodaySchedules } from '../hooks/useAttendanceData';
 import {
@@ -20,6 +20,23 @@ const GuruDashboard = () => {
 
   // Main Data (Today)
   const { data: todaySchedules, isLoading: isTodayLoading } = useTodaySchedules();
+  
+  const activeCardRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll to active card on load
+  useEffect(() => {
+    if (!isTodayLoading && todaySchedules && todaySchedules.length > 0) {
+      const timer = setTimeout(() => {
+        if (activeCardRef.current) {
+          activeCardRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isTodayLoading, todaySchedules]);
 
   const isCurrentSchedule = (startTime: string, endTime: string) => {
     const [startH, startM] = startTime.split(':').map(Number);
@@ -61,6 +78,7 @@ const GuruDashboard = () => {
               return (
                 <div
                   key={item.id}
+                  ref={active ? activeCardRef : undefined}
                   className={cn(
                     "transition-all duration-500 rounded-[2rem] p-5 flex items-center gap-5",
                     active
@@ -103,6 +121,7 @@ const GuruDashboard = () => {
             return (
               <div
                 key={item.id}
+                ref={active ? activeCardRef : undefined}
                 className={cn(
                   "group relative overflow-hidden transition-all duration-500 rounded-[2rem] p-5 border",
                   active
