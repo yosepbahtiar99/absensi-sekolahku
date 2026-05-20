@@ -376,17 +376,43 @@ const cloneSchedule = async (req, res) => {
     }
 
     // 2. Ambil semua time slots di tahun tujuan
-    const newTimeSlots = await TimeSlot.findAll({
+    let newTimeSlots = await TimeSlot.findAll({
       where: { academicYearId: toYearId }
     });
+
+    // Jika tahun tujuan belum memiliki jam pelajaran (time slots) sama sekali,
+    // otomatis copy semua jam pelajaran dari tahun asal terlebih dahulu
+    if (newTimeSlots.length === 0) {
+      const oldTimeSlots = await TimeSlot.findAll({
+        where: { academicYearId: fromYearId }
+      });
+      if (oldTimeSlots.length > 0) {
+        newTimeSlots = await TimeSlot.bulkCreate(
+          oldTimeSlots.map(ts => ({
+            academicYearId: toYearId,
+            day: ts.day,
+            label: ts.label,
+            startTime: ts.startTime,
+            endTime: ts.endTime,
+            periodNumber: ts.periodNumber,
+            isBreak: ts.isBreak
+          })),
+          { returning: true }
+        );
+      }
+    }
 
     // 3. Mapping logic
     const newSchedules = [];
     for (const oldSched of oldSchedules) {
-      // Cari slot yang cocok (berdasarkan hari dan nomor periode/label)
+      // Cari slot yang cocok (berdasarkan hari dan nomor periode/label/waktu)
       const matchingSlot = newTimeSlots.find(ts => 
         ts.day === oldSched.day && 
-        (ts.periodNumber === oldSched.TimeSlot?.periodNumber || ts.label === oldSched.TimeSlot?.label)
+        (
+          (oldSched.TimeSlot && ts.periodNumber === oldSched.TimeSlot.periodNumber) || 
+          (oldSched.TimeSlot && ts.label === oldSched.TimeSlot.label) ||
+          (oldSched.TimeSlot && ts.startTime === oldSched.TimeSlot.startTime && ts.endTime === oldSched.TimeSlot.endTime)
+        )
       );
 
       if (matchingSlot) {
@@ -404,6 +430,9 @@ const cloneSchedule = async (req, res) => {
     if (newSchedules.length === 0) {
       return res.status(400).json({ message: 'Struktur jam pelajaran di tahun tujuan tidak cocok' });
     }
+
+    // Hapus jadwal tahun tujuan yang sudah ada untuk menghindari bentrok duplikasi
+    await Schedule.destroy({ where: { academicYearId: toYearId } });
 
     // 4. Bulk Create
     await Schedule.bulkCreate(newSchedules);
