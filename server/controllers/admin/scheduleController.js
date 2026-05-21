@@ -145,7 +145,11 @@ const exportSchedule = async (req, res) => {
     });
 
     const workbook = new ExcelJS.Workbook();
-    const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat'];
+    
+    // Bikin dinamis berdasarkan TimeSlot yang ada, diurutkan sesuai urutan hari
+    const dayOrder = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+    const days = [...new Set(timeSlots.map(ts => ts.day.toLowerCase()))]
+      .sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
 
     // 1. Group time slots by day and sort them chronologically
     const slotsPerDay = {};
