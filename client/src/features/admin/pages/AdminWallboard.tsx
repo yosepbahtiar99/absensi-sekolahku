@@ -9,7 +9,9 @@ import {
   Loader2
 } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
-import { useDailyMatrixData } from '../hooks/useAdminData';
+import { useDailyMatrixData, useManualActivity } from '../hooks/useAdminData';
+import { useNotificationStore } from '../../../shared/store/notificationStore';
+import { AlertTriangle, X } from 'lucide-react';
 
 const AdminWallboard = () => {
   const todayStr = new Date().toISOString().split('T')[0];
@@ -22,6 +24,14 @@ const AdminWallboard = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const { showNotification } = useNotificationStore();
+  const manualActivityMutation = useManualActivity();
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [manualForm, setManualForm] = useState({ status: 'masuk', description: '' });
 
   // Fetch Matrix data
   const { data, isLoading, isFetching, refetch } = useDailyMatrixData(selectedDate);
@@ -259,6 +269,49 @@ const AdminWallboard = () => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Handle cell click
+  const handleCellClick = (teacher: any, slotInfo: any, slotData: any) => {
+    setSelectedSlot({
+      scheduleId: slotData.scheduleId,
+      teacherId: teacher.teacherId,
+      teacherName: teacher.teacherName,
+      className: slotData.className,
+      lessonName: slotData.lessonName,
+      timeLabel: `${slotInfo.label} (${slotInfo.startTime.substring(0,5)} - ${slotInfo.endTime.substring(0,5)})`,
+      currentStatus: slotData.status
+    });
+    
+    // Map existing status to form status (or default to masuk)
+    let formStatus = 'masuk';
+    if (slotData.status === 'telat') formStatus = 'telat';
+    if (slotData.status === 'izin') formStatus = 'tidak_hadir';
+    if (slotData.status === 'alpa') formStatus = 'alpa';
+    
+    setManualForm({ status: formStatus, description: '' });
+    setIsModalOpen(true);
+  };
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSlot) return;
+
+    manualActivityMutation.mutate({
+      scheduleId: selectedSlot.scheduleId,
+      teacherId: selectedSlot.teacherId,
+      status: manualForm.status as any,
+      description: manualForm.description,
+      date: selectedDate
+    }, {
+      onSuccess: () => {
+        showNotification('Berhasil memperbarui status absensi', 'success');
+        setIsModalOpen(false);
+      },
+      onError: () => {
+        showNotification('Gagal memperbarui absensi', 'error');
+      }
+    });
+  };
+
   // Format digital clock
   const timeFormatted = time.toLocaleTimeString('id-ID', { 
     hour: '2-digit', 
@@ -468,7 +521,9 @@ const AdminWallboard = () => {
                                 >
                                   {slotData ? (
                                     <div 
-                                      className={`p-3 rounded-2xl text-left transition-all ${getStatusStyle(slotData.status)}`}
+                                      onClick={() => handleCellClick(row, slot, slotData)}
+                                      className={`p-3 rounded-2xl text-left transition-all cursor-pointer hover:ring-2 hover:ring-cyan-500/50 hover:shadow-md ${getStatusStyle(slotData.status)}`}
+                                      title="Klik untuk ubah manual"
                                     >
                                       {/* Class & Status Badge */}
                                       <div className="flex justify-between items-center mb-1.5 gap-2">
@@ -525,6 +580,86 @@ const AdminWallboard = () => {
           </div>
         )}
       </main>
+
+      {/* Modal Manual Attendance */}
+      {isModalOpen && selectedSlot && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="font-black text-slate-800 text-lg">Absensi Manual</h3>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleManualSubmit} className="p-6">
+              <div className="bg-slate-50 p-4 rounded-2xl mb-6 border border-slate-100 space-y-2">
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Detail Jadwal</p>
+                <p className="font-black text-slate-800">{selectedSlot.teacherName}</p>
+                <p className="text-sm text-slate-600">{selectedSlot.lessonName} • {selectedSlot.className}</p>
+                <p className="text-sm font-mono text-cyan-600 font-bold">{selectedSlot.timeLabel}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Ubah Status</label>
+                  <select 
+                    value={manualForm.status}
+                    onChange={(e) => setManualForm({...manualForm, status: e.target.value})}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 font-bold text-slate-700"
+                  >
+                    <option value="masuk">Hadir (Tepat Waktu)</option>
+                    <option value="telat">Terlambat</option>
+                    <option value="tidak_hadir">Izin / Sakit</option>
+                    <option value="alpa">Alpa / Bolos (Reset)</option>
+                  </select>
+                </div>
+
+                {manualForm.status === 'alpa' && (
+                  <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex gap-3 text-rose-800 text-sm">
+                    <AlertTriangle size={20} className="shrink-0 text-rose-600" />
+                    <div>
+                      <span className="font-bold block mb-1">Peringatan Keras!</span>
+                      Memilih <b>Alpa (Reset)</b> akan menghapus data kehadiran untuk jam ini (jika sudah ada).
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Keterangan (Opsional)</label>
+                  <textarea 
+                    value={manualForm.description}
+                    onChange={(e) => setManualForm({...manualForm, description: e.target.value})}
+                    placeholder="Alasan perubahan manual..."
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm min-h-[80px]"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  type="submit"
+                  disabled={manualActivityMutation.isPending}
+                  className="flex-1 px-4 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-bold shadow-lg shadow-cyan-600/20 transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2"
+                >
+                  {manualActivityMutation.isPending && <Loader2 size={16} className="animate-spin" />}
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

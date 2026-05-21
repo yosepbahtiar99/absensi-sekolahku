@@ -59,3 +59,33 @@ export const useUpdateSystemSettings = () => {
     },
   });
 };
+
+export const useDailyPresence = () => {
+  return useQuery({
+    queryKey: ['admin-daily-presence'],
+    queryFn: () => adminService.getDailyPresence(),
+  });
+};
+
+export const useApproveClockOut = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => adminService.approveClockOut(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-daily-presence'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-activities'] });
+    },
+  });
+};
+
+export const useManualActivity = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: import('../services/admin.service').IManualActivityPayload) => adminService.setManualActivity(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['daily-matrix'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-daily-presence'] });
+    },
+  });
+};

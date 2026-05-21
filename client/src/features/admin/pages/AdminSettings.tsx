@@ -13,14 +13,15 @@ import {
   Save, 
   Info,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Briefcase
 } from 'lucide-react';
 
 const AdminSettings: React.FC = () => {
   const { data: settings, isLoading, isError } = useSystemSettings();
   const updateSettingsMutation = useUpdateSystemSettings();
 
-  const [selectedFlow, setSelectedFlow] = useState<'disabled' | 'strict' | 'block'>('disabled');
+  const [selectedFlow, setSelectedFlow] = useState<'disabled' | 'strict' | 'block' | 'full_day'>('disabled');
   const [lateTolerance, setLateTolerance] = useState<number>(15);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -88,6 +89,17 @@ const AdminSettings: React.FC = () => {
       icon: Layers,
       iconBg: 'bg-purple-50 text-purple-600',
       iconSelectedBg: 'bg-purple-100 text-purple-700'
+    },
+    {
+      id: 'full_day',
+      title: 'Corporate / Full Day',
+      badge: 'Gaya Kantoran',
+      badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      description: 'Guru absen 1 kali saat datang. Semua jadwal ke depannya hari itu otomatis hadir. Jadwal yang terlewat sebelum jam absen tidak akan ikut hadir.',
+      details: 'Kepulangan (Clock Out) di-approve sentral oleh Admin melalui tab Approval Kehadiran.',
+      icon: Briefcase,
+      iconBg: 'bg-blue-50 text-blue-600',
+      iconSelectedBg: 'bg-blue-100 text-blue-700'
     }
   ];
 
@@ -236,7 +248,7 @@ const AdminSettings: React.FC = () => {
                 <div className={`grid transition-all duration-300 ease-in-out ${isFlowOpen ? 'grid-rows-[1fr] opacity-100 border-t border-slate-100 p-8 pt-6' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}>
                   <div className="overflow-hidden space-y-8">
                     {/* Main Options Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 pt-2">
                       {options.map((opt) => {
                         const Icon = opt.icon;
                         const isSelected = selectedFlow === opt.id;
@@ -302,7 +314,7 @@ const AdminSettings: React.FC = () => {
                           <li>Jam ke-5 (10:15 - 11:00)</li>
                         </ul>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 pt-2">
                           <div className="p-4 bg-white border border-slate-200 rounded-2xl">
                             <span className="font-bold text-slate-700 block mb-1">Jika memilih Bawaan:</span>
                             Pak Budi harus absen 3x secara mandiri, yaitu pada Jam ke-2, Jam ke-3, dan Jam ke-5.
@@ -314,6 +326,10 @@ const AdminSettings: React.FC = () => {
                           <div className="p-4 bg-white border border-slate-200 rounded-2xl">
                             <span className="font-bold text-slate-700 block mb-1">Jika memilih Block:</span>
                             Pak Budi cukup absen pada Jam ke-2. Sistem langsung mengabsenkan Jam ke-3 dan Jam ke-5 sekaligus secara otomatis.
+                          </div>
+                          <div className="p-4 bg-white border border-slate-200 rounded-2xl">
+                            <span className="font-bold text-slate-700 block mb-1">Jika memilih Corporate / Full Day:</span>
+                            Pak Budi cukup absen 1 kali hari itu. Semua jadwal ke depan di hari tersebut lintas kelas & mapel akan otomatis hadir. Jika Pak Budi baru absen di Jam ke-3, maka Jam ke-2 tetap merah (bolong/alpa). Jam pulang di-approve Admin.
                           </div>
                         </div>
                       </div>

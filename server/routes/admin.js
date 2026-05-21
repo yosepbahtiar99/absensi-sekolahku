@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { 
-  getDashboardSummary, getAllActivities, getApprovalRequests, approveRequest,
+  getDashboardSummary, getAllActivities, getApprovalRequests, approveRequest, getDailyPresence, approveClockOut, manualActivity,
   getGurus, createGuru, updateGuru, deleteGuru,
   getClasses, createClass, updateClass, deleteClass,
   getLessons, createLesson, updateLesson, deleteLesson,
@@ -24,6 +24,9 @@ router.get('/summary', getDashboardSummary);
 router.get('/activities', getAllActivities);
 router.get('/requests', getApprovalRequests);
 router.put('/requests/:id/approve', approveRequest);
+router.get('/attendance/daily-presence', getDailyPresence);
+router.put('/attendance/clock-out/:userId', approveClockOut);
+router.post('/activities/manual', manualActivity);
 router.get('/export-report', exportReport);
 
 // Laporan (Reports)

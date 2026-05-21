@@ -18,5 +18,8 @@ module.exports = (sequelize) => {
     snapshotClassName: { type: DataTypes.STRING },
     snapshotLessonName: { type: DataTypes.STRING },
     snapshotTeacherName: { type: DataTypes.STRING },
+    // Corporate Full Day Check Out Logic
+    isApproveCheckOut: { type: DataTypes.BOOLEAN, defaultValue: false },
+    clockOutTime: { type: DataTypes.DATE },
   });
 };

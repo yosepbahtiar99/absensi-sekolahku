@@ -1,4 +1,4 @@
-const { User, Class, Lesson, Schedule, Activity, AcademicYear, TimeSlot, GradeLevel, Curriculum, ApprovalRequest, sequelize } = require('../../models');
+const { User, Class, Lesson, Schedule, Activity, AcademicYear, TimeSlot, GradeLevel, Curriculum, ApprovalRequest, SystemSetting, sequelize } = require('../../models');
 const { Op } = require('sequelize');
 const ExcelJS = require('exceljs');
 
@@ -255,6 +255,9 @@ const getDailyAttendanceReport = async (req, res) => {
       return res.json({ summary: { totalScheduled: 0, totalHadir: 0, totalTelat: 0, totalAlpa: 0, totalIzin: 0, totalBelumMulai: 0, totalBelumAbsen: 0 }, details: [], meta: { totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 10 } });
     }
 
+    const sysSetting = await SystemSetting.findOne({ where: { key: 'attendance_flow' } });
+    const attendanceFlow = sysSetting ? sysSetting.value : 'disabled';
+
     const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
     const getJakartaDateStr = (d) => {
       const p = formatter.formatToParts(d);
@@ -325,7 +328,8 @@ const getDailyAttendanceReport = async (req, res) => {
 
         let status = 'belum_mulai';
         if (activity) {
-          if (activity.status === 'masuk') status = 'hadir';
+          if (attendanceFlow === 'full_day' && activity.isApproveCheckOut === false && now > endTimeDate) status = 'alpa';
+          else if (activity.status === 'masuk') status = 'hadir';
           else if (activity.status === 'telat') status = 'telat';
           else if (activity.status === 'tidak_hadir') status = 'izin';
         } else if (hasGeneralLeave) {
@@ -486,6 +490,9 @@ const exportDailyAttendanceExcel = async (req, res) => {
     const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
     if (!activeYear) return res.status(404).json({ message: 'Tahun ajaran aktif tidak ditemukan' });
 
+    const sysSetting = await SystemSetting.findOne({ where: { key: 'attendance_flow' } });
+    const attendanceFlow = sysSetting ? sysSetting.value : 'disabled';
+
     // 2. Fetch TimeSlots (X Axis columns) untuk hari ini saja
     const timeSlots = await TimeSlot.findAll({
       where: {
@@ -637,7 +644,11 @@ const exportDailyAttendanceExcel = async (req, res) => {
         let bgColor = 'F1F5F9';
 
         if (activity) {
-          if (activity.status === 'masuk') {
+          if (attendanceFlow === 'full_day' && activity.isApproveCheckOut === false && now > endTimeDate) {
+            symbol = 'A';
+            fgColor = '991B1B';
+            bgColor = 'FCA5A5';
+          } else if (activity.status === 'masuk') {
             symbol = 'H';
             fgColor = '065F46';
             bgColor = 'A7F3D0';
@@ -913,6 +924,9 @@ const exportDailyAttendanceListExcel = async (req, res) => {
     const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
     if (!activeYear) return res.status(404).json({ message: 'Tidak ada tahun ajaran aktif.' });
 
+    const sysSetting = await SystemSetting.findOne({ where: { key: 'attendance_flow' } });
+    const attendanceFlow = sysSetting ? sysSetting.value : 'disabled';
+
     const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
     const getJakartaDateStr = (d) => {
       const p = formatter.formatToParts(d);
@@ -983,7 +997,8 @@ const exportDailyAttendanceListExcel = async (req, res) => {
 
         let status = 'belum_mulai';
         if (activity) {
-          if (activity.status === 'masuk') status = 'hadir';
+          if (attendanceFlow === 'full_day' && activity.isApproveCheckOut === false && now > endTimeDate) status = 'alpa';
+          else if (activity.status === 'masuk') status = 'hadir';
           else if (activity.status === 'telat') status = 'telat';
           else if (activity.status === 'tidak_hadir') status = 'izin';
         } else if (hasGeneralLeave) {
@@ -1163,6 +1178,9 @@ const getDailyAttendanceMatrixData = async (req, res) => {
     const activeYear = await AcademicYear.findOne({ where: { isActive: true } });
     if (!activeYear) return res.status(404).json({ message: 'Tahun ajaran aktif tidak ditemukan' });
 
+    const sysSetting = await SystemSetting.findOne({ where: { key: 'attendance_flow' } });
+    const attendanceFlow = sysSetting ? sysSetting.value : 'disabled';
+
     // Fetch TimeSlots for today
     const timeSlots = await TimeSlot.findAll({
       where: {
@@ -1229,7 +1247,8 @@ const getDailyAttendanceMatrixData = async (req, res) => {
 
         let status = 'belum_mulai';
         if (activity) {
-          if (activity.status === 'masuk') status = 'hadir';
+          if (attendanceFlow === 'full_day' && activity.isApproveCheckOut === false && now > endTimeDate) status = 'alpa';
+          else if (activity.status === 'masuk') status = 'hadir';
           else if (activity.status === 'telat') status = 'telat';
           else if (activity.status === 'tidak_hadir') status = 'izin';
         } else if (hasGeneralLeave) {

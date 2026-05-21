@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminActivities } from '../hooks/useAdminData';
+import { useAdminActivities, useSystemSettings, useDailyPresence, useApproveClockOut } from '../hooks/useAdminData';
 import { useGurus } from '../../master-data/guru/hooks/useGuruData';
 import { useClasses } from '../../master-data/kelas/hooks/useKelasData';
 import { useLessons } from '../../master-data/lesson/hooks/useLessonData';
@@ -9,9 +9,10 @@ import AdminHeader from '../components/AdminHeader';
 import AdminSidebar from '../components/AdminSidebar';
 import { useAcademicYearStore } from '../../../shared/store/academicYearStore';
 import { useNotificationStore } from '../../../shared/store/notificationStore';
-import { Search, Clock, Filter, FileSpreadsheet } from 'lucide-react';
+import { Search, Clock, Filter, FileSpreadsheet, CheckCircle2 } from 'lucide-react';
 
 const AdminActivities = () => {
+  const [activeTab, setActiveTab] = useState<'history' | 'approval'>('history');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
@@ -42,6 +43,20 @@ const AdminActivities = () => {
   const { data: response, isLoading } = useAdminActivities({ 
     search, page, limit, teacherId, classId, lessonId, status, startDate, endDate, academicYearId: selectedYearId || undefined 
   });
+
+  const { data: settings } = useSystemSettings();
+  const isFullDayFlow = settings?.attendance_flow === 'full_day';
+
+  const { data: dailyPresenceRes, isLoading: isLoadingPresence } = useDailyPresence();
+  const approveMutation = useApproveClockOut();
+
+  const handleApproveClockOut = (userId: string) => {
+    approveMutation.mutate(userId, {
+      onSuccess: () => {
+        showNotification('Berhasil melakukan clock out untuk guru ini', 'success');
+      }
+    });
+  };
 
   const { data: guruRes } = useGurus({ limit: 100 });
   const { data: kelasRes } = useClasses({ limit: 100 });
@@ -100,8 +115,30 @@ const AdminActivities = () => {
           icon={<Clock className="text-primary" size={28} />}
         />
 
+        <div className="px-8 mt-2 flex gap-6 border-b border-slate-200">
+          <button 
+            onClick={() => setActiveTab('history')}
+            className={`pb-4 px-2 font-bold text-sm transition-all border-b-2 ${activeTab === 'history' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+          >
+            Riwayat Aktivitas
+          </button>
+          {isFullDayFlow && (
+            <button 
+              onClick={() => setActiveTab('approval')}
+              className={`pb-4 px-2 font-bold text-sm transition-all border-b-2 flex items-center gap-2 ${activeTab === 'approval' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            >
+              Approval Kehadiran Guru
+              {dailyPresenceRes?.data?.length ? (
+                <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full">{dailyPresenceRes.data.length}</span>
+              ) : null}
+            </button>
+          )}
+        </div>
+
         <div className="p-8 pb-0 flex-1 flex flex-col overflow-hidden">
-          <div className="mb-6 flex justify-between items-end">
+          {activeTab === 'history' ? (
+            <>
+              <div className="mb-6 flex justify-between items-end">
             <div>
               <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest px-1">Filter & Export</h3>
             </div>
@@ -337,6 +374,69 @@ const AdminActivities = () => {
             {/* Removed internal pagination here because it's now in DataTable */}
           </div>
         )}
+            </>
+          ) : (
+            <div className="flex-1 bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col min-h-0">
+              <div className="p-6 border-b border-slate-50">
+                <h2 className="text-lg font-bold text-slate-800">Daftar Guru Hadir Hari Ini</h2>
+                <p className="text-slate-500 text-xs mt-1">Daftar guru yang sudah clock-in dan perlu di-approve clock-out-nya untuk menyelesaikan presensi hari ini.</p>
+              </div>
+              <DataTable 
+                data={dailyPresenceRes?.data || []}
+                isLoading={isLoadingPresence}
+                emptyMessage="Tidak ada guru yang menunggu approval clock-out."
+                className="border-none shadow-none rounded-none flex-1 min-h-0"
+                columns={[
+                  {
+                    header: 'Guru',
+                    accessor: (row: any) => (
+                      <div className="flex items-center gap-4 px-6">
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white flex items-center justify-center font-black text-sm shadow-lg shadow-blue-500/20">
+                          {row.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-800 text-sm leading-tight">{row.name}</p>
+                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: {row.userId.slice(0,8)}</p>
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    header: 'Jam Masuk Pertama',
+                    accessor: (row: any) => (
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Clock size={16} className="text-blue-500/60" />
+                        <span className="text-sm font-bold tabular-nums">
+                          {new Date(row.firstCheckIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    )
+                  },
+                  {
+                    header: 'Total Jadwal Terisi',
+                    accessor: (row: any) => (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+                        {row.activityIds.length} Jadwal
+                      </span>
+                    )
+                  },
+                  {
+                    header: 'Aksi',
+                    accessor: (row: any) => (
+                      <button 
+                        onClick={() => handleApproveClockOut(row.userId)}
+                        disabled={approveMutation.isPending}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20 active:scale-95 disabled:opacity-50"
+                      >
+                        <CheckCircle2 size={16} />
+                        Approve Clock Out
+                      </button>
+                    )
+                  }
+                ]}
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -27,7 +27,7 @@ const updateSettings = async (req, res) => {
   try {
     const { attendance_flow, late_tolerance } = req.body;
     
-    if (attendance_flow && !['disabled', 'strict', 'block'].includes(attendance_flow)) {
+    if (attendance_flow && !['disabled', 'strict', 'block', 'full_day'].includes(attendance_flow)) {
       return res.status(400).json({ message: 'Aliran absensi tidak valid' });
     }
 

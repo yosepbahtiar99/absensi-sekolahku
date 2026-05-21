@@ -109,16 +109,25 @@ const submitAttendance = async (req, res) => {
       }).format(now).toLowerCase();
       const todayName = dayMap[weekdayName] || 'senin';
 
+      const whereClause = {
+        teacherId: userId,
+        day: todayName,
+        academicYearId: schedule.academicYearId,
+        id: { [Op.ne]: scheduleId }
+      };
+
+      if (flowSetting !== 'full_day') {
+        whereClause.classId = schedule.classId;
+        whereClause.lessonId = schedule.lessonId;
+      }
+
       const sameSchedules = await Schedule.findAll({
-        where: {
-          teacherId: userId,
-          day: todayName,
-          academicYearId: schedule.academicYearId,
-          classId: schedule.classId,
-          lessonId: schedule.lessonId,
-          id: { [Op.ne]: scheduleId }
-        },
-        include: [{ model: TimeSlot }]
+        where: whereClause,
+        include: [
+          { model: TimeSlot },
+          { model: Class },
+          { model: Lesson }
+        ]
       });
 
       if (sameSchedules.length > 0) {
@@ -136,7 +145,7 @@ const submitAttendance = async (req, res) => {
 
           let inheritSchedules = [];
 
-          if (flowSetting === 'block') {
+          if (flowSetting === 'block' || flowSetting === 'full_day') {
             inheritSchedules = futureSchedules;
           } else if (flowSetting === 'strict') {
             let lastPeriod = currentPeriod;

@@ -74,10 +74,40 @@ export const adminService = {
     const response = await api.put<{ message: string }>('/admin/settings', settings);
     return response.data;
   },
+
+  getDailyPresence: async (): Promise<{ data: IDailyPresence[] }> => {
+    const response = await api.get<{ data: IDailyPresence[] }>('/admin/attendance/daily-presence');
+    return response.data;
+  },
+
+  approveClockOut: async (userId: string): Promise<{ message: string }> => {
+    const response = await api.put<{ message: string }>(`/admin/attendance/clock-out/${userId}`);
+    return response.data;
+  },
+
+  setManualActivity: async (data: IManualActivityPayload): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/admin/activities/manual', data);
+    return response.data;
+  },
 };
 
+export interface IManualActivityPayload {
+  scheduleId: string;
+  teacherId: string;
+  status: 'masuk' | 'telat' | 'tidak_hadir' | 'alpa';
+  description?: string;
+  date: string;
+}
+
+export interface IDailyPresence {
+  userId: string;
+  name: string;
+  firstCheckIn: string;
+  activityIds: string[];
+}
+
 export interface ISystemSettings {
-  attendance_flow: 'disabled' | 'strict' | 'block';
+  attendance_flow: 'disabled' | 'strict' | 'block' | 'full_day';
   late_tolerance: number;
 }
 
