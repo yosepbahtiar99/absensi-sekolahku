@@ -346,22 +346,34 @@ const AdminActivities = () => {
                 header: 'Visual',
                 accessor: (act: any) => (
                   <div className="flex gap-2">
-                    <a 
-                      href={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoSelfie}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 hover:border-primary transition-colors shadow-sm"
-                    >
-                      <img src={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoSelfie}`} className="w-full h-full object-cover" alt="Selfie" />
-                    </a>
-                    <a 
-                      href={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoClass}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 hover:border-primary transition-colors shadow-sm"
-                    >
-                      <img src={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoClass}`} className="w-full h-full object-cover" alt="Class" />
-                    </a>
+                    {act.photoSelfie ? (
+                      <a 
+                        href={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoSelfie}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 hover:border-primary transition-colors shadow-sm"
+                      >
+                        <img src={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoSelfie}`} className="w-full h-full object-cover" alt="Selfie" />
+                      </a>
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center" title="Manual / Tidak ada foto selfie">
+                        <span className="text-xs text-slate-400 font-bold">-</span>
+                      </div>
+                    )}
+                    {act.photoClass ? (
+                      <a 
+                        href={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoClass}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 rounded-xl overflow-hidden border border-slate-100 hover:border-primary transition-colors shadow-sm"
+                      >
+                        <img src={`${import.meta.env.VITE_UPLOAD_URL}/${act.photoClass}`} className="w-full h-full object-cover" alt="Class" />
+                      </a>
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center" title="Manual / Tidak ada foto kelas">
+                        <span className="text-xs text-slate-400 font-bold">-</span>
+                      </div>
+                    )}
                   </div>
                 )
               }

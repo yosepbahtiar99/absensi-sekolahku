@@ -322,6 +322,7 @@ const getDailyAttendanceReport = async (req, res) => {
         const hasGeneralLeave = activities.some(a => 
           a.userId === s.teacherId && 
           a.status === 'tidak_hadir' &&
+          !a.scheduleId &&
           new Date(a.timestamp) >= dayActStart && 
           new Date(a.timestamp) <= dayActEnd
         );
@@ -632,7 +633,7 @@ const exportDailyAttendanceExcel = async (req, res) => {
 
         // Correlate status
         const activity = activities.find(a => a.scheduleId === schedule.id);
-        const hasGeneralLeave = activities.some(a => a.userId === teacher.id && a.status === 'tidak_hadir');
+        const hasGeneralLeave = activities.some(a => a.userId === teacher.id && a.status === 'tidak_hadir' && !a.scheduleId);
 
         const scheduleStartTime = slot.startTime;
         const scheduleEndTime = slot.endTime;
@@ -991,6 +992,7 @@ const exportDailyAttendanceListExcel = async (req, res) => {
         const hasGeneralLeave = activities.some(a => 
           a.userId === s.teacherId && 
           a.status === 'tidak_hadir' &&
+          !a.scheduleId &&
           new Date(a.timestamp) >= dayActStart && 
           new Date(a.timestamp) <= dayActEnd
         );
@@ -1238,7 +1240,7 @@ const getDailyAttendanceMatrixData = async (req, res) => {
         }
 
         const activity = activities.find(a => a.scheduleId === schedule.id);
-        const hasGeneralLeave = activities.some(a => a.userId === teacher.id && a.status === 'tidak_hadir');
+        const hasGeneralLeave = activities.some(a => a.userId === teacher.id && a.status === 'tidak_hadir' && !a.scheduleId);
 
         const scheduleStartTime = slot.startTime;
         const scheduleEndTime = slot.endTime;

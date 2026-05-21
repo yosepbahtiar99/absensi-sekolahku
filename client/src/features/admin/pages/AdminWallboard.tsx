@@ -6,8 +6,10 @@ import {
   RefreshCw, 
   Clock, 
   Info,
-  Loader2
+  Loader2,
+  FileSpreadsheet
 } from 'lucide-react';
+import api from '../../../shared/lib/axios';
 import AdminSidebar from '../components/AdminSidebar';
 import { useDailyMatrixData, useManualActivity } from '../hooks/useAdminData';
 import { useNotificationStore } from '../../../shared/store/notificationStore';
@@ -312,6 +314,26 @@ const AdminWallboard = () => {
     });
   };
 
+  const handleDownloadDailyExcel = async () => {
+    try {
+      showNotification('Menyiapkan file Excel, matriks sedang diunduh...', 'info');
+      const response = await api.get(`/admin/reports/daily/excel?date=${selectedDate}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `rekap_absensi_${selectedDate}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      showNotification('Laporan Matriks berhasil diunduh', 'success');
+    } catch (err) {
+      console.error('Gagal mengunduh Excel:', err);
+      showNotification('Gagal mengunduh laporan Matriks', 'error');
+    }
+  };
+
   // Format digital clock
   const timeFormatted = time.toLocaleTimeString('id-ID', { 
     hour: '2-digit', 
@@ -390,6 +412,16 @@ const AdminWallboard = () => {
               >
                 <RefreshCw size={16} className={`${isFetching || isLoading ? 'animate-spin' : ''}`} />
                 <span className="text-xs font-bold font-mono text-cyan-600 tracking-tighter shrink-0">{countdown}s</span>
+              </button>
+
+              {/* Download Matrix Button */}
+              <button
+                onClick={handleDownloadDailyExcel}
+                className="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl shadow-lg shadow-indigo-600/10 transition-all active:scale-95 shrink-0 flex items-center justify-center gap-2"
+                title="Unduh Excel Matriks"
+              >
+                <FileSpreadsheet size={18} />
+                <span className="hidden sm:inline font-bold text-sm">Unduh Matriks</span>
               </button>
 
               {/* Fullscreen Button */}
