@@ -680,9 +680,15 @@ const exportDailyAttendanceExcel = async (req, res) => {
             fgColor = '92400E';
             bgColor = 'FDE68A';
           } else if (activity.status === 'tidak_hadir') {
-            symbol = 'I/S';
-            fgColor = '1E40AF';
-            bgColor = 'BFDBFE';
+            if (activity.type === 'corporate_alpa') {
+              symbol = 'A';
+              fgColor = '991B1B';
+              bgColor = 'FCA5A5';
+            } else {
+              symbol = 'I/S';
+              fgColor = '1E40AF';
+              bgColor = 'BFDBFE';
+            }
           }
           
           if (!firstCheckIn || new Date(activity.timestamp) < new Date(firstCheckIn)) {
@@ -1083,7 +1089,9 @@ const exportDailyAttendanceListExcel = async (req, res) => {
           if (attendanceFlow === 'full_day' && activity.isApproveCheckOut === false && now > endTimeDate) status = 'alpa';
           else if (activity.status === 'masuk') status = 'hadir';
           else if (activity.status === 'telat') status = 'telat';
-          else if (activity.status === 'tidak_hadir') status = 'izin';
+          else if (activity.status === 'tidak_hadir') {
+            status = activity.type === 'corporate_alpa' ? 'alpa' : 'izin';
+          }
         } else if (hasGeneralLeave) {
           status = 'izin';
         } else {
@@ -1332,7 +1340,9 @@ const getDailyAttendanceMatrixData = async (req, res) => {
         if (activity) {
           if (activity.status === 'masuk') status = 'hadir';
           else if (activity.status === 'telat') status = 'telat';
-          else if (activity.status === 'tidak_hadir') status = 'izin';
+          else if (activity.status === 'tidak_hadir') {
+            status = activity.type === 'corporate_alpa' ? 'alpa' : 'izin';
+          }
           else status = activity.status;
         } else if (hasGeneralLeave) {
           status = 'izin';
@@ -1356,9 +1366,22 @@ const getDailyAttendanceMatrixData = async (req, res) => {
         };
       });
 
+      let firstCheckIn = null;
+      let lastCheckOut = null;
+      
+      const teacherActivities = activities.filter(a => a.userId === teacher.id);
+      teacherActivities.forEach(a => {
+        if (!firstCheckIn || new Date(a.timestamp) < new Date(firstCheckIn)) firstCheckIn = a.timestamp;
+        if (a.clockOutTime && (!lastCheckOut || new Date(a.clockOutTime) > new Date(lastCheckOut))) {
+          lastCheckOut = a.clockOutTime;
+        }
+      });
+
       return {
         teacherId: teacher.id,
         teacherName: teacher.name,
+        firstCheckIn,
+        lastCheckOut,
         slots: teacherSlots
       };
     });

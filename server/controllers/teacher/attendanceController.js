@@ -320,7 +320,7 @@ const corporateClockIn = async (req, res) => {
           photoSelfie,
           photoClass, // environment photo
           status,
-          type: 'pembelajaran',
+          type: status === 'tidak_hadir' ? 'corporate_alpa' : 'pembelajaran',
           isCustom: false,
           timestamp: now,
           snapshotClassName: sched.Class?.name || 'Unknown Class',

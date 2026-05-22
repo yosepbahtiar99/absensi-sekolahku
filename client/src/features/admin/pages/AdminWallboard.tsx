@@ -531,11 +531,27 @@ const AdminWallboard = () => {
                           <tr key={row.teacherId} className="hover:bg-slate-50/50 transition-colors">
                             {/* Sticky Guru Name column */}
                             <td className="sticky left-0 z-20 bg-white p-4 font-black text-sm text-slate-700 border-r border-slate-200 w-64 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-sm text-xs shrink-0 select-none">
-                                  {row.teacherName.charAt(0)}
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-sm text-xs shrink-0 select-none">
+                                    {row.teacherName.charAt(0)}
+                                  </div>
+                                  <span className="truncate" title={row.teacherName}>{row.teacherName}</span>
                                 </div>
-                                <span className="truncate" title={row.teacherName}>{row.teacherName}</span>
+                                {(row.firstCheckIn || row.lastCheckOut) && (
+                                  <div className="flex flex-wrap items-center gap-1.5 mt-1 ml-11 text-[10px] font-medium font-mono">
+                                    {row.firstCheckIn && (
+                                      <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded shadow-sm">
+                                        M: {new Date(row.firstCheckIn).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })}
+                                      </span>
+                                    )}
+                                    {row.lastCheckOut && (
+                                      <span className="flex items-center gap-1 text-rose-700 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded shadow-sm">
+                                        K: {new Date(row.lastCheckOut).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </td>
 
@@ -576,7 +592,7 @@ const AdminWallboard = () => {
                                         </div>
 
                                         {/* Time of Attendance if checked in */}
-                                        {slotData.checkInTime && (
+                                        {slotData.checkInTime && !['alpa', 'izin'].includes(slotData.status) && (
                                           <div className="text-[9px] font-bold text-slate-500 mt-2 font-mono flex items-center gap-1">
                                             <Clock size={8} />
                                             <span>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTodaySchedules, useSystemSettings, useMyActivities, useCorporateClockOut } from '../hooks/useAttendanceData';
 import { useNotificationStore } from '../../../shared/store/notificationStore';
+import { useConfirmStore } from '../../../shared/store/confirmStore';
 import {
   Calendar, Clock, MapPin, CheckCircle, Camera, Coffee, LogIn, LogOut
 } from 'lucide-react';
@@ -25,6 +26,7 @@ const GuruDashboard = () => {
   const { data: activitiesRes, isLoading: isActivitiesLoading } = useMyActivities({ limit: 100 });
   const clockOutMutation = useCorporateClockOut();
   const { showNotification } = useNotificationStore();
+  const { confirm: confirmAction } = useConfirmStore();
 
   const isFullDayFlow = settings?.attendance_flow === 'full_day';
   const myActivities = activitiesRes?.data || [];
@@ -42,8 +44,16 @@ const GuruDashboard = () => {
   const hasCheckedIn = todayActivities.length > 0;
   const hasCheckedOut = todayActivities.some((act: any) => act.isApproveCheckOut === true);
 
-  const handleCorporateClockOut = () => {
-    if (confirm('Apakah Anda yakin ingin menyelesaikan absensi hari ini?')) {
+  const handleCorporateClockOut = async () => {
+    const isConfirmed = await confirmAction({
+      title: 'Check-Out Harian',
+      message: 'Apakah Anda yakin ingin menyelesaikan absensi hari ini? Anda tidak bisa membatalkannya.',
+      confirmText: 'Ya, Keluar Sekolah',
+      cancelText: 'Batal',
+      variant: 'warning'
+    });
+
+    if (isConfirmed) {
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
