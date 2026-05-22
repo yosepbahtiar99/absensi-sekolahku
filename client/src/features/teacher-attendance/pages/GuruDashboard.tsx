@@ -129,6 +129,14 @@ const GuruDashboard = () => {
           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-400 font-medium text-sm">Menyiapkan dashboard...</p>
         </div>
+      ) : todaySchedules?.length === 0 ? (
+        <div className="bg-white p-10 rounded-[2.5rem] text-center shadow-xl shadow-cyan-900/5 border border-slate-50">
+          <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+            <Calendar size={32} />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">Libur Mengajar</h3>
+          <p className="text-slate-500 text-sm leading-relaxed px-4">Nikmati waktu istirahat Anda, tidak ada jadwal mengajar untuk hari ini.</p>
+        </div>
       ) : isFullDayFlow ? (
         // Corporate Mode UI
         <div className="flex flex-col gap-6 pt-4 pb-10">
@@ -190,14 +198,6 @@ const GuruDashboard = () => {
               </button>
             </div>
           </div>
-        </div>
-      ) : todaySchedules?.length === 0 ? (
-        <div className="bg-white p-10 rounded-[2.5rem] text-center shadow-xl shadow-cyan-900/5 border border-slate-50">
-          <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
-            <Calendar size={32} />
-          </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-2">Libur Mengajar</h3>
-          <p className="text-slate-500 text-sm leading-relaxed px-4">Nikmati waktu istirahat Anda, tidak ada jadwal mengajar untuk hari ini.</p>
         </div>
       ) : (
         <div className="space-y-4 pb-10">

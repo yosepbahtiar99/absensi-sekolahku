@@ -746,6 +746,11 @@ const exportDailyAttendanceExcel = async (req, res) => {
             if (firstCheckIn) {
               const teacherSchedules = schedules.filter(s => s.teacherId === teacher.id);
               if (teacherSchedules.length > 0) {
+                teacherSchedules.sort((a, b) => {
+                  const aTime = a.TimeSlot?.endTime || a.endTime || '00:00:00';
+                  const bTime = b.TimeSlot?.endTime || b.endTime || '00:00:00';
+                  return aTime.localeCompare(bTime);
+                });
                 const lastSched = teacherSchedules[teacherSchedules.length - 1];
                 const lastEndTime = lastSched.TimeSlot?.endTime || lastSched.endTime;
                 if (lastEndTime) {
@@ -758,8 +763,9 @@ const exportDailyAttendanceExcel = async (req, res) => {
             }
 
             if (defaultClockOut) {
-              checkOutCell.value = defaultClockOut.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-              checkOutCell.font = { size: 10, italic: true, color: { argb: 'FF9CA3AF' } };
+              const timeStr = defaultClockOut.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+              checkOutCell.value = `${timeStr} (Auto)`;
+              checkOutCell.font = { size: 10, bold: true, color: { argb: 'FF92400E' } };
             } else {
               checkOutCell.value = '-';
               checkOutCell.font = { color: { argb: 'FFCBD5E1' } };
@@ -1376,6 +1382,25 @@ const getDailyAttendanceMatrixData = async (req, res) => {
           lastCheckOut = a.clockOutTime;
         }
       });
+
+      if (!lastCheckOut && firstCheckIn && attendanceFlow === 'full_day') {
+        const teacherSchedules = schedules.filter(s => s.teacherId === teacher.id);
+        if (teacherSchedules.length > 0) {
+          teacherSchedules.sort((a, b) => {
+            const aTime = a.TimeSlot?.endTime || a.endTime || '00:00:00';
+            const bTime = b.TimeSlot?.endTime || b.endTime || '00:00:00';
+            return aTime.localeCompare(bTime);
+          });
+          const lastSched = teacherSchedules[teacherSchedules.length - 1];
+          const lastEndTime = lastSched.TimeSlot?.endTime || lastSched.endTime;
+          if (lastEndTime) {
+            const lastEndTimeDate = new Date(`${yearStr}-${monthStr}-${dayStr}T${lastEndTime}+07:00`);
+            if (now >= lastEndTimeDate) {
+              lastCheckOut = lastEndTimeDate;
+            }
+          }
+        }
+      }
 
       return {
         teacherId: teacher.id,
