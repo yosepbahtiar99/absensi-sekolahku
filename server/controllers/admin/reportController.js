@@ -1268,7 +1268,10 @@ const getDailyAttendanceMatrixData = async (req, res) => {
           lessonId: schedule.Lesson?.id,
           lessonName: schedule.Lesson?.name,
           status,
-          checkInTime: activity?.timestamp || null
+          checkInTime: activity?.timestamp || null,
+          photoSelfie: activity?.photoSelfie || null,
+          photoClass: activity?.photoClass || null,
+          description: activity?.description || null
         };
       });
 

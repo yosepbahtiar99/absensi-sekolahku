@@ -129,6 +129,9 @@ export interface IWallboardMatrixCell {
   lessonName: string;
   status: 'hadir' | 'telat' | 'izin' | 'alpa' | 'belum_absen' | 'belum_mulai';
   checkInTime: string | null;
+  photoSelfie?: string | null;
+  photoClass?: string | null;
+  description?: string | null;
 }
 
 export interface IWallboardTeacherRow {

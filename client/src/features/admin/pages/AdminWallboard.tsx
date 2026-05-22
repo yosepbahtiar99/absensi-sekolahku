@@ -7,7 +7,8 @@ import {
   Clock, 
   Info,
   Loader2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  UserCheck
 } from 'lucide-react';
 import api from '../../../shared/lib/axios';
 import AdminSidebar from '../components/AdminSidebar';
@@ -553,38 +554,59 @@ const AdminWallboard = () => {
                                   }`}
                                 >
                                   {slotData ? (
-                                    <div 
-                                      onClick={() => handleCellClick(row, slot, slotData)}
-                                      className={`p-3 rounded-2xl text-left transition-all cursor-pointer hover:ring-2 hover:ring-cyan-500/50 hover:shadow-md ${getStatusStyle(slotData.status)}`}
-                                      title="Klik untuk ubah manual"
-                                    >
-                                      {/* Class & Status Badge */}
-                                      <div className="flex justify-between items-center mb-1.5 gap-2">
-                                        <span className="font-black text-sm tracking-tight text-slate-900 leading-none">
-                                          {slotData.className}
-                                        </span>
-                                        <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-full bg-black/5 tracking-widest leading-none font-mono">
-                                          {getStatusLabel(slotData.status)}
-                                        </span>
-                                      </div>
-                                      
-                                      {/* Lesson Title */}
-                                      <div className="text-xs font-semibold truncate text-slate-600 leading-tight">
-                                        {slotData.lessonName}
+                                    <div className="group relative hover:z-[60]">
+                                      <div 
+                                        onClick={() => handleCellClick(row, slot, slotData)}
+                                        className={`p-3 rounded-2xl text-left transition-all cursor-pointer hover:ring-2 hover:ring-cyan-500/50 hover:shadow-md ${getStatusStyle(slotData.status)} relative z-10`}
+                                        title="Klik untuk ubah manual"
+                                      >
+                                        {/* Class & Status Badge */}
+                                        <div className="flex justify-between items-center mb-1.5 gap-2">
+                                          <span className="font-black text-sm tracking-tight text-slate-900 leading-none">
+                                            {slotData.className}
+                                          </span>
+                                          <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-full bg-black/5 tracking-widest leading-none font-mono">
+                                            {getStatusLabel(slotData.status)}
+                                          </span>
+                                        </div>
+                                        
+                                        {/* Lesson Title */}
+                                        <div className="text-xs font-semibold truncate text-slate-600 leading-tight">
+                                          {slotData.lessonName}
+                                        </div>
+
+                                        {/* Time of Attendance if checked in */}
+                                        {slotData.checkInTime && (
+                                          <div className="text-[9px] font-bold text-slate-500 mt-2 font-mono flex items-center gap-1">
+                                            <Clock size={8} />
+                                            <span>
+                                              {new Date(slotData.checkInTime).toLocaleString('id-ID', {
+                                                timeZone: 'Asia/Jakarta',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                hour12: false
+                                              })} WIB
+                                            </span>
+                                          </div>
+                                        )}
                                       </div>
 
-                                      {/* Time of Attendance if checked in */}
+                                      {/* Hover Tooltip */}
                                       {slotData.checkInTime && (
-                                        <div className="text-[9px] font-bold text-slate-500 mt-2 font-mono flex items-center gap-1">
-                                          <Clock size={8} />
-                                          <span>
-                                            {new Date(slotData.checkInTime).toLocaleString('id-ID', {
-                                              timeZone: 'Asia/Jakarta',
-                                              hour: '2-digit',
-                                              minute: '2-digit',
-                                              hour12: false
-                                            })} WIB
-                                          </span>
+                                        <div className={`absolute z-[70] invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all left-1/2 -translate-x-1/2 w-48 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border border-slate-100 p-2 pointer-events-none scale-95 group-hover:scale-100 ${isLastRow ? 'bottom-[calc(100%+8px)] origin-bottom' : 'top-[calc(100%+8px)] origin-top'}`}>
+                                          {slotData.photoSelfie || slotData.photoClass ? (
+                                            <div className="flex gap-2 h-24">
+                                              {slotData.photoSelfie && <img src={`${import.meta.env.VITE_UPLOAD_URL}/${slotData.photoSelfie}`} className="w-full h-full object-cover rounded-xl shadow-sm" alt="Selfie" />}
+                                              {slotData.photoClass && <img src={`${import.meta.env.VITE_UPLOAD_URL}/${slotData.photoClass}`} className="w-full h-full object-cover rounded-xl shadow-sm" alt="Class" />}
+                                            </div>
+                                          ) : (
+                                            <div className="bg-slate-50 text-slate-500 text-xs font-bold p-3 text-center rounded-xl border border-slate-100 flex flex-col items-center gap-1.5">
+                                              <UserCheck size={16} className="text-slate-400" />
+                                              <span className="leading-tight">{slotData.description || 'Diabsen by Admin'}</span>
+                                            </div>
+                                          )}
+                                          {/* Caret */}
+                                          <div className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-slate-100 transform rotate-45 ${isLastRow ? '-bottom-1.5 border-b border-r' : '-top-1.5 border-t border-l'}`}></div>
                                         </div>
                                       )}
                                     </div>
