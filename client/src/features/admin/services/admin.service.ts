@@ -137,6 +137,8 @@ export interface IWallboardMatrixCell {
 export interface IWallboardTeacherRow {
   teacherId: string;
   teacherName: string;
+  firstCheckIn?: string | null;
+  lastCheckOut?: string | null;
   slots: Record<string, IWallboardMatrixCell | null>;
 }
 
