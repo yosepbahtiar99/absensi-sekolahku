@@ -57,7 +57,7 @@ const AdminWallboard = () => {
     const startMinutes = parseTimeToMinutes(startTime);
     const endMinutes = parseTimeToMinutes(endTime);
 
-    return currentTimeInMinutes >= startMinutes && currentTimeInMinutes <= endMinutes;
+    return currentTimeInMinutes >= startMinutes && currentTimeInMinutes < endMinutes;
   };
 
   const getStatusStyle = (status: string) => {
@@ -491,8 +491,8 @@ const AdminWallboard = () => {
                 {data?.matrix && data.matrix.length > 0 && data.timeSlots && data.timeSlots.length > 0 ? (
                   <table className="w-full border-collapse text-left table-fixed">
                     <thead>
-                      <tr className="sticky top-0 z-20 bg-slate-50 shadow-sm">
-                        <th className="sticky left-0 z-30 bg-slate-50 p-4 text-xs font-black uppercase text-slate-500 tracking-wider border-b border-slate-200 w-64">
+                      <tr className="sticky top-0 z-40 bg-slate-50 shadow-sm">
+                        <th className="sticky left-0 z-50 bg-slate-50 p-4 text-xs font-black uppercase text-slate-500 tracking-wider border-b border-slate-200 w-64">
                           GURU PENGAJAR
                         </th>
                         {data.timeSlots.map((slot) => {
@@ -530,7 +530,7 @@ const AdminWallboard = () => {
                         return (
                           <tr key={row.teacherId} className="hover:bg-slate-50/50 transition-colors">
                             {/* Sticky Guru Name column */}
-                            <td className="sticky left-0 z-10 bg-white p-4 font-black text-sm text-slate-700 border-r border-slate-200 w-64 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                            <td className="sticky left-0 z-20 bg-white p-4 font-black text-sm text-slate-700 border-r border-slate-200 w-64 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-sm text-xs shrink-0 select-none">
                                   {row.teacherName.charAt(0)}
