@@ -16,7 +16,8 @@ import { useNotificationStore } from '../../../shared/store/notificationStore';
 import { AlertTriangle, X } from 'lucide-react';
 
 const AdminWallboard = () => {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [time, setTime] = useState(new Date());

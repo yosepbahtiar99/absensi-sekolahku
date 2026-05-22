@@ -19,7 +19,8 @@ const AdminActivities = () => {
   const [limit, setLimit] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
   
-  const today = new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   
   // Applied Filters
   const [teacherId, setTeacherId] = useState('');
@@ -76,7 +77,10 @@ const AdminActivities = () => {
   };
 
   const handleResetFilters = () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const d2 = new Date();
+    const todayStr = `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, '0')}-${String(d2.getDate()).padStart(2, '0')}`;
+    if (!startDate) setStartDate(todayStr);
+    if (!endDate) setEndDate(todayStr);
     setTempTeacherId('');
     setTempClassId('');
     setTempLessonId('');

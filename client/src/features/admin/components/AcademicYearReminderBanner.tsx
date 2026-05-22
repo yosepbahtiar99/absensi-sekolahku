@@ -14,7 +14,8 @@ const AcademicYearReminderBanner: React.FC = () => {
   // Check if already dismissed today
   useEffect(() => {
     const dismissedDate = localStorage.getItem(DISMISS_KEY);
-    const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     if (dismissedDate === today) {
       setDismissed(true);
     }
@@ -50,7 +51,8 @@ const AcademicYearReminderBanner: React.FC = () => {
   }, [academicYears]);
 
   const handleDismiss = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const d2 = new Date();
+    const today = `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, '0')}-${String(d2.getDate()).padStart(2, '0')}`;
     localStorage.setItem(DISMISS_KEY, today);
     setDismissed(true);
   };

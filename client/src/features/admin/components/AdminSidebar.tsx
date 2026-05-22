@@ -64,7 +64,8 @@ const AdminSidebar = () => {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response.data, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      const dateStr = new Date().toISOString().slice(0, 10);
+      const d = new Date();
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       downloadAnchor.setAttribute("download", `snapshot_sekolahku_${dateStr}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();

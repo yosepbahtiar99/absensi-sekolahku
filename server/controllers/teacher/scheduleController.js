@@ -70,6 +70,11 @@ const getMySchedule = async (req, res) => {
       ]
     });
 
+    // If teacher has no schedules at all for today, return empty to show 'Libur Mengajar'
+    if (schedules.length === 0) {
+      return res.json([]);
+    }
+
     // Fetch all time slots for the day
     const timeSlots = await TimeSlot.findAll({
       where: {

@@ -54,7 +54,9 @@ export const adminService = {
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `Laporan_Absensi_${new Date().toISOString().split('T')[0]}.xlsx`);
+    const d = new Date();
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    link.setAttribute('download', `Laporan_Absensi_${dateStr}.xlsx`);
     document.body.appendChild(link);
     link.click();
     link.remove();
