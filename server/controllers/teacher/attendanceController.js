@@ -239,7 +239,182 @@ const getMyActivities = async (req, res) => {
   }
 };
 
+const corporateClockIn = async (req, res) => {
+  try {
+    const { photoSelfie, photoClass } = req.body; // photoClass is used as environment photo
+    const userId = req.user.id;
+
+    const { year, month, day: dayStr, start, end } = getJakartaDayInfo();
+    
+    // Check if already clocked in today (any activity)
+    const existingActivity = await Activity.findOne({
+      where: {
+        userId,
+        timestamp: {
+          [Op.gte]: start,
+          [Op.lte]: end
+        }
+      }
+    });
+
+    if (existingActivity) {
+      return res.status(400).json({ message: 'Anda sudah check-in hari ini' });
+    }
+
+    // Get today's indonesian day name
+    const dayMap = {
+      sunday: 'minggu', monday: 'senin', tuesday: 'selasa', wednesday: 'rabu',
+      thursday: 'kamis', friday: 'jumat', saturday: 'sabtu'
+    };
+    const now = new Date();
+    const weekdayName = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Jakarta', weekday: 'long'
+    }).format(now).toLowerCase();
+    const todayName = dayMap[weekdayName] || 'senin';
+
+    // Find all schedules for this teacher today
+    const schedules = await Schedule.findAll({
+      where: { teacherId: userId, day: todayName },
+      include: [{ model: TimeSlot }, { model: Class }, { model: Lesson }]
+    });
+
+    if (schedules.length > 0) {
+      // Find the earliest schedule
+      schedules.sort((a, b) => {
+        const aStart = a.TimeSlot?.startTime || a.startTime || '00:00:00';
+        const bStart = b.TimeSlot?.startTime || b.startTime || '00:00:00';
+        return aStart.localeCompare(bStart);
+      });
+
+      const lateSettingObj = await SystemSetting.findOne({ where: { key: 'late_tolerance' } });
+      const lateTolerance = lateSettingObj ? parseInt(lateSettingObj.value, 10) : 15;
+      const snapshotTeacherName = (await User.findByPk(userId))?.name || 'Unknown Teacher';
+
+      // Create activity for all schedules today (corporate inheritance with per-schedule logic)
+      for (const sched of schedules) {
+        const schedStartTimeStr = sched.TimeSlot?.startTime || sched.startTime;
+        const schedEndTimeStr = sched.TimeSlot?.endTime || sched.endTime;
+        
+        let status = 'masuk';
+
+        if (schedStartTimeStr && schedEndTimeStr) {
+          const startTimeDate = new Date(`${year}-${month}-${dayStr}T${schedStartTimeStr}+07:00`);
+          const endTimeDate = new Date(`${year}-${month}-${dayStr}T${schedEndTimeStr}+07:00`);
+          
+          if (now > endTimeDate) {
+            status = 'tidak_hadir'; // Missed completely
+          } else {
+            const diffInMinutes = (now.getTime() - startTimeDate.getTime()) / (1000 * 60);
+            if (diffInMinutes > lateTolerance) {
+              status = 'telat';
+            } else {
+              status = 'masuk';
+            }
+          }
+        }
+
+        await Activity.create({
+          userId,
+          scheduleId: sched.id,
+          academicYearId: sched.academicYearId,
+          photoSelfie,
+          photoClass, // environment photo
+          status,
+          type: 'pembelajaran',
+          isCustom: false,
+          timestamp: now,
+          snapshotClassName: sched.Class?.name || 'Unknown Class',
+          snapshotLessonName: sched.Lesson?.name || 'Unknown Lesson',
+          snapshotTeacherName
+        });
+      }
+    } else {
+      // No schedule today, but clocked in
+      const activeYear = await SystemSetting.findOne({ where: { key: 'active_academic_year' } }); // Mock fallback if needed
+      await Activity.create({
+        userId,
+        scheduleId: null, // No specific schedule
+        academicYearId: null,
+        photoSelfie,
+        photoClass,
+        status: 'masuk',
+        type: 'corporate_in',
+        isCustom: false,
+        timestamp: now,
+        snapshotClassName: '-',
+        snapshotLessonName: 'Kehadiran Sekolah',
+        snapshotTeacherName: (await User.findByPk(userId))?.name || 'Unknown Teacher'
+      });
+    }
+
+    res.json({ message: 'Check-in berhasil disimpan' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal melakukan check-in' });
+  }
+};
+
+const corporateClockOut = async (req, res) => {
+  try {
+    const { latitude, longitude } = req.body;
+    const userId = req.user.id;
+    const { start, end } = getJakartaDayInfo();
+
+    // Check if clocked in
+    const activities = await Activity.findAll({
+      where: {
+        userId,
+        timestamp: {
+          [Op.gte]: start,
+          [Op.lte]: end
+        }
+      }
+    });
+
+    if (activities.length === 0) {
+      return res.status(400).json({ message: 'Anda belum check-in hari ini' });
+    }
+
+    const now = new Date();
+    const locationString = latitude && longitude ? JSON.stringify({ latitude, longitude }) : null;
+
+    await Activity.update({
+      isApproveCheckOut: true,
+      clockOutTime: now,
+      description: locationString
+    }, {
+      where: {
+        userId,
+        timestamp: {
+          [Op.gte]: start,
+          [Op.lte]: end
+        },
+        isApproveCheckOut: false
+      }
+    });
+
+    res.json({ message: 'Check-out berhasil disimpan' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal melakukan check-out' });
+  }
+};
+
+const getSettings = async (req, res) => {
+  try {
+    const settings = await SystemSetting.findAll();
+    const settingsMap = {};
+    settings.forEach(s => settingsMap[s.key] = s.value);
+    res.json(settingsMap);
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal mengambil pengaturan' });
+  }
+};
+
 module.exports = {
   submitAttendance,
-  getMyActivities
+  getMyActivities,
+  corporateClockIn,
+  corporateClockOut,
+  getSettings
 };

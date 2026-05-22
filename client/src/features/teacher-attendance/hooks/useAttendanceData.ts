@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { attendanceService } from '../services/attendance.service';
 
+export const useSystemSettings = () => {
+  return useQuery({
+    queryKey: ['system-settings'],
+    queryFn: () => attendanceService.getSettings(),
+  });
+};
+
 export const useTodaySchedules = (day?: string) => {
   return useQuery({
     queryKey: ['today-schedules', day],
@@ -36,6 +43,27 @@ export const useCreateRequest = () => {
     mutationFn: attendanceService.createRequest,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-requests'] });
+    },
+  });
+};
+
+export const useCorporateClockIn = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: attendanceService.corporateClockIn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['today-schedules'] });
+    },
+  });
+};
+
+export const useCorporateClockOut = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: attendanceService.corporateClockOut,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-activities'] });
     },
   });
 };

@@ -1,6 +1,6 @@
 const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot, SystemSetting } = require('../../models');
 const { Op } = require('sequelize');
-const { getJakartaDayInfo } = require('./scheduleController');
+const { getJakartaDayInfo } = require('../teacher/scheduleController');
 
 const getApprovalRequests = async (req, res) => {
   try {
@@ -132,7 +132,7 @@ const getDailyPresence = async (req, res) => {
           [Op.gte]: start,
           [Op.lte]: end
         },
-        status: 'masuk',
+        status: { [Op.in]: ['masuk', 'telat'] },
         isApproveCheckOut: false
       },
       include: [{ model: User, attributes: ['id', 'name'] }]
@@ -176,7 +176,7 @@ const approveClockOut = async (req, res) => {
           [Op.gte]: start,
           [Op.lte]: end
         },
-        status: 'masuk',
+        status: { [Op.in]: ['masuk', 'telat'] },
         isApproveCheckOut: false
       }
     });

@@ -542,7 +542,8 @@ const exportDailyAttendanceExcel = async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Laporan Harian');
 
-    const totalCols = Math.max(7, 1 + timeSlots.length);
+    const baseCols = 1 + timeSlots.length + (attendanceFlow === 'full_day' ? 2 : 0);
+    const totalCols = Math.max(7, baseCols);
 
     // Title banner
     sheet.mergeCells(1, 1, 1, totalCols);
@@ -600,6 +601,24 @@ const exportDailyAttendanceExcel = async (req, res) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
       cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     });
+
+    if (attendanceFlow === 'full_day') {
+      const checkInColIdx = 2 + timeSlots.length;
+      const checkOutColIdx = 3 + timeSlots.length;
+
+      const checkInCell = headerRow.getCell(checkInColIdx);
+      checkInCell.value = 'Jam Datang';
+      checkInCell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 9 };
+      checkInCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+      checkInCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+
+      const checkOutCell = headerRow.getCell(checkOutColIdx);
+      checkOutCell.value = 'Jam Pulang';
+      checkOutCell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 9 };
+      checkOutCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+      checkOutCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    }
+
     headerRow.height = 35;
 
     const now = new Date();
@@ -614,6 +633,9 @@ const exportDailyAttendanceExcel = async (req, res) => {
       row.getCell(1).border = {
         top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
       };
+
+      let firstCheckIn = null;
+      let clockOutTime = null;
 
       timeSlots.forEach((slot, slotIdx) => {
         const colIdx = slotIdx + 2;
@@ -662,6 +684,13 @@ const exportDailyAttendanceExcel = async (req, res) => {
             fgColor = '1E40AF';
             bgColor = 'BFDBFE';
           }
+          
+          if (!firstCheckIn || new Date(activity.timestamp) < new Date(firstCheckIn)) {
+            firstCheckIn = activity.timestamp;
+          }
+          if (activity.clockOutTime && (!clockOutTime || new Date(activity.clockOutTime) > new Date(clockOutTime))) {
+            clockOutTime = activity.clockOutTime;
+          }
         } else if (hasGeneralLeave) {
           symbol = 'I/S';
           fgColor = '1E40AF';
@@ -684,6 +713,54 @@ const exportDailyAttendanceExcel = async (req, res) => {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       });
 
+      if (attendanceFlow === 'full_day') {
+        const checkInColIdx = 2 + timeSlots.length;
+        const checkOutColIdx = 3 + timeSlots.length;
+
+        const checkInCell = row.getCell(checkInColIdx);
+        checkInCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        checkInCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (firstCheckIn) {
+            checkInCell.value = new Date(firstCheckIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            checkInCell.font = { size: 10, bold: true };
+        } else {
+            checkInCell.value = '-';
+            checkInCell.font = { color: { argb: 'FFCBD5E1' } };
+        }
+
+        const checkOutCell = row.getCell(checkOutColIdx);
+        checkOutCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        checkOutCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (clockOutTime) {
+            checkOutCell.value = new Date(clockOutTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            checkOutCell.font = { size: 10, bold: true };
+        } else {
+            // Default checkout to last schedule's endTime if past and they checked in
+            let defaultClockOut = null;
+            if (firstCheckIn) {
+              const teacherSchedules = schedules.filter(s => s.teacherId === teacher.id);
+              if (teacherSchedules.length > 0) {
+                const lastSched = teacherSchedules[teacherSchedules.length - 1];
+                const lastEndTime = lastSched.TimeSlot?.endTime || lastSched.endTime;
+                if (lastEndTime) {
+                  const lastEndTimeDate = new Date(`${yearStr}-${monthStr}-${dayStr}T${lastEndTime}+07:00`);
+                  if (now >= lastEndTimeDate) {
+                    defaultClockOut = lastEndTimeDate;
+                  }
+                }
+              }
+            }
+
+            if (defaultClockOut) {
+              checkOutCell.value = defaultClockOut.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+              checkOutCell.font = { size: 10, italic: true, color: { argb: 'FF9CA3AF' } };
+            } else {
+              checkOutCell.value = '-';
+              checkOutCell.font = { color: { argb: 'FFCBD5E1' } };
+            }
+        }
+      }
+
       row.height = 25;
       currentRowIdx++;
     });
@@ -693,6 +770,10 @@ const exportDailyAttendanceExcel = async (req, res) => {
     timeSlots.forEach((_, idx) => {
       sheet.getColumn(idx + 2).width = 18;
     });
+    if (attendanceFlow === 'full_day') {
+      sheet.getColumn(2 + timeSlots.length).width = 15;
+      sheet.getColumn(3 + timeSlots.length).width = 15;
+    }
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=rekap_absensi_${targetDateStr}.xlsx`);
@@ -1249,10 +1330,10 @@ const getDailyAttendanceMatrixData = async (req, res) => {
 
         let status = 'belum_mulai';
         if (activity) {
-          if (attendanceFlow === 'full_day' && activity.isApproveCheckOut === false && now > endTimeDate) status = 'alpa';
-          else if (activity.status === 'masuk') status = 'hadir';
+          if (activity.status === 'masuk') status = 'hadir';
           else if (activity.status === 'telat') status = 'telat';
           else if (activity.status === 'tidak_hadir') status = 'izin';
+          else status = activity.status;
         } else if (hasGeneralLeave) {
           status = 'izin';
         } else {

@@ -10,6 +10,7 @@ import GuruApproval from '../../features/teacher-attendance/pages/GuruApproval';
 import CreateRequestPage from '../../features/teacher-attendance/pages/CreateRequestPage';
 import GuruProfile from '../../features/teacher-attendance/pages/GuruProfile';
 import AttendancePage from '../../features/teacher-attendance/pages/AttendancePage';
+import CorporateAttendancePage from '../../features/teacher-attendance/pages/CorporateAttendancePage';
 import AdminDashboard from '../../features/admin/pages/AdminDashboard';
 import AdminActivities from '../../features/admin/pages/AdminActivities';
 import AdminApprovals from '../../features/admin/pages/AdminApprovals';
@@ -56,6 +57,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute role="guru">
             <AttendancePage />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/corporate-attendance" 
+        element={
+          <ProtectedRoute role="guru">
+            <CorporateAttendancePage />
           </ProtectedRoute>
         } 
       />

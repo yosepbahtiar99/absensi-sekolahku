@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTodaySchedules } from '../hooks/useAttendanceData';
+import { useTodaySchedules, useSystemSettings, useMyActivities, useCorporateClockOut } from '../hooks/useAttendanceData';
+import { useNotificationStore } from '../../../shared/store/notificationStore';
 import {
-  Calendar, Clock, MapPin, CheckCircle, Camera, Coffee
+  Calendar, Clock, MapPin, CheckCircle, Camera, Coffee, LogIn, LogOut
 } from 'lucide-react';
 import { cn } from '../../../shared/lib/utils';
 
@@ -20,7 +21,63 @@ const GuruDashboard = () => {
 
   // Main Data (Today)
   const { data: todaySchedules, isLoading: isTodayLoading } = useTodaySchedules();
+  const { data: settings, isLoading: isSettingsLoading } = useSystemSettings();
+  const { data: activitiesRes, isLoading: isActivitiesLoading } = useMyActivities({ limit: 100 });
+  const clockOutMutation = useCorporateClockOut();
+  const { showNotification } = useNotificationStore();
+
+  const isFullDayFlow = settings?.attendance_flow === 'full_day';
+  const myActivities = activitiesRes?.data || [];
+
+  // Determine check-in and check-out status
+  const d = new Date();
+  const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   
+  const todayActivities = myActivities.filter((act: any) => {
+    const actDate = new Date(act.timestamp);
+    const actDateStr = `${actDate.getFullYear()}-${String(actDate.getMonth() + 1).padStart(2, '0')}-${String(actDate.getDate()).padStart(2, '0')}`;
+    return actDateStr === todayStr;
+  });
+
+  const hasCheckedIn = todayActivities.length > 0;
+  const hasCheckedOut = todayActivities.some((act: any) => act.isApproveCheckOut === true);
+
+  const handleCorporateClockOut = () => {
+    if (confirm('Apakah Anda yakin ingin menyelesaikan absensi hari ini?')) {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            clockOutMutation.mutate(
+              { latitude: position.coords.latitude, longitude: position.coords.longitude },
+              {
+                onSuccess: () => showNotification('Berhasil Check-Out / Keluar Sekolah', 'success'),
+                onError: () => showNotification('Gagal melakukan Check-Out', 'error')
+              }
+            );
+          },
+          (error) => {
+            console.error('Error getting location', error);
+            // Fallback: Proceed without location if denied/failed
+            clockOutMutation.mutate(
+              undefined,
+              {
+                onSuccess: () => showNotification('Berhasil Check-Out (Tanpa Lokasi)', 'success'),
+                onError: () => showNotification('Gagal melakukan Check-Out', 'error')
+              }
+            );
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      } else {
+        // Fallback for browsers without geolocation
+        clockOutMutation.mutate(undefined, {
+          onSuccess: () => showNotification('Berhasil Check-Out', 'success'),
+          onError: () => showNotification('Gagal melakukan Check-Out', 'error')
+        });
+      }
+    }
+  };
+
   const activeCardRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-scroll to active card on load
@@ -57,10 +114,72 @@ const GuruDashboard = () => {
         </span>
       </div>
 
-      {isTodayLoading ? (
+      {isSettingsLoading || isTodayLoading || isActivitiesLoading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-          <p className="text-slate-400 font-medium text-sm">Menyiapkan jadwal...</p>
+          <p className="text-slate-400 font-medium text-sm">Menyiapkan dashboard...</p>
+        </div>
+      ) : isFullDayFlow ? (
+        // Corporate Mode UI
+        <div className="flex flex-col gap-6 pt-4 pb-10">
+          <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-cyan-900/5 border border-slate-50 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-500/5 rounded-full -ml-10 -mb-10 blur-xl"></div>
+            
+            <h3 className="text-xl font-bold text-slate-800 mb-6 relative z-10 text-center">Absensi Kehadiran Harian</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
+              {/* Button Masuk */}
+              <button
+                onClick={() => !hasCheckedIn && navigate('/corporate-attendance')}
+                disabled={hasCheckedIn}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-4 p-8 rounded-[2rem] transition-all duration-300",
+                  hasCheckedIn 
+                    ? "bg-slate-50 border-2 border-slate-200 opacity-70 cursor-not-allowed" 
+                    : "bg-emerald-50 border-2 border-emerald-500 hover:bg-emerald-100 hover:-translate-y-1 shadow-lg shadow-emerald-500/20 active:scale-95"
+                )}
+              >
+                <div className={cn(
+                  "p-4 rounded-2xl",
+                  hasCheckedIn ? "bg-slate-200 text-slate-500" : "bg-emerald-500 text-white shadow-inner"
+                )}>
+                  {hasCheckedIn ? <CheckCircle size={32} /> : <LogIn size={32} />}
+                </div>
+                <div className="text-center">
+                  <h4 className={cn("font-black text-lg", hasCheckedIn ? "text-slate-600" : "text-emerald-700")}>Masuk Sekolah</h4>
+                  <p className={cn("text-xs font-medium mt-1", hasCheckedIn ? "text-slate-500" : "text-emerald-600/80")}>
+                    {hasCheckedIn ? 'Sudah Hadir' : 'Ambil Foto Kehadiran'}
+                  </p>
+                </div>
+              </button>
+
+              {/* Button Keluar */}
+              <button
+                onClick={handleCorporateClockOut}
+                disabled={!hasCheckedIn || hasCheckedOut || clockOutMutation.isPending}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-4 p-8 rounded-[2rem] transition-all duration-300",
+                  !hasCheckedIn || hasCheckedOut || clockOutMutation.isPending
+                    ? "bg-slate-50 border-2 border-slate-200 opacity-70 cursor-not-allowed" 
+                    : "bg-orange-50 border-2 border-orange-500 hover:bg-orange-100 hover:-translate-y-1 shadow-lg shadow-orange-500/20 active:scale-95"
+                )}
+              >
+                <div className={cn(
+                  "p-4 rounded-2xl",
+                  (!hasCheckedIn || hasCheckedOut) ? "bg-slate-200 text-slate-500" : "bg-orange-500 text-white shadow-inner"
+                )}>
+                  {hasCheckedOut ? <CheckCircle size={32} /> : <LogOut size={32} />}
+                </div>
+                <div className="text-center">
+                  <h4 className={cn("font-black text-lg", (!hasCheckedIn || hasCheckedOut) ? "text-slate-600" : "text-orange-700")}>Keluar Sekolah</h4>
+                  <p className={cn("text-xs font-medium mt-1", (!hasCheckedIn || hasCheckedOut) ? "text-slate-500" : "text-orange-600/80")}>
+                    {hasCheckedOut ? 'Sudah Pulang' : !hasCheckedIn ? 'Belum Masuk' : 'Akhiri Hari Ini'}
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       ) : todaySchedules?.length === 0 ? (
         <div className="bg-white p-10 rounded-[2.5rem] text-center shadow-xl shadow-cyan-900/5 border border-slate-50">
