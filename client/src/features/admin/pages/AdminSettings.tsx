@@ -95,8 +95,8 @@ const AdminSettings: React.FC = () => {
       title: 'Corporate / Full Day',
       badge: 'Gaya Kantoran',
       badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
-      description: 'Guru absen 1 kali saat datang. Semua jadwal ke depannya hari itu otomatis hadir. Jadwal yang terlewat sebelum jam absen tidak akan ikut hadir.',
-      details: 'Kepulangan (Clock Out) di-approve sentral oleh Admin melalui tab Approval Kehadiran.',
+      description: 'Absensi otomatis penuh (Corporate-style). Guru hanya check-in 1x di pagi hari. Semua jadwal hari itu otomatis terisi.',
+      details: 'Kepulangan (Clock Out) divalidasi secara mandiri menggunakan Geolocation dari HP Guru masing-masing.',
       icon: Briefcase,
       iconBg: 'bg-blue-50 text-blue-600',
       iconSelectedBg: 'bg-blue-100 text-blue-700'
@@ -329,7 +329,7 @@ const AdminSettings: React.FC = () => {
                           </div>
                           <div className="p-4 bg-white border border-slate-200 rounded-2xl">
                             <span className="font-bold text-slate-700 block mb-1">Jika memilih Corporate / Full Day:</span>
-                            Pak Budi cukup absen 1 kali hari itu. Semua jadwal ke depan di hari tersebut lintas kelas & mapel akan otomatis hadir. Jika Pak Budi baru absen di Jam ke-3, maka Jam ke-2 tetap merah (bolong/alpa). Jam pulang di-approve Admin.
+                            Pak Budi cukup absen 1 kali saat datang (Check-In). Semua jadwal ke depan di hari tersebut akan otomatis hadir. Jika Pak Budi baru absen di Jam ke-3, maka Jam sebelumnya otomatis Alpa. Saat pulang, guru melakukan Check-Out mandiri berbasis lokasi (Geolocation) yang akan mengunci kehadiran seharian penuh.
                           </div>
                         </div>
                       </div>
