@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAdminActivities, useSystemSettings, useDailyPresence, useApproveClockOut } from '../hooks/useAdminData';
+import { useAdminActivities } from '../hooks/useAdminData';
 import { useGurus } from '../../master-data/guru/hooks/useGuruData';
 import { useClasses } from '../../master-data/kelas/hooks/useKelasData';
 import { useLessons } from '../../master-data/lesson/hooks/useLessonData';
@@ -9,10 +9,10 @@ import AdminHeader from '../components/AdminHeader';
 import AdminSidebar from '../components/AdminSidebar';
 import { useAcademicYearStore } from '../../../shared/store/academicYearStore';
 import { useNotificationStore } from '../../../shared/store/notificationStore';
-import { Search, Clock, Filter, FileSpreadsheet, CheckCircle2 } from 'lucide-react';
+import { Search, Clock, Filter, FileSpreadsheet } from 'lucide-react';
 
 const AdminActivities = () => {
-  const [activeTab, setActiveTab] = useState<'history' | 'approval'>('history');
+
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
@@ -45,19 +45,7 @@ const AdminActivities = () => {
     search, page, limit, teacherId, classId, lessonId, status, startDate, endDate, academicYearId: selectedYearId || undefined 
   });
 
-  const { data: settings } = useSystemSettings();
-  const isFullDayFlow = settings?.attendance_flow === 'full_day';
 
-  const { data: dailyPresenceRes, isLoading: isLoadingPresence } = useDailyPresence();
-  const approveMutation = useApproveClockOut();
-
-  const handleApproveClockOut = (userId: string) => {
-    approveMutation.mutate(userId, {
-      onSuccess: () => {
-        showNotification('Berhasil melakukan clock out untuk guru ini', 'success');
-      }
-    });
-  };
 
   const { data: guruRes } = useGurus({ limit: 100 });
   const { data: kelasRes } = useClasses({ limit: 100 });
