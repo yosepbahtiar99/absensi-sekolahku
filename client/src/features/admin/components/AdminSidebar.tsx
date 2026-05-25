@@ -162,7 +162,7 @@ const AdminSidebar = () => {
         <MenuNavLink to="/admin" icon={LayoutDashboard} label="Dashboard" isCollapsed={isSidebarCollapsed} />
         <MenuNavLink to="/admin/wallboard" icon={Tv} label="Wallboard Guru" isCollapsed={isSidebarCollapsed} />
         <MenuNavLink to="/admin/activities" icon={CheckSquare} label="Riwayat Kehadiran" isCollapsed={isSidebarCollapsed} />
-        <MenuNavLink to="/admin/approvals" icon={CheckSquare} label="Approval Guru" isCollapsed={isSidebarCollapsed} />
+        {/* <MenuNavLink to="/admin/approvals" icon={CheckSquare} label="Approval Guru" isCollapsed={isSidebarCollapsed} /> */}
 
         {/* Master Data Collapsible Menu */}
         <div>

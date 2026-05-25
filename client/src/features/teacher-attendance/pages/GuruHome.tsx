@@ -377,6 +377,7 @@ const GuruHome = () => {
             {activeTab !== 'schedule' && <span className="text-[8px] font-black uppercase tracking-widest">Jadwal</span>}
           </button>
 
+          {/* 
           <button
             onClick={() => setActiveTab('approval')}
             className={cn(
@@ -392,6 +393,7 @@ const GuruHome = () => {
             </div>
             {activeTab !== 'approval' && <span className="text-[8px] font-black uppercase tracking-widest">Approval</span>}
           </button>
+          */}
 
           <button
             onClick={() => setActiveTab('user')}

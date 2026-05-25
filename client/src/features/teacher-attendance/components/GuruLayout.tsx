@@ -34,7 +34,7 @@ const GuruLayout = () => {
   const navItems = [
     { path: '/home', icon: LayoutGrid, label: 'Home' },
     { path: '/schedule', icon: CalendarDays, label: 'Jadwal' },
-    { path: '/approvals', icon: CheckCircle, label: 'Approval' },
+    // { path: '/approvals', icon: CheckCircle, label: 'Approval' },
     { path: '/profile', icon: User, label: 'Profil' },
   ];
 
