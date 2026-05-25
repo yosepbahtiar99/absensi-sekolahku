@@ -65,6 +65,26 @@ const AdminWallboard = () => {
     e.preventDefault();
     if (!timePromptData) return;
 
+    const row = data?.matrix?.find(r => r.teacherId === timePromptData.teacherId);
+    if (row) {
+      if (timePromptData.type === 'hadir' && row.lastCheckOut) {
+        const outDate = new Date(row.lastCheckOut);
+        const inDate = new Date(`${selectedDate}T${timePromptData.time}:00+07:00`);
+        if (inDate > outDate) {
+          showNotification('Validasi Gagal: Jam Masuk tidak boleh lebih besar dari Jam Pulang', 'error');
+          return;
+        }
+      }
+      if (timePromptData.type === 'pulang' && row.firstCheckIn) {
+        const inDate = new Date(row.firstCheckIn);
+        const outDate = new Date(`${selectedDate}T${timePromptData.time}:00+07:00`);
+        if (outDate < inDate) {
+          showNotification('Validasi Gagal: Jam Pulang tidak boleh lebih kecil dari Jam Masuk', 'error');
+          return;
+        }
+      }
+    }
+
     if (timePromptData.type === 'hadir') {
       manualCorporateMutation.mutate(
         { teacherId: timePromptData.teacherId, dateStr: selectedDate, checkInTimeStr: timePromptData.time },
@@ -590,7 +610,7 @@ const AdminWallboard = () => {
                         return (
                           <tr key={row.teacherId} className="group/row hover:bg-slate-50/50 transition-colors">
                             {/* Sticky Guru Name column */}
-                            <td className="sticky left-0 z-20 bg-white p-4 font-black text-sm text-slate-700 border-r border-slate-200 w-64 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
+                            <td className="sticky left-0 z-20 bg-white p-4 font-black text-sm text-slate-700 border-r border-slate-200 w-64 shadow-[2px_0_5px_rgba(0,0,0,0.02)] group/cell">
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-3">
                                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-sm text-xs shrink-0 select-none">
@@ -631,7 +651,7 @@ const AdminWallboard = () => {
                                       <button
                                         onClick={() => handleManualPulang(row.teacherId, row.teacherName)}
                                         disabled={manualCorporateOutMutation.isPending}
-                                        className="text-[10px] bg-slate-100 hover:bg-rose-100 hover:text-rose-700 text-slate-500 font-bold px-1.5 py-0.5 rounded shadow-sm transition-all disabled:opacity-50 opacity-0 group-hover/row:opacity-100 focus:opacity-100"
+                                        className="text-[10px] bg-slate-100 hover:bg-rose-100 hover:text-rose-700 text-slate-500 font-bold px-1.5 py-0.5 rounded shadow-sm transition-all disabled:opacity-50 opacity-0 group-hover/cell:opacity-100 focus:opacity-100"
                                       >
                                         {manualCorporateOutMutation.isPending ? '...' : '+ Set Pulang'}
                                       </button>
@@ -643,7 +663,7 @@ const AdminWallboard = () => {
                                     <button
                                       onClick={() => handleManualHadir(row.teacherId, row.teacherName)}
                                       disabled={manualCorporateMutation.isPending}
-                                      className="text-[10px] bg-slate-100 hover:bg-emerald-100 hover:text-emerald-700 text-slate-500 font-bold py-1 px-2 rounded transition-all disabled:opacity-50 opacity-0 group-hover/row:opacity-100 focus:opacity-100"
+                                      className="text-[10px] bg-slate-100 hover:bg-emerald-100 hover:text-emerald-700 text-slate-500 font-bold py-1 px-2 rounded transition-all disabled:opacity-50 opacity-0 group-hover/cell:opacity-100 focus:opacity-100"
                                     >
                                       {manualCorporateMutation.isPending ? 'Proses...' : '+ Set Hadir Manual'}
                                     </button>
