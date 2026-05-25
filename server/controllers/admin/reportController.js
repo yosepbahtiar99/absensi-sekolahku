@@ -527,6 +527,10 @@ const exportDailyAttendanceExcel = async (req, res) => {
       }
     });
 
+    const dailyAttendances = await DailyAttendance.findAll({
+      where: { date: targetDateStr }
+    });
+
     // Get unique teachers scheduled today
     const teacherMap = new Map();
     schedules.forEach(s => {
@@ -634,8 +638,9 @@ const exportDailyAttendanceExcel = async (req, res) => {
         top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
       };
 
-      let firstCheckIn = null;
-      let clockOutTime = null;
+      const dailyAtt = dailyAttendances.find(d => d.userId === teacher.id);
+      let firstCheckIn = dailyAtt ? dailyAtt.checkInTime : null;
+      let clockOutTime = dailyAtt ? dailyAtt.checkOutTime : null;
 
       timeSlots.forEach((slot, slotIdx) => {
         const colIdx = slotIdx + 2;
@@ -692,11 +697,11 @@ const exportDailyAttendanceExcel = async (req, res) => {
           }
           
           const checkIn = activity.corporateCheckIn || activity.timestamp;
-          if (!firstCheckIn || new Date(checkIn) < new Date(firstCheckIn)) {
+          if (!dailyAtt && (!firstCheckIn || new Date(checkIn) < new Date(firstCheckIn))) {
             firstCheckIn = checkIn;
           }
           const checkOut = activity.corporateCheckOut || activity.clockOutTime;
-          if (checkOut && (!clockOutTime || new Date(checkOut) > new Date(clockOutTime))) {
+          if (!dailyAtt && checkOut && (!clockOutTime || new Date(checkOut) > new Date(clockOutTime))) {
             clockOutTime = checkOut;
           }
         } else if (hasGeneralLeave) {
@@ -1446,19 +1451,21 @@ const manualCorporateClockIn = async (req, res) => {
       }
     });
 
+    let dailyAttendanceId;
     if (existingDaily) {
       existingDaily.checkInTime = checkInDate;
       await existingDaily.save();
-      return res.json({ message: 'Jam masuk harian berhasil diubah' });
+      dailyAttendanceId = existingDaily.id;
+    } else {
+      const dailyAttendance = await DailyAttendance.create({
+        userId: teacherId,
+        date: dateStr,
+        checkInTime: checkInDate,
+        status: 'hadir',
+        notes: 'Ditambahkan manual oleh Admin'
+      });
+      dailyAttendanceId = dailyAttendance.id;
     }
-
-    const dailyAttendance = await DailyAttendance.create({
-      userId: teacherId,
-      date: dateStr,
-      checkInTime: checkInDate,
-      status: 'hadir',
-      notes: 'Ditambahkan manual oleh Admin'
-    });
 
     // Populate class activities for that day
     const dayObj = new Date(`${dateStr}T12:00:00+07:00`);
@@ -1477,26 +1484,74 @@ const manualCorporateClockIn = async (req, res) => {
       include: [{ model: TimeSlot }, { model: Class }, { model: Lesson }]
     });
 
+    const sysSetting = await SystemSetting.findOne({ where: { key: 'late_tolerance' } });
+    const toleranceMinutes = sysSetting ? parseInt(sysSetting.value, 10) : 15;
+
     if (schedules.length > 0) {
       const snapshotTeacherName = (await User.findByPk(teacherId))?.name || 'Unknown Teacher';
 
       for (const sched of schedules) {
-        await Activity.create({
-          userId: teacherId,
-          scheduleId: sched.id,
-          academicYearId: sched.academicYearId,
-          photoSelfie: null,
-          photoClass: null,
-          status: 'masuk',
-          type: 'pembelajaran',
-          isCustom: false,
-          timestamp: checkInDate,
-          snapshotClassName: sched.Class?.name || 'Unknown Class',
-          snapshotLessonName: sched.Lesson?.name || 'Unknown Lesson',
-          snapshotTeacherName,
-          dailyAttendanceId: dailyAttendance.id,
-          description: 'Hadir Manual by Admin'
+        const schedStartTimeStr = sched.TimeSlot?.startTime || sched.startTime;
+        const schedEndTimeStr = sched.TimeSlot?.endTime || sched.endTime;
+
+        let activityStatus = 'masuk';
+        let activityTimestamp = checkInDate;
+
+        if (schedStartTimeStr && schedEndTimeStr) {
+          const startTimeDate = new Date(`${dateStr}T${schedStartTimeStr}+07:00`);
+          const endTimeDate = new Date(`${dateStr}T${schedEndTimeStr}+07:00`);
+
+          if (checkInDate < startTimeDate) {
+            activityTimestamp = startTimeDate;
+          }
+
+          if (checkInDate > endTimeDate) {
+            activityStatus = 'alpa';
+          } else {
+            const diffInMinutes = (checkInDate.getTime() - startTimeDate.getTime()) / (1000 * 60);
+            if (diffInMinutes > toleranceMinutes) {
+              activityStatus = 'telat';
+            } else {
+              activityStatus = 'masuk';
+            }
+          }
+        }
+
+        const existingActivity = await Activity.findOne({
+          where: {
+            userId: teacherId,
+            scheduleId: sched.id,
+            timestamp: {
+              [Op.gte]: new Date(`${dateStr}T00:00:00+07:00`),
+              [Op.lte]: new Date(`${dateStr}T23:59:59+07:00`)
+            }
+          }
         });
+
+        if (existingActivity) {
+          existingActivity.status = activityStatus;
+          existingActivity.type = activityStatus === 'alpa' ? 'corporate_alpa' : 'pembelajaran';
+          existingActivity.timestamp = activityTimestamp;
+          existingActivity.dailyAttendanceId = dailyAttendanceId;
+          await existingActivity.save();
+        } else {
+          await Activity.create({
+            userId: teacherId,
+            scheduleId: sched.id,
+            academicYearId: sched.academicYearId,
+            photoSelfie: null,
+            photoClass: null,
+            status: activityStatus,
+            type: activityStatus === 'alpa' ? 'corporate_alpa' : 'pembelajaran',
+            isCustom: false,
+            timestamp: activityTimestamp,
+            snapshotClassName: sched.Class?.name || 'Unknown Class',
+            snapshotLessonName: sched.Lesson?.name || 'Unknown Lesson',
+            snapshotTeacherName,
+            dailyAttendanceId: dailyAttendanceId,
+            description: 'Hadir Manual by Admin'
+          });
+        }
       }
     }
 
@@ -1527,16 +1582,17 @@ const manualCorporateClockOut = async (req, res) => {
       return res.status(400).json({ message: 'Guru ini belum melakukan absen harian (Clock In) di tanggal tersebut' });
     }
 
+    let message = 'Berhasil melakukan set pulang manual';
     if (dailyAttendance.checkOutTime) {
       dailyAttendance.checkOutTime = checkOutDate;
       await dailyAttendance.save();
-      return res.json({ message: 'Jam pulang harian berhasil diubah' });
+      message = 'Jam pulang harian berhasil diubah';
+    } else {
+      await dailyAttendance.update({
+        checkOutTime: checkOutDate,
+        notes: dailyAttendance.notes ? `${dailyAttendance.notes}, Pulang diset manual` : 'Pulang diset manual'
+      });
     }
-
-    await dailyAttendance.update({
-      checkOutTime: checkOutDate,
-      notes: dailyAttendance.notes ? `${dailyAttendance.notes}, Pulang diset manual` : 'Pulang diset manual'
-    });
 
     // Mark remaining future activities as alpa if any, though for admin manual set we could just leave them as is, or mark alpa.
     // Let's mark 'belum_mulai' or 'masuk' activities that occur after checkOutTime as 'alpa' just like normal clock-out.
@@ -1550,18 +1606,32 @@ const manualCorporateClockOut = async (req, res) => {
         const schedStartTimeStr = act.Schedule.TimeSlot?.startTime || act.Schedule.startTime;
         if (schedStartTimeStr) {
           const startTimeDate = new Date(`${dateStr}T${schedStartTimeStr}+07:00`);
-          if (checkOutDate < startTimeDate && (act.status === 'masuk' || act.status === 'belum_mulai')) {
+          if (checkOutDate < startTimeDate) {
             await act.update({
               status: 'alpa',
               type: 'corporate_alpa',
               description: 'Alpa otomatis (Pulang manual awal)'
+            });
+          } else if (act.type === 'corporate_alpa' && act.description === 'Alpa otomatis (Pulang manual awal)') {
+            // Revert back if checkout was edited to be later
+            const checkInDate = dailyAttendance.checkInTime;
+            const diffInMinutes = (checkInDate.getTime() - startTimeDate.getTime()) / (1000 * 60);
+            let restoredStatus = 'masuk';
+            
+            // Assume default late tolerance 15 since we don't have it here, or we can fetch it
+            if (diffInMinutes > 15) restoredStatus = 'telat';
+            
+            await act.update({
+              status: restoredStatus,
+              type: 'pembelajaran',
+              description: 'Hadir Manual by Admin'
             });
           }
         }
       }
     }
 
-    res.json({ message: 'Berhasil melakukan set pulang manual' });
+    res.json({ message });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Gagal melakukan set pulang manual' });

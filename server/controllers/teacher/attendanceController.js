@@ -296,10 +296,16 @@ const corporateClockIn = async (req, res) => {
         
         let status = 'masuk';
 
+        let activityTimestamp = now;
+
         if (schedStartTimeStr && schedEndTimeStr) {
           const startTimeDate = new Date(`${todayDateOnly}T${schedStartTimeStr}+07:00`);
           const endTimeDate = new Date(`${todayDateOnly}T${schedEndTimeStr}+07:00`);
           
+          if (now < startTimeDate) {
+            activityTimestamp = startTimeDate;
+          }
+
           if (now > endTimeDate) {
             status = 'alpa'; // Missed completely because they clocked in late
           } else {
@@ -321,7 +327,7 @@ const corporateClockIn = async (req, res) => {
           status,
           type: status === 'alpa' ? 'corporate_alpa' : 'pembelajaran',
           isCustom: false,
-          timestamp: now,
+          timestamp: activityTimestamp,
           snapshotClassName: sched.Class?.name || 'Unknown Class',
           snapshotLessonName: sched.Lesson?.name || 'Unknown Lesson',
           snapshotTeacherName,
