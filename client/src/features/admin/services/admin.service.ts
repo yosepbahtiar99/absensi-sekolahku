@@ -91,6 +91,16 @@ export const adminService = {
     const response = await api.post<{ message: string }>('/admin/activities/manual', data);
     return response.data;
   },
+
+  manualCorporateClockIn: async (data: { teacherId: string, dateStr: string, checkInTimeStr?: string }): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/admin/attendance/daily/manual', data);
+    return response.data;
+  },
+
+  manualCorporateClockOut: async (data: { teacherId: string, dateStr: string, checkOutTimeStr?: string }): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>('/admin/attendance/daily/manual-checkout', data);
+    return response.data;
+  }
 };
 
 export interface IManualActivityPayload {
@@ -132,6 +142,8 @@ export interface IWallboardMatrixCell {
   photoSelfie?: string | null;
   photoClass?: string | null;
   description?: string | null;
+  corporateCheckOutLat?: string | null;
+  corporateCheckOutLong?: string | null;
 }
 
 export interface IWallboardTeacherRow {

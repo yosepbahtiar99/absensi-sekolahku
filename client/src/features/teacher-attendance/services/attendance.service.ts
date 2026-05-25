@@ -14,6 +14,11 @@ export const attendanceService = {
     return response.data;
   },
 
+  getDailyAttendanceStatus: async (): Promise<{ data: any }> => {
+    const response = await api.get<{ data: any }>('/teacher/attendance/daily-status');
+    return response.data;
+  },
+
   uploadPhoto: async (file: File): Promise<{ filename: string; url: string }> => {
     const formData = new FormData();
     formData.append('photo', file);

@@ -13,7 +13,7 @@ const {
   exportReport, exportSnapshot, importSnapshot,
   getDailyAttendanceReport, getTeacherScheduleReport,
   exportDailyAttendanceExcel, exportDailyAttendanceListExcel, exportTeacherScheduleExcel,
-  getDailyAttendanceMatrixData, getSettings, updateSettings
+  getDailyAttendanceMatrixData, manualCorporateClockIn, manualCorporateClockOut, getSettings, updateSettings
 } = require('../controllers/adminController');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
@@ -26,6 +26,8 @@ router.get('/requests', getApprovalRequests);
 router.put('/requests/:id/approve', approveRequest);
 router.get('/attendance/daily-presence', getDailyPresence);
 router.put('/attendance/clock-out/:userId', approveClockOut);
+router.post('/attendance/daily/manual', manualCorporateClockIn);
+router.post('/attendance/daily/manual-checkout', manualCorporateClockOut);
 router.post('/activities/manual', manualActivity);
 router.get('/export-report', exportReport);
 

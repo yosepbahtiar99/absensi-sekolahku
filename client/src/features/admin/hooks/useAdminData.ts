@@ -83,9 +83,29 @@ export const useManualActivity = () => {
   return useMutation({
     mutationFn: (data: import('../services/admin.service').IManualActivityPayload) => adminService.setManualActivity(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['daily-matrix'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-matrix-data'] });
       queryClient.invalidateQueries({ queryKey: ['admin-activities'] });
       queryClient.invalidateQueries({ queryKey: ['admin-daily-presence'] });
+    },
+  });
+};
+
+export const useManualCorporateClockIn = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { teacherId: string, dateStr: string, checkInTimeStr?: string }) => adminService.manualCorporateClockIn(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['daily-matrix-data'] });
+    },
+  });
+};
+
+export const useManualCorporateClockOut = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { teacherId: string, dateStr: string, checkOutTimeStr?: string }) => adminService.manualCorporateClockOut(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['daily-matrix-data'] });
     },
   });
 };

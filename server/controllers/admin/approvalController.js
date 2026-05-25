@@ -1,4 +1,4 @@
-const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot, SystemSetting } = require('../../models');
+const { User, Class, Lesson, Schedule, Activity, ApprovalRequest, AcademicYear, TimeSlot, SystemSetting, DailyAttendance } = require('../../models');
 const { Op } = require('sequelize');
 const { getJakartaDayInfo } = require('../teacher/scheduleController');
 
@@ -236,12 +236,30 @@ const manualActivity = async (req, res) => {
       return res.json({ message: 'Aktivitas dihapus (diset Alpa)' });
     }
 
+    const flowSetting = await SystemSetting.findOne({ where: { key: 'attendance_flow' } });
+    const attendanceFlow = flowSetting ? flowSetting.value : 'strict';
+
+    let dailyAttendanceId = null;
+    if (attendanceFlow === 'full_day') {
+      const daily = await DailyAttendance.findOne({
+        where: { userId: teacherId, date }
+      });
+      
+      if (!daily && status !== 'alpa') {
+        return res.status(400).json({ message: 'Guru belum melakukan Check In harian. Silakan klik "+ Set Hadir Manual" di bawah nama guru terlebih dahulu.' });
+      }
+      if (daily) {
+        dailyAttendanceId = daily.id;
+      }
+    }
+
     if (existingActivity) {
       await existingActivity.update({
         status,
         timestamp: targetTimestamp,
         description: description || existingActivity.description,
-        isApproveCheckOut: true
+        isApproveCheckOut: true,
+        dailyAttendanceId: dailyAttendanceId || existingActivity.dailyAttendanceId
       });
       return res.json({ message: `Aktivitas berhasil diupdate menjadi ${status}` });
     } else {
@@ -258,7 +276,8 @@ const manualActivity = async (req, res) => {
         snapshotClassName: schedule.Class?.name,
         snapshotLessonName: schedule.Lesson?.name,
         snapshotTeacherName: (await User.findByPk(teacherId))?.name,
-        isApproveCheckOut: true
+        isApproveCheckOut: true,
+        dailyAttendanceId
       });
 
       return res.json({ message: `Aktivitas berhasil ditambahkan sebagai ${status}` });

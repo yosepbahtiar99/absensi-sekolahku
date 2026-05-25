@@ -32,7 +32,7 @@ fs.readdirSync(__dirname)
 const { 
   User, Activity, Class, Lesson, Schedule, 
   ApprovalRequest, AcademicYear, TimeSlot, 
-  Curriculum, GradeLevel 
+  Curriculum, GradeLevel, DailyAttendance
 } = db;
 
 // Relationships
@@ -59,6 +59,16 @@ if (Schedule && Activity) {
 if (User && Activity) {
   User.hasMany(Activity, { foreignKey: 'userId' });
   Activity.belongsTo(User, { foreignKey: 'userId' });
+}
+
+if (User && DailyAttendance) {
+  User.hasMany(DailyAttendance, { foreignKey: 'userId' });
+  DailyAttendance.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+}
+
+if (DailyAttendance && Activity) {
+  DailyAttendance.hasMany(Activity, { foreignKey: 'dailyAttendanceId' });
+  Activity.belongsTo(DailyAttendance, { foreignKey: 'dailyAttendanceId' });
 }
 
 if (User && ApprovalRequest) {

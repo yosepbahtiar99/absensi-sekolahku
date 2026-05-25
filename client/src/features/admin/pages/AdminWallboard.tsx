@@ -8,13 +8,14 @@ import {
   Info,
   Loader2,
   FileSpreadsheet,
-  UserCheck
+  UserCheck,
+  Pencil
 } from 'lucide-react';
 import api from '../../../shared/lib/axios';
 import AdminSidebar from '../components/AdminSidebar';
-import { useDailyMatrixData, useManualActivity } from '../hooks/useAdminData';
+import { useDailyMatrixData, useManualActivity, useManualCorporateClockIn, useManualCorporateClockOut, useSystemSettings } from '../hooks/useAdminData';
 import { useNotificationStore } from '../../../shared/store/notificationStore';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, X, MapPin } from 'lucide-react';
 
 const AdminWallboard = () => {
   const d = new Date();
@@ -31,14 +32,69 @@ const AdminWallboard = () => {
 
   const { showNotification } = useNotificationStore();
   const manualActivityMutation = useManualActivity();
+  const manualCorporateMutation = useManualCorporateClockIn();
+  const manualCorporateOutMutation = useManualCorporateClockOut();
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [manualForm, setManualForm] = useState({ status: 'masuk', description: '' });
 
+  // Time Prompt Modal State
+  const [isTimePromptOpen, setIsTimePromptOpen] = useState(false);
+  const [timePromptData, setTimePromptData] = useState<{ type: 'hadir' | 'pulang', teacherId: string, teacherName: string, time: string } | null>(null);
+
   // Fetch Matrix data
   const { data, isLoading, isFetching, refetch } = useDailyMatrixData(selectedDate);
+  const { data: settings } = useSystemSettings();
+
+  const attendanceFlow = settings?.attendance_flow || 'strict';
+  const isCorporateFlow = attendanceFlow === 'full_day';
+
+  const handleManualHadir = (teacherId: string, teacherName: string) => {
+    setTimePromptData({ type: 'hadir', teacherId, teacherName, time: '07:00' });
+    setIsTimePromptOpen(true);
+  };
+
+  const handleManualPulang = (teacherId: string, teacherName: string) => {
+    setTimePromptData({ type: 'pulang', teacherId, teacherName, time: '12:00' });
+    setIsTimePromptOpen(true);
+  };
+
+  const submitTimePrompt = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!timePromptData) return;
+
+    if (timePromptData.type === 'hadir') {
+      manualCorporateMutation.mutate(
+        { teacherId: timePromptData.teacherId, dateStr: selectedDate, checkInTimeStr: timePromptData.time },
+        {
+          onSuccess: () => {
+            showNotification('Berhasil melakukan absen manual', 'success');
+            setIsTimePromptOpen(false);
+          },
+          onError: (error: any) => {
+            const msg = error?.response?.data?.message || 'Gagal melakukan absen manual';
+            showNotification(msg, 'error');
+          }
+        }
+      );
+    } else {
+      manualCorporateOutMutation.mutate(
+        { teacherId: timePromptData.teacherId, dateStr: selectedDate, checkOutTimeStr: timePromptData.time },
+        {
+          onSuccess: () => {
+            showNotification('Berhasil melakukan set pulang manual', 'success');
+            setIsTimePromptOpen(false);
+          },
+          onError: (error: any) => {
+            const msg = error?.response?.data?.message || 'Gagal melakukan set pulang manual';
+            showNotification(msg, 'error');
+          }
+        }
+      );
+    }
+  };
 
   // --- 1. Helper Functions ---
   const isSlotActive = (startTime: string, endTime: string) => {
@@ -282,7 +338,10 @@ const AdminWallboard = () => {
       className: slotData.className,
       lessonName: slotData.lessonName,
       timeLabel: `${slotInfo.label} (${slotInfo.startTime.substring(0,5)} - ${slotInfo.endTime.substring(0,5)})`,
-      currentStatus: slotData.status
+      currentStatus: slotData.status,
+      description: slotData.description,
+      corporateCheckOutLat: slotData.corporateCheckOutLat,
+      corporateCheckOutLong: slotData.corporateCheckOutLong
     });
     
     // Map existing status to form status (or default to masuk)
@@ -310,8 +369,9 @@ const AdminWallboard = () => {
         showNotification('Berhasil memperbarui status absensi', 'success');
         setIsModalOpen(false);
       },
-      onError: () => {
-        showNotification('Gagal memperbarui absensi', 'error');
+      onError: (error: any) => {
+        const msg = error?.response?.data?.message || 'Gagal memperbarui absensi';
+        showNotification(msg, 'error');
       }
     });
   };
@@ -528,7 +588,7 @@ const AdminWallboard = () => {
                       {sortedMatrix.map((row, rowIndex) => {
                         const isLastRow = rowIndex === sortedMatrix.length - 1;
                         return (
-                          <tr key={row.teacherId} className="hover:bg-slate-50/50 transition-colors">
+                          <tr key={row.teacherId} className="group/row hover:bg-slate-50/50 transition-colors">
                             {/* Sticky Guru Name column */}
                             <td className="sticky left-0 z-20 bg-white p-4 font-black text-sm text-slate-700 border-r border-slate-200 w-64 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                               <div className="flex flex-col gap-1">
@@ -538,18 +598,55 @@ const AdminWallboard = () => {
                                   </div>
                                   <span className="truncate" title={row.teacherName}>{row.teacherName}</span>
                                 </div>
-                                {(row.firstCheckIn || row.lastCheckOut) && (
+                                {isCorporateFlow && (row.firstCheckIn || row.lastCheckOut) && (
                                   <div className="flex flex-wrap items-center gap-1.5 mt-1 ml-11 text-[10px] font-medium font-mono">
                                     {row.firstCheckIn && (
-                                      <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded shadow-sm">
-                                        M: {new Date(row.firstCheckIn).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })}
-                                      </span>
+                                      <button
+                                        onClick={() => {
+                                          const timeStr = new Date(row.firstCheckIn!).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+                                          setTimePromptData({ type: 'hadir', teacherId: row.teacherId, teacherName: row.teacherName, time: timeStr });
+                                          setIsTimePromptOpen(true);
+                                        }}
+                                        className="group/editbtn flex items-center justify-center min-w-[50px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 hover:border-emerald-300 px-1.5 py-0.5 rounded shadow-sm transition-all focus:outline-none"
+                                        title="Edit Jam Masuk"
+                                      >
+                                        <span className="group-hover/editbtn:hidden flex items-center gap-1">M: {new Date(row.firstCheckIn).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':')}</span>
+                                        <span className="hidden group-hover/editbtn:flex items-center gap-1"><Pencil size={10} /> Edit</span>
+                                      </button>
                                     )}
-                                    {row.lastCheckOut && (
-                                      <span className="flex items-center gap-1 text-rose-700 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded shadow-sm">
-                                        K: {new Date(row.lastCheckOut).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })}
-                                      </span>
+                                    {row.lastCheckOut ? (
+                                      <button
+                                        onClick={() => {
+                                          const timeStr = new Date(row.lastCheckOut!).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+                                          setTimePromptData({ type: 'pulang', teacherId: row.teacherId, teacherName: row.teacherName, time: timeStr });
+                                          setIsTimePromptOpen(true);
+                                        }}
+                                        className="group/editbtn flex items-center justify-center min-w-[50px] text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-100 hover:border-rose-300 px-1.5 py-0.5 rounded shadow-sm transition-all focus:outline-none"
+                                        title="Edit Jam Pulang"
+                                      >
+                                        <span className="group-hover/editbtn:hidden flex items-center gap-1">K: {new Date(row.lastCheckOut).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':')}</span>
+                                        <span className="hidden group-hover/editbtn:flex items-center gap-1"><Pencil size={10} /> Edit</span>
+                                      </button>
+                                    ) : row.firstCheckIn && (
+                                      <button
+                                        onClick={() => handleManualPulang(row.teacherId, row.teacherName)}
+                                        disabled={manualCorporateOutMutation.isPending}
+                                        className="text-[10px] bg-slate-100 hover:bg-rose-100 hover:text-rose-700 text-slate-500 font-bold px-1.5 py-0.5 rounded shadow-sm transition-all disabled:opacity-50 opacity-0 group-hover/row:opacity-100 focus:opacity-100"
+                                      >
+                                        {manualCorporateOutMutation.isPending ? '...' : '+ Set Pulang'}
+                                      </button>
                                     )}
+                                  </div>
+                                )}
+                                {isCorporateFlow && !row.firstCheckIn && !row.lastCheckOut && (
+                                  <div className="mt-1 ml-11">
+                                    <button
+                                      onClick={() => handleManualHadir(row.teacherId, row.teacherName)}
+                                      disabled={manualCorporateMutation.isPending}
+                                      className="text-[10px] bg-slate-100 hover:bg-emerald-100 hover:text-emerald-700 text-slate-500 font-bold py-1 px-2 rounded transition-all disabled:opacity-50 opacity-0 group-hover/row:opacity-100 focus:opacity-100"
+                                    >
+                                      {manualCorporateMutation.isPending ? 'Proses...' : '+ Set Hadir Manual'}
+                                    </button>
                                   </div>
                                 )}
                               </div>
@@ -618,7 +715,17 @@ const AdminWallboard = () => {
                                           ) : (
                                             <div className="bg-slate-50 text-slate-500 text-xs font-bold p-3 text-center rounded-xl border border-slate-100 flex flex-col items-center gap-1.5">
                                               <UserCheck size={16} className="text-slate-400" />
-                                              <span className="leading-tight">{slotData.description || 'Diabsen by Admin'}</span>
+                                              <span className="leading-tight">
+                                                {(() => {
+                                                  if (slotData.corporateCheckOutLat && slotData.corporateCheckOutLong) {
+                                                    return 'Lokasi Tersimpan (Klik cell untuk Maps)';
+                                                  }
+                                                  if (slotData.description) {
+                                                    return slotData.description;
+                                                  }
+                                                  return 'Diabsen by Admin';
+                                                })()}
+                                              </span>
                                             </div>
                                           )}
                                           {/* Caret */}
@@ -672,6 +779,36 @@ const AdminWallboard = () => {
                 <p className="font-black text-slate-800">{selectedSlot.teacherName}</p>
                 <p className="text-sm text-slate-600">{selectedSlot.lessonName} • {selectedSlot.className}</p>
                 <p className="text-sm font-mono text-cyan-600 font-bold">{selectedSlot.timeLabel}</p>
+                {(() => {
+                  const hasLocation = selectedSlot.corporateCheckOutLat && selectedSlot.corporateCheckOutLong;
+                  const hasDescription = !!selectedSlot.description;
+                  
+                  return (
+                    <>
+                      {hasLocation && (
+                        <div className="mt-3 pt-3 border-t border-slate-200">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                            <MapPin size={12} className="text-cyan-600" />
+                            Lokasi Check-Out (Corporate)
+                          </p>
+                          <a 
+                            href={`https://www.google.com/maps?q=${selectedSlot.corporateCheckOutLat},${selectedSlot.corporateCheckOutLong}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-1 bg-blue-50 px-2 py-1 rounded"
+                          >
+                            Buka di Google Maps
+                          </a>
+                        </div>
+                      )}
+                      {hasDescription && (
+                        <div className="mt-3 pt-3 border-t border-slate-200">
+                           <p className="text-xs font-medium text-slate-600">Catatan: {selectedSlot.description}</p>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               <div className="space-y-4">
@@ -725,6 +862,78 @@ const AdminWallboard = () => {
                 >
                   {manualActivityMutation.isPending && <Loader2 size={16} className="animate-spin" />}
                   Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Corporate Time Prompt Modal */}
+      {isTimePromptOpen && timePromptData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsTimePromptOpen(false)}></div>
+          
+          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className={`p-6 text-white ${timePromptData.type === 'hadir' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <Clock size={20} />
+                    {timePromptData.type === 'hadir' ? 'Set Hadir Manual' : 'Set Pulang Manual'}
+                  </h3>
+                  <p className="text-white/80 text-sm mt-1">Atur waktu absensi untuk <b>{timePromptData.teacherName}</b></p>
+                </div>
+                <button 
+                  onClick={() => setIsTimePromptOpen(false)}
+                  className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={submitTimePrompt} className="p-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                    Waktu {timePromptData.type === 'hadir' ? 'Masuk' : 'Pulang'} (HH:mm)
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Clock size={16} className="text-slate-400" />
+                    </div>
+                    <input 
+                      type="time"
+                      value={timePromptData.time}
+                      onChange={(e) => setTimePromptData({...timePromptData, time: e.target.value})}
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-slate-700 font-mono font-bold text-lg"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Sistem akan mencatat absensi ini pada tanggal <b>{selectedDate}</b>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsTimePromptOpen(false)}
+                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  type="submit"
+                  disabled={manualCorporateMutation.isPending || manualCorporateOutMutation.isPending}
+                  className={`flex-1 px-4 py-3 text-white rounded-xl font-bold shadow-lg transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2 ${timePromptData.type === 'hadir' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'}`}
+                >
+                  {(manualCorporateMutation.isPending || manualCorporateOutMutation.isPending) && <Loader2 size={16} className="animate-spin" />}
+                  Simpan Waktu
                 </button>
               </div>
             </form>

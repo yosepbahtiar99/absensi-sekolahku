@@ -1,4 +1,4 @@
-const { Schedule, Class, Lesson, Activity, User, TimeSlot, SystemSetting } = require('../../models');
+const { Schedule, Class, Lesson, Activity, User, TimeSlot, SystemSetting, DailyAttendance } = require('../../models');
 const { Op } = require('sequelize');
 const { getJakartaDayInfo } = require('./scheduleController');
 
@@ -241,32 +241,39 @@ const getMyActivities = async (req, res) => {
 
 const corporateClockIn = async (req, res) => {
   try {
-    const { photoSelfie, photoClass } = req.body; // photoClass is used as environment photo
+    const { photoSelfie, photoClass } = req.body;
     const userId = req.user.id;
 
     const { year, month, day: dayStr, start, end } = getJakartaDayInfo();
+    const todayDateOnly = `${year}-${month}-${dayStr}`;
     
-    // Check if already clocked in today (any activity)
-    const existingActivity = await Activity.findOne({
+    // Cek apakah sudah absen harian hari ini
+    const existingDaily = await DailyAttendance.findOne({
       where: {
         userId,
-        timestamp: {
-          [Op.gte]: start,
-          [Op.lte]: end
-        }
+        date: todayDateOnly
       }
     });
 
-    if (existingActivity) {
+    if (existingDaily) {
       return res.status(400).json({ message: 'Anda sudah check-in hari ini' });
     }
+
+    const now = new Date();
+
+    // Create DailyAttendance
+    const dailyAttendance = await DailyAttendance.create({
+      userId,
+      date: todayDateOnly,
+      checkInTime: now,
+      status: 'hadir'
+    });
 
     // Get today's indonesian day name
     const dayMap = {
       sunday: 'minggu', monday: 'senin', tuesday: 'selasa', wednesday: 'rabu',
       thursday: 'kamis', friday: 'jumat', saturday: 'sabtu'
     };
-    const now = new Date();
     const weekdayName = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Jakarta', weekday: 'long'
     }).format(now).toLowerCase();
@@ -279,18 +286,10 @@ const corporateClockIn = async (req, res) => {
     });
 
     if (schedules.length > 0) {
-      // Find the earliest schedule
-      schedules.sort((a, b) => {
-        const aStart = a.TimeSlot?.startTime || a.startTime || '00:00:00';
-        const bStart = b.TimeSlot?.startTime || b.startTime || '00:00:00';
-        return aStart.localeCompare(bStart);
-      });
-
       const lateSettingObj = await SystemSetting.findOne({ where: { key: 'late_tolerance' } });
       const lateTolerance = lateSettingObj ? parseInt(lateSettingObj.value, 10) : 15;
       const snapshotTeacherName = (await User.findByPk(userId))?.name || 'Unknown Teacher';
 
-      // Create activity for all schedules today (corporate inheritance with per-schedule logic)
       for (const sched of schedules) {
         const schedStartTimeStr = sched.TimeSlot?.startTime || sched.startTime;
         const schedEndTimeStr = sched.TimeSlot?.endTime || sched.endTime;
@@ -298,11 +297,11 @@ const corporateClockIn = async (req, res) => {
         let status = 'masuk';
 
         if (schedStartTimeStr && schedEndTimeStr) {
-          const startTimeDate = new Date(`${year}-${month}-${dayStr}T${schedStartTimeStr}+07:00`);
-          const endTimeDate = new Date(`${year}-${month}-${dayStr}T${schedEndTimeStr}+07:00`);
+          const startTimeDate = new Date(`${todayDateOnly}T${schedStartTimeStr}+07:00`);
+          const endTimeDate = new Date(`${todayDateOnly}T${schedEndTimeStr}+07:00`);
           
           if (now > endTimeDate) {
-            status = 'tidak_hadir'; // Missed completely
+            status = 'alpa'; // Missed completely because they clocked in late
           } else {
             const diffInMinutes = (now.getTime() - startTimeDate.getTime()) / (1000 * 60);
             if (diffInMinutes > lateTolerance) {
@@ -318,39 +317,23 @@ const corporateClockIn = async (req, res) => {
           scheduleId: sched.id,
           academicYearId: sched.academicYearId,
           photoSelfie,
-          photoClass, // environment photo
+          photoClass,
           status,
-          type: status === 'tidak_hadir' ? 'corporate_alpa' : 'pembelajaran',
+          type: status === 'alpa' ? 'corporate_alpa' : 'pembelajaran',
           isCustom: false,
           timestamp: now,
           snapshotClassName: sched.Class?.name || 'Unknown Class',
           snapshotLessonName: sched.Lesson?.name || 'Unknown Lesson',
-          snapshotTeacherName
+          snapshotTeacherName,
+          dailyAttendanceId: dailyAttendance.id
         });
       }
-    } else {
-      // No schedule today, but clocked in
-      const activeYear = await SystemSetting.findOne({ where: { key: 'active_academic_year' } }); // Mock fallback if needed
-      await Activity.create({
-        userId,
-        scheduleId: null, // No specific schedule
-        academicYearId: null,
-        photoSelfie,
-        photoClass,
-        status: 'masuk',
-        type: 'corporate_in',
-        isCustom: false,
-        timestamp: now,
-        snapshotClassName: '-',
-        snapshotLessonName: 'Kehadiran Sekolah',
-        snapshotTeacherName: (await User.findByPk(userId))?.name || 'Unknown Teacher'
-      });
     }
 
     res.json({ message: 'Check-in berhasil disimpan' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Gagal melakukan check-in' });
+    res.status(500).json({ message: 'Gagal melakukan check-in', error: error.message, stack: error.stack });
   }
 };
 
@@ -358,45 +341,81 @@ const corporateClockOut = async (req, res) => {
   try {
     const { latitude, longitude } = req.body;
     const userId = req.user.id;
-    const { start, end } = getJakartaDayInfo();
+    const { year, month, day: dayStr } = getJakartaDayInfo();
+    const todayDateOnly = `${year}-${month}-${dayStr}`;
 
-    // Check if clocked in
-    const activities = await Activity.findAll({
+    const dailyAttendance = await DailyAttendance.findOne({
       where: {
         userId,
-        timestamp: {
-          [Op.gte]: start,
-          [Op.lte]: end
-        }
+        date: todayDateOnly
       }
     });
 
-    if (activities.length === 0) {
+    if (!dailyAttendance) {
       return res.status(400).json({ message: 'Anda belum check-in hari ini' });
+    }
+    if (dailyAttendance.checkOutTime) {
+      return res.status(400).json({ message: 'Anda sudah check-out hari ini' });
     }
 
     const now = new Date();
-    const locationString = latitude && longitude ? JSON.stringify({ latitude, longitude }) : null;
 
-    await Activity.update({
-      isApproveCheckOut: true,
-      clockOutTime: now,
-      description: locationString
-    }, {
-      where: {
-        userId,
-        timestamp: {
-          [Op.gte]: start,
-          [Op.lte]: end
-        },
-        isApproveCheckOut: false
-      }
+    await dailyAttendance.update({
+      checkOutTime: now,
+      checkOutLat: latitude ? String(latitude) : null,
+      checkOutLong: longitude ? String(longitude) : null
     });
+
+    // Cari activities guru untuk hari ini (jadwal kelas)
+    const activities = await Activity.findAll({
+      where: { dailyAttendanceId: dailyAttendance.id },
+      include: [{
+        model: Schedule,
+        include: [{ model: TimeSlot }]
+      }]
+    });
+
+    // Update remaining future classes to 'alpa' because teacher clocked out early
+    for (const act of activities) {
+      if (act.Schedule) {
+        const schedStartTimeStr = act.Schedule.TimeSlot?.startTime || act.Schedule.startTime;
+        if (schedStartTimeStr) {
+          const startTimeDate = new Date(`${todayDateOnly}T${schedStartTimeStr}+07:00`);
+          // If the class hasn't started yet and the teacher checks out early
+          if (now < startTimeDate) {
+            await act.update({
+              status: 'alpa',
+              type: 'corporate_alpa'
+            });
+          }
+        }
+      }
+    }
 
     res.json({ message: 'Check-out berhasil disimpan' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Gagal melakukan check-out' });
+  }
+};
+
+const getDailyAttendanceStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { year, month, day: dayStr } = getJakartaDayInfo();
+    const todayDateOnly = `${year}-${month}-${dayStr}`;
+
+    const dailyAttendance = await DailyAttendance.findOne({
+      where: {
+        userId,
+        date: todayDateOnly
+      }
+    });
+
+    res.json({ data: dailyAttendance });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Gagal mengambil status absen harian' });
   }
 };
 
@@ -416,5 +435,6 @@ module.exports = {
   getMyActivities,
   corporateClockIn,
   corporateClockOut,
-  getSettings
+  getSettings,
+  getDailyAttendanceStatus
 };

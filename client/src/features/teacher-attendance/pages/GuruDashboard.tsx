@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTodaySchedules, useSystemSettings, useMyActivities, useCorporateClockOut } from '../hooks/useAttendanceData';
+import { useTodaySchedules, useSystemSettings, useCorporateClockOut, useDailyAttendanceStatus } from '../hooks/useAttendanceData';
 import { useNotificationStore } from '../../../shared/store/notificationStore';
 import { useConfirmStore } from '../../../shared/store/confirmStore';
 import {
@@ -23,26 +23,17 @@ const GuruDashboard = () => {
   // Main Data (Today)
   const { data: todaySchedules, isLoading: isTodayLoading } = useTodaySchedules();
   const { data: settings, isLoading: isSettingsLoading } = useSystemSettings();
-  const { data: activitiesRes, isLoading: isActivitiesLoading } = useMyActivities({ limit: 100 });
   const clockOutMutation = useCorporateClockOut();
   const { showNotification } = useNotificationStore();
   const { confirm: confirmAction } = useConfirmStore();
 
+  const { data: dailyStatusRes } = useDailyAttendanceStatus();
+
   const isFullDayFlow = settings?.attendance_flow === 'full_day';
-  const myActivities = activitiesRes?.data || [];
 
-  // Determine check-in and check-out status
-  const d = new Date();
-  const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  
-  const todayActivities = myActivities.filter((act: any) => {
-    const actDate = new Date(act.timestamp);
-    const actDateStr = `${actDate.getFullYear()}-${String(actDate.getMonth() + 1).padStart(2, '0')}-${String(actDate.getDate()).padStart(2, '0')}`;
-    return actDateStr === todayStr;
-  });
-
-  const hasCheckedIn = todayActivities.length > 0;
-  const hasCheckedOut = todayActivities.some((act: any) => act.isApproveCheckOut === true);
+  const dailyStatus = dailyStatusRes?.data;
+  const hasCheckedIn = !!dailyStatus;
+  const hasCheckedOut = !!dailyStatus?.checkOutTime;
 
   const handleCorporateClockOut = async () => {
     const isConfirmed = await confirmAction({
@@ -124,7 +115,7 @@ const GuruDashboard = () => {
         </span>
       </div>
 
-      {isSettingsLoading || isTodayLoading || isActivitiesLoading ? (
+      {isSettingsLoading || isTodayLoading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-400 font-medium text-sm">Menyiapkan dashboard...</p>

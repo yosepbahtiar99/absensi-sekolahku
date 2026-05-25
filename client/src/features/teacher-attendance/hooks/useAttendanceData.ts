@@ -8,6 +8,13 @@ export const useSystemSettings = () => {
   });
 };
 
+export const useDailyAttendanceStatus = () => {
+  return useQuery({
+    queryKey: ['daily-attendance-status'],
+    queryFn: () => attendanceService.getDailyAttendanceStatus(),
+  });
+};
+
 export const useTodaySchedules = (day?: string) => {
   return useQuery({
     queryKey: ['today-schedules', day],
@@ -54,6 +61,7 @@ export const useCorporateClockIn = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-activities'] });
       queryClient.invalidateQueries({ queryKey: ['today-schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-attendance-status'] });
     },
   });
 };
@@ -64,6 +72,7 @@ export const useCorporateClockOut = () => {
     mutationFn: attendanceService.corporateClockOut,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-activities'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-attendance-status'] });
     },
   });
 };
