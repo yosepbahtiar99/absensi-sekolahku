@@ -139,8 +139,8 @@ const AdminSidebar = () => {
       {/* Sidebar Header */}
       <div className={cn("p-6 transition-all duration-300", isSidebarCollapsed ? "px-4" : "p-8")}>
         <div className="flex items-center gap-3 mb-8">
-          <div className="bg-primary p-2.5 rounded-2xl shadow-lg shadow-primary/20 shrink-0">
-            <School size={24} className="text-white" />
+          <div className="shrink-0 flex items-center justify-center">
+            <img src="/favicon.svg" alt="Logo Absensi" className="w-10 h-10 shadow-lg shadow-primary/20 rounded-[10px]" />
           </div>
           {!isSidebarCollapsed && (
             <div className="transition-all duration-300 opacity-100 translate-x-0">

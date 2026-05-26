@@ -503,7 +503,7 @@ const AdminWallboard = () => {
                 title="Unduh Excel Matriks"
               >
                 <FileSpreadsheet size={18} />
-                <span className="hidden sm:inline font-bold text-sm">Unduh Matriks</span>
+                <span className="hidden sm:inline font-bold text-sm">Export Matriks</span>
               </button>
 
               {/* Fullscreen Button */}

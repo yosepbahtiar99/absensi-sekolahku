@@ -160,7 +160,7 @@ const AdminTeacherReports = () => {
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm active:scale-95 transition-all"
                 >
                   <Download size={16} />
-                  Unduh Excel Jadwal
+                  Export Jadwal
                 </button>
               </div>
             )}

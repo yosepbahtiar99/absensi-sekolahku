@@ -278,36 +278,53 @@ const AdminReports = () => {
         <div className="flex-1 flex flex-col min-h-0 print:overflow-visible">
               
               {/* Daily Filter Bar - Hidden on print */}
-              <div className="mb-6 flex justify-between items-end print:hidden">
-                <div>
-                  <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest px-1">Filter & Export</h3>
-                </div>
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm active:scale-95 ${
-                      showFilters ? 'bg-primary text-white' : 'bg-white border border-slate-100 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Filter size={18} />
-                    Filter
-                  </button>
-                  <button 
-                    onClick={handleDownloadDailyListExcel}
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
-                  >
-                    <Download size={18} />
-                    Unduh Excel Data List
-                  </button>
-                  <button 
-                    onClick={handleDownloadDailyExcel}
-                    className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 active:scale-95"
-                  >
-                    <FileSpreadsheet size={18} />
-                    Unduh Matriks
-                  </button>
-                </div>
+
+
+
+
+              {/* Print Only Header */}
+              <div className="hidden print:block mb-8 text-center text-slate-900 border-b-2 border-slate-900 pb-4">
+                <h1 className="text-2xl font-black uppercase tracking-wider">Laporan Kehadiran Harian Guru</h1>
+                <p className="text-sm font-bold mt-1">SMP TUNAS BARU CIPARAY</p>
+                <p className="text-xs font-semibold text-slate-600 mt-0.5">Tanggal Laporan: {startDate === endDate ? startDate : `${startDate} s/d ${endDate}`}</p>
               </div>
+
+              {/* Bento Grid Stats */}
+              {dailyData && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 print:grid-cols-6 print:gap-2">
+                  <div className="bg-slate-50 border border-slate-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Jadwal Hari Ini</span>
+                    <span className="text-2xl font-black text-slate-800 mt-2">{dailyData.summary.totalScheduled}</span>
+                  </div>
+                  
+                  <div className="bg-emerald-50/60 border border-emerald-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
+                    <span className="text-[10px] font-bold text-emerald-600/80 uppercase tracking-widest leading-none">Hadir Tepat</span>
+                    <span className="text-2xl font-black text-emerald-700 mt-2">{dailyData.summary.totalHadir}</span>
+                  </div>
+
+                  <div className="bg-amber-50/60 border border-amber-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
+                    <span className="text-[10px] font-bold text-amber-600/80 uppercase tracking-widest leading-none">Terlambat</span>
+                    <span className="text-2xl font-black text-amber-700 mt-2">{dailyData.summary.totalTelat}</span>
+                  </div>
+
+                  <div className="bg-indigo-50/60 border border-indigo-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
+                    <span className="text-[10px] font-bold text-indigo-600/80 uppercase tracking-widest leading-none">Izin / Sakit</span>
+                    <span className="text-2xl font-black text-indigo-700 mt-2">{dailyData.summary.totalIzin}</span>
+                  </div>
+
+                  <div className="bg-rose-50/60 border border-rose-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
+                    <span className="text-[10px] font-bold text-rose-600/80 uppercase tracking-widest leading-none">Alpa (Kosong)</span>
+                    <span className="text-2xl font-black text-rose-700 mt-2">{dailyData.summary.totalAlpa}</span>
+                  </div>
+
+                  <div className="bg-slate-100/50 border border-slate-200/40 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Belum Mulai</span>
+                    <span className="text-2xl font-black text-slate-500 mt-2">
+                      {dailyData.summary.totalBelumMulai + dailyData.summary.totalBelumAbsen}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {showFilters && (
                 <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm mb-6 animate-in slide-in-from-top-4 duration-300 print:hidden">
@@ -398,50 +415,6 @@ const AdminReports = () => {
                 </div>
               )}
 
-              {/* Print Only Header */}
-              <div className="hidden print:block mb-8 text-center text-slate-900 border-b-2 border-slate-900 pb-4">
-                <h1 className="text-2xl font-black uppercase tracking-wider">Laporan Kehadiran Harian Guru</h1>
-                <p className="text-sm font-bold mt-1">SMP TUNAS BARU CIPARAY</p>
-                <p className="text-xs font-semibold text-slate-600 mt-0.5">Tanggal Laporan: {startDate === endDate ? startDate : `${startDate} s/d ${endDate}`}</p>
-              </div>
-
-              {/* Bento Grid Stats */}
-              {dailyData && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 print:grid-cols-6 print:gap-2">
-                  <div className="bg-slate-50 border border-slate-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Jadwal Hari Ini</span>
-                    <span className="text-2xl font-black text-slate-800 mt-2">{dailyData.summary.totalScheduled}</span>
-                  </div>
-                  
-                  <div className="bg-emerald-50/60 border border-emerald-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
-                    <span className="text-[10px] font-bold text-emerald-600/80 uppercase tracking-widest leading-none">Hadir Tepat</span>
-                    <span className="text-2xl font-black text-emerald-700 mt-2">{dailyData.summary.totalHadir}</span>
-                  </div>
-
-                  <div className="bg-amber-50/60 border border-amber-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
-                    <span className="text-[10px] font-bold text-amber-600/80 uppercase tracking-widest leading-none">Terlambat</span>
-                    <span className="text-2xl font-black text-amber-700 mt-2">{dailyData.summary.totalTelat}</span>
-                  </div>
-
-                  <div className="bg-indigo-50/60 border border-indigo-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
-                    <span className="text-[10px] font-bold text-indigo-600/80 uppercase tracking-widest leading-none">Izin / Sakit</span>
-                    <span className="text-2xl font-black text-indigo-700 mt-2">{dailyData.summary.totalIzin}</span>
-                  </div>
-
-                  <div className="bg-rose-50/60 border border-rose-100 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
-                    <span className="text-[10px] font-bold text-rose-600/80 uppercase tracking-widest leading-none">Alpa (Kosong)</span>
-                    <span className="text-2xl font-black text-rose-700 mt-2">{dailyData.summary.totalAlpa}</span>
-                  </div>
-
-                  <div className="bg-slate-100/50 border border-slate-200/40 p-5 rounded-[1.75rem] shadow-sm flex flex-col justify-between print:p-3">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Belum Mulai</span>
-                    <span className="text-2xl font-black text-slate-500 mt-2">
-                      {dailyData.summary.totalBelumMulai + dailyData.summary.totalBelumAbsen}
-                    </span>
-                  </div>
-                </div>
-              )}
-
               {/* Attendance Table */}
               <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden flex flex-col min-h-0 print:border-none print:shadow-none print:overflow-visible relative">
                 <div className="p-6 border-b border-slate-50 flex items-center justify-between print:hidden">
@@ -461,13 +434,38 @@ const AdminReports = () => {
                       className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     />
                   </div>
-                  <button 
-                    onClick={fetchDailyReport}
-                    className="p-3 text-slate-500 hover:text-primary bg-slate-50 hover:bg-primary/5 rounded-xl border border-slate-200/40 transition-colors"
-                    title="Refresh Data"
-                  >
-                    <RefreshCw size={18} className={isDailyLoading ? 'animate-spin' : ''} />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm active:scale-95 ${
+                        showFilters ? 'bg-primary text-white' : 'bg-white border border-slate-100 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Filter size={18} />
+                      Filter
+                    </button>
+                    <button 
+                      onClick={handleDownloadDailyListExcel}
+                      className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+                    >
+                      <Download size={18} />
+                      Export Data List
+                    </button>
+                    <button 
+                      onClick={handleDownloadDailyExcel}
+                      className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 active:scale-95"
+                    >
+                      <FileSpreadsheet size={18} />
+                      Export Matriks
+                    </button>
+                    <button 
+                      onClick={fetchDailyReport}
+                      className="p-3 text-slate-500 hover:text-primary bg-slate-50 hover:bg-primary/5 rounded-xl border border-slate-200/40 transition-colors"
+                      title="Refresh Data"
+                    >
+                      <RefreshCw size={18} className={isDailyLoading ? 'animate-spin' : ''} />
+                    </button>
+                  </div>
                 </div>
                 
                 <DataTable 

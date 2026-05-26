@@ -109,29 +109,7 @@ const AdminActivities = () => {
 
         <div className="p-8 pb-0 flex-1 flex flex-col overflow-hidden">
 
-              <div className="mb-6 flex justify-between items-end">
-            <div>
-              <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest px-1">Filter & Export</h3>
-            </div>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm active:scale-95 ${
-                  showFilters ? 'bg-primary text-white' : 'bg-white border border-slate-100 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <Filter size={18} />
-                Filter
-              </button>
-              <button 
-                onClick={handleExport}
-                className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 active:scale-95"
-              >
-                <FileSpreadsheet size={18} />
-                Export Report
-              </button>
-            </div>
-          </div>
+
 
         {showFilters && (
           <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm mb-8 animate-in slide-in-from-top-4 duration-300">
@@ -235,6 +213,24 @@ const AdminActivities = () => {
                 }}
                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
+            </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold transition-all shadow-sm active:scale-95 ${
+                  showFilters ? 'bg-primary text-white' : 'bg-white border border-slate-100 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <Filter size={18} />
+                Filter
+              </button>
+              <button 
+                onClick={handleExport}
+                className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-600/20 active:scale-95"
+              >
+                <FileSpreadsheet size={18} />
+                Export
+              </button>
             </div>
           </div>
 
