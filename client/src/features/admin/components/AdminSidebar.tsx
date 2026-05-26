@@ -8,7 +8,6 @@ import {
   Calendar, 
   CheckSquare, 
   LogOut, 
-  School, 
   ChevronLeft,
   ChevronRight,
   Clock,
