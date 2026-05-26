@@ -1,7 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { useAdminSummary } from '../hooks/useAdminData';
-import { Users, GraduationCap, BookOpen, Clock, AlertTriangle, CheckCircle, Calendar, ArrowRight, Loader2, LayoutDashboard } from 'lucide-react';
+import { 
+  Users, 
+  GraduationCap, 
+  BookOpen, 
+  LayoutDashboard, 
+  Tv, 
+  CalendarDays, 
+  UserPlus, 
+  FileSpreadsheet,
+  ArrowRight,
+  Loader2
+} from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminHeader from '../components/AdminHeader';
 import { useAcademicYearStore } from '../../../shared/store/academicYearStore';
@@ -18,13 +29,44 @@ const AdminDashboard = () => {
     { label: 'Total Pelajaran', value: summary?.totalPelajaran || 0, icon: BookOpen, color: 'text-orange-600', bg: 'bg-orange-100' },
   ];
 
+  const quickActions = [
+    {
+      title: 'Pantau Wallboard',
+      description: 'Monitoring kehadiran real-time',
+      icon: Tv,
+      color: 'bg-blue-500 shadow-blue-500/30',
+      path: '/admin/wallboard'
+    },
+    {
+      title: 'Atur Jadwal',
+      description: 'Kelola jadwal mengajar guru',
+      icon: CalendarDays,
+      color: 'bg-emerald-500 shadow-emerald-500/30',
+      path: '/admin/schedule'
+    },
+    {
+      title: 'Kelola Guru',
+      description: 'Tambah atau edit data guru',
+      icon: UserPlus,
+      color: 'bg-amber-500 shadow-amber-500/30',
+      path: '/admin/guru'
+    },
+    {
+      title: 'Laporan Kehadiran',
+      description: 'Export data presensi harian',
+      icon: FileSpreadsheet,
+      color: 'bg-purple-500 shadow-purple-500/30',
+      path: '/admin/reports/daily'
+    }
+  ];
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
       <AdminSidebar />
       
       <main className="flex-1 overflow-hidden flex flex-col">
         <AdminHeader 
-          title="Dashboard Overview" 
+          title="Admin Hub" 
           subtitle={`Selamat datang kembali, ${user?.name}`}
           icon={<LayoutDashboard size={28} />}
         />
@@ -37,82 +79,57 @@ const AdminDashboard = () => {
             <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Menyiapkan Data...</p>
           </div>
         ) : (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {stats.map((stat, i) => (
-                <div key={i} className="group bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 flex flex-col gap-6 transition-all hover:shadow-[0_20px_50px_rgba(8,145,178,0.05)] hover:-translate-y-1">
-                  <div className="flex justify-between items-start">
-                    <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl group-hover:scale-110 transition-transform`}>
-                      <stat.icon size={28} />
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-6xl mx-auto">
+            
+            {/* Quick Actions Section */}
+            <div>
+              <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+                ⚡ Aksi Cepat
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                {quickActions.map((action, i) => (
+                  <button
+                    key={i}
+                    onClick={() => navigate(action.path)}
+                    className="group bg-white p-6 rounded-[2rem] shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col items-start text-left transition-all hover:-translate-y-1 active:scale-95"
+                  >
+                    <div className={`${action.color} text-white p-4 rounded-2xl mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-lg`}>
+                      <action.icon size={28} />
                     </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-400 font-bold uppercase tracking-[0.1em] mb-1">{stat.label}</p>
-                    <p className="text-4xl font-black text-slate-900 tabular-nums">{stat.value}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Today's Detail - Bento Style */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100">
-                <div className="flex justify-between items-center mb-8">
-                  <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
-                    <Clock size={24} className="text-primary" />
-                    Kehadiran Guru Hari Ini
-                  </h3>
-                  <button onClick={() => navigate('/admin/activities')} className="text-primary font-bold text-sm hover:underline">Lihat Detail</button>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-[2.5rem] text-white shadow-lg shadow-green-500/20 relative overflow-hidden group">
-                    <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-3 mb-2 opacity-80">
-                        <CheckCircle size={20} />
-                        <span className="text-xs font-black uppercase tracking-[0.2em]">Hadir Tepat Waktu</span>
-                      </div>
-                      <p className="text-5xl font-black">{summary?.todayStats.hadir}</p>
-                      <p className="mt-4 text-sm font-medium text-green-100">Guru sudah melakukan absensi</p>
+                    <h4 className="text-lg font-black text-slate-800 mb-1">{action.title}</h4>
+                    <p className="text-sm font-medium text-slate-500 mb-6">{action.description}</p>
+                    
+                    <div className="mt-auto w-full flex items-center justify-between text-slate-400 group-hover:text-primary transition-colors">
+                      <span className="text-xs font-bold uppercase tracking-wider">Buka Menu</span>
+                      <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                     </div>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-8 rounded-[2.5rem] text-white shadow-lg shadow-amber-500/20 relative overflow-hidden group">
-                    <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-3 mb-2 opacity-80">
-                        <AlertTriangle size={20} />
-                        <span className="text-xs font-black uppercase tracking-[0.2em]">Terlambat</span>
-                      </div>
-                      <p className="text-5xl font-black">{summary?.todayStats.telat}</p>
-                      <p className="mt-4 text-sm font-medium text-amber-100">Guru melewati batas waktu</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-primary p-10 rounded-[3rem] shadow-2xl shadow-primary/20 text-white flex flex-col relative overflow-hidden group">
-                <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-1000"></div>
-                <div className="relative z-10 flex-1">
-                  <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-xl border border-white/20">
-                    <Calendar size={32} />
-                  </div>
-                  <h3 className="text-2xl font-black mb-4 leading-tight">Optimalkan Jadwal Belajar</h3>
-                  <p className="text-cyan-100 text-sm font-medium leading-relaxed mb-10 opacity-80">
-                    Gunakan fitur Drag & Drop untuk mengatur pembagian guru dan mata pelajaran ke setiap kelas secara efisien.
-                  </p>
-                </div>
-                <button 
-                  onClick={() => navigate('/admin/schedule')}
-                  className="relative z-10 bg-white text-primary px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-cyan-50 transition-all active:scale-95 shadow-xl group/btn"
-                >
-                  <span>Atur Jadwal</span>
-                  <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
-                </button>
+                  </button>
+                ))}
               </div>
             </div>
+
+            {/* Static Stats Grid */}
+            <div>
+              <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
+                📊 Ringkasan Data Master
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {stats.map((stat, i) => (
+                  <div key={i} className="group bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col gap-6 transition-all hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:-translate-y-1">
+                    <div className="flex justify-between items-start">
+                      <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl group-hover:scale-110 transition-transform`}>
+                        <stat.icon size={28} />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-slate-400 font-bold uppercase tracking-[0.1em] mb-1">{stat.label}</p>
+                      <p className="text-4xl font-black text-slate-900 tabular-nums">{stat.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
         </div>
