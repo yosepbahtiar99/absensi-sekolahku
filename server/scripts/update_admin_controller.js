@@ -1,5 +1,6 @@
 const fs = require('fs');
-const path = 'c:/Users/PT-DIKA/Source/yosep/absensi-sekolahku/server/controllers/adminController.js';
+const pathModule = require('path');
+const path = pathModule.join(__dirname, '../controllers/adminController.js');
 let content = fs.readFileSync(path, 'utf8');
 
 // 1. Update createClass and updateClass

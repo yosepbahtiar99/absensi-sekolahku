@@ -4,7 +4,7 @@ import { useAuthMutation } from '../hooks/useAuthMutation';
 import { Button } from '../../../shared/components/Button';
 import { Input } from '../../../shared/components/Input';
 import { Card } from '../../../shared/components/Card';
-import { LogIn, User, Lock, Loader2, School } from 'lucide-react';
+import { LogIn, User, Lock, Loader2 } from 'lucide-react';
 import { cn } from '../../../shared/lib/utils';
 
 const LoginPage = () => {
@@ -21,9 +21,7 @@ const LoginPage = () => {
       <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Logo Section */}
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl shadow-xl shadow-cyan-900/10 border border-white p-4 mb-2">
-            <School size={40} className="text-primary" />
-          </div>
+          <img src="/favicon.svg" alt="Logo Absensi" className="w-20 h-20 mx-auto mb-2 object-contain" />
           <div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tight">
               Absensi<span className="text-primary">{` ${' '}Sekolahku`}</span>
@@ -34,7 +32,7 @@ const LoginPage = () => {
 
         {/* Ultimate Gradient Border Card */}
         <div className="animate-in zoom-in duration-700">
-          <Card 
+          <Card
             className="p-10 bg-white relative rounded-[2.5rem] shadow-2xl shadow-primary/5 transition-all duration-500 group"
             style={{
               border: '2px solid transparent',
@@ -48,89 +46,89 @@ const LoginPage = () => {
               <p className="text-slate-500 text-sm">Masuk dengan akun yang sudah terdaftar</p>
             </div>
 
-          {(errorMessage || error) && (
-            <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-2xl text-sm border border-red-100 flex items-center gap-3 animate-shake">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-600"></div>
-              {errorMessage || 'Terjadi kesalahan sistem.'}
-            </div>
-          )}
-
-          <Formik
-            initialValues={{ username: '', password: '' }}
-            validationSchema={loginSchema}
-            onSubmit={(values) => mutate(values)}
-          >
-            {({ errors, touched, handleChange, handleBlur, values }) => (
-              <Form className="space-y-6">
-                <div className="space-y-4">
-                  <div className="group">
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Username</label>
-                    <Input
-                      name="username"
-                      placeholder="Masukkan username"
-                      icon={<User size={18} />}
-                      value={values.username}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={cn(
-                        "border border-slate-300 bg-white/50 focus:bg-white transition-all",
-                        errors.username && touched.username ? "border-red-500 ring-4 ring-red-500/10" : "focus:border-primary/40 focus:border-primary"
-                      )}
-                    />
-                    {errors.username && touched.username && (
-                      <p className="mt-1.5 ml-1 text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.username}</p>
-                    )}
-                  </div>
-
-                  <div className="group">
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Password</label>
-                    <Input
-                      name="password"
-                      type="password"
-                      placeholder="••••••••"
-                      icon={<Lock size={18} />}
-                      value={values.password}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      className={cn(
-                        "border border-slate-300 bg-white/50 focus:bg-white transition-all",
-                        errors.password && touched.password ? "border-red-500 ring-4 ring-red-500/10" : "focus:border-primary/40 focus:border-primary"
-                      )}
-                    />
-                    {errors.password && touched.password && (
-                      <p className="mt-1.5 ml-1 text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.password}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-sm px-1">
-                  <label className="flex items-center gap-2 cursor-pointer text-slate-500">
-                    <input type="checkbox" className="w-4 h-4 rounded-md border-slate-300 text-primary focus:ring-primary" />
-                    <span>Ingat saya</span>
-                  </label>
-                  <a href="#" className="text-primary font-bold hover:underline">Lupa password?</a>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isPending}
-                  className="w-full"
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 size={20} className="animate-spin mr-2" />
-                      <span>Memproses...</span>
-                    </>
-                  ) : (
-                    <>
-                      <LogIn size={20} className="mr-2" />
-                      <span>Masuk Sekarang</span>
-                    </>
-                  )}
-                </Button>
-              </Form>
+            {(errorMessage || error) && (
+              <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-2xl text-sm border border-red-100 flex items-center gap-3 animate-shake">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-600"></div>
+                {errorMessage || 'Terjadi kesalahan sistem.'}
+              </div>
             )}
-          </Formik>
+
+            <Formik
+              initialValues={{ username: '', password: '' }}
+              validationSchema={loginSchema}
+              onSubmit={(values) => mutate(values)}
+            >
+              {({ errors, touched, handleChange, handleBlur, values }) => (
+                <Form className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="group">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Username</label>
+                      <Input
+                        name="username"
+                        placeholder="Masukkan username"
+                        icon={<User size={18} />}
+                        value={values.username}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={cn(
+                          "border border-slate-300 bg-white/50 focus:bg-white transition-all",
+                          errors.username && touched.username ? "border-red-500 ring-4 ring-red-500/10" : "focus:border-primary/40 focus:border-primary"
+                        )}
+                      />
+                      {errors.username && touched.username && (
+                        <p className="mt-1.5 ml-1 text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.username}</p>
+                      )}
+                    </div>
+
+                    <div className="group">
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Password</label>
+                      <Input
+                        name="password"
+                        type="password"
+                        placeholder="••••••••"
+                        icon={<Lock size={18} />}
+                        value={values.password}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={cn(
+                          "border border-slate-300 bg-white/50 focus:bg-white transition-all",
+                          errors.password && touched.password ? "border-red-500 ring-4 ring-red-500/10" : "focus:border-primary/40 focus:border-primary"
+                        )}
+                      />
+                      {errors.password && touched.password && (
+                        <p className="mt-1.5 ml-1 text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.password}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm px-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-500">
+                      <input type="checkbox" className="w-4 h-4 rounded-md border-slate-300 text-primary focus:ring-primary" />
+                      <span>Ingat saya</span>
+                    </label>
+                    <a href="#" className="text-primary font-bold hover:underline">Lupa password?</a>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isPending}
+                    className="w-full"
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 size={20} className="animate-spin mr-2" />
+                        <span>Memproses...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn size={20} className="mr-2" />
+                        <span>Masuk Sekarang</span>
+                      </>
+                    )}
+                  </Button>
+                </Form>
+              )}
+            </Formik>
           </Card>
         </div>
 
