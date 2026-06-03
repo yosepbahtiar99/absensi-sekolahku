@@ -16,6 +16,7 @@ interface GuruFormProps {
 const guruSchema = Yup.object().shape({
   name: Yup.string().required('Nama wajib diisi'),
   username: Yup.string().required('Username wajib diisi'),
+  email: Yup.string().email('Format email tidak valid').optional().nullable(),
   password: Yup.string().when('id', {
     is: (id: any) => !id,
     then: (schema) => schema.required('Password wajib diisi untuk guru baru'),
@@ -31,6 +32,7 @@ const GuruForm: React.FC<GuruFormProps> = ({ initialValues, onSubmit, isLoading,
       initialValues={{
         name: initialValues?.name || '',
         username: initialValues?.username || '',
+        email: initialValues?.email || '',
         password: '',
         isPhotoRequired: initialValues?.isPhotoRequired ?? true,
       }}
@@ -62,6 +64,19 @@ const GuruForm: React.FC<GuruFormProps> = ({ initialValues, onSubmit, isLoading,
                 className={errors.username && touched.username ? "border-red-500" : ""}
               />
               <ErrorMessage name="username" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
+            </div>
+
+            <div>
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Email Aktif (Opsional)</label>
+              <Input 
+                type="email"
+                name="email" 
+                value={values.email} 
+                onChange={handleChange}
+                placeholder="budi@example.com" 
+                className={errors.email && touched.email ? "border-red-500" : ""}
+              />
+              <ErrorMessage name="email" component="p" className="text-red-500 text-[10px] mt-1 font-bold italic" />
             </div>
 
             <div>

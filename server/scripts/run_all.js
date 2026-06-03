@@ -2,6 +2,7 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+
 const scripts = [
   'seed_smp_tunas_baru.js',
   'alter-activity-clockout.js',
@@ -10,7 +11,8 @@ const scripts = [
   'sync-daily-attendance.js',
   'update_admin_controller.js',
   'update_admin_controller_v2.js',
-  'migrate-photo.js'
+  'migrate-photo.js',
+  'migrate-email.js'
 ];
 
 console.log('🏁 Memulai eksekusi semua script secara berurutan...\n');
@@ -35,5 +37,10 @@ scripts.forEach((scriptFile, index) => {
     console.error(`Detail Error: ${error.message}\n`);
   }
 });
+
+console.log('\n✅ Semua migrasi berhasil!\n');
+
+console.log('🚀 Menjalankan Server Backend...');
+execSync('npm run start', { stdio: 'inherit' });
 
 console.log('🎉 Semua script telah selesai diproses.');

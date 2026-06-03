@@ -11,5 +11,6 @@ export interface IGuruPayload {
   username: string;
   name: string;
   password?: string;
+  email?: string;
   isPhotoRequired?: boolean;
 }

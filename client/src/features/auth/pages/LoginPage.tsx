@@ -1,5 +1,5 @@
 import { Formik, Form } from 'formik';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../../shared/store/authStore';
 import { loginSchema } from '../validations/login.schema';
 import { useAuthMutation } from '../hooks/useAuthMutation';
@@ -111,7 +111,9 @@ const LoginPage = () => {
                   </div>
 
                   <div className="flex justify-end text-sm px-1">
-                    <a href={`https://wa.me/${import.meta.env.VITE_ADMIN_WHATSAPP}?text=Tolong%20reset%20password%20saya,%20saya%20lupa%20password`} target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">Lupa password?</a>
+                    <Link to="/forgot-password" className="text-primary font-bold hover:underline">
+                      Lupa password?
+                    </Link>
                   </div>
 
                   <Button

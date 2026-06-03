@@ -42,11 +42,12 @@ const getGurus = async (req, res) => {
 
 const createGuru = async (req, res) => {
   try {
-    const { name, username, password, isPhotoRequired } = req.body;
+    const { name, username, password, email, isPhotoRequired } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
     const guru = await User.create({ 
       name, 
       username, 
+      email,
       password: hashedPassword, 
       role: 'guru',
       isPhotoRequired: isPhotoRequired ?? true
@@ -60,8 +61,8 @@ const createGuru = async (req, res) => {
 const updateGuru = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, username, password, isPhotoRequired } = req.body;
-    const data = { name, username, isPhotoRequired };
+    const { name, username, password, email, isPhotoRequired } = req.body;
+    const data = { name, username, email, isPhotoRequired };
     if (password) data.password = await bcrypt.hash(password, 10);
     await User.update(data, { where: { id, role: 'guru' } });
     res.json({ message: 'Guru berhasil diupdate' });

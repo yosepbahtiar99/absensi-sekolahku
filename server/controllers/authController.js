@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
 
 const login = async (req, res) => {
   try {
@@ -162,4 +164,94 @@ const uploadPhoto = async (req, res) => {
   }
 };
 
-module.exports = { login, refreshToken, logout, changePassword, uploadPhoto };
+const forgotPassword = async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ message: 'Username harus diisi' });
+
+    const user = await User.findOne({ where: { username } });
+    if (!user) return res.status(404).json({ message: 'Username tidak ditemukan' });
+
+    if (!user.email) {
+      return res.status(400).json({ message: 'Akun ini belum memiliki email terdaftar. Silakan hubungi admin.' });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    // Set expiration 1 hour
+    user.resetPasswordToken = resetTokenHash;
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
+    await user.save();
+
+    const origin = req.headers.origin;
+    const fallbackUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',')[0] : 'http://localhost:5173';
+    const baseUrl = origin || fallbackUrl;
+    
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+
+    const message = `
+      Anda menerima email ini karena Anda (atau orang lain) telah meminta pengaturan ulang kata sandi untuk akun Anda.\n\n
+      Silakan klik link berikut, atau salin dan tempel ke browser Anda untuk menyelesaikan proses:\n\n
+      ${resetUrl}\n\n
+      Jika Anda tidak memintanya, abaikan email ini dan kata sandi Anda akan tetap aman.\n
+    `;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Reset Password - Absensi Sekolahku',
+        message
+      });
+
+      res.status(200).json({ message: 'Email reset password telah dikirim' });
+    } catch (err) {
+      console.error('Error sending email:', err);
+      user.resetPasswordToken = null;
+      user.resetPasswordExpires = null;
+      await user.save();
+
+      return res.status(500).json({ message: 'Gagal mengirim email reset password' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error saat memproses forgot password' });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Token dan Password baru harus diisi' });
+    }
+
+    const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      where: {
+        resetPasswordToken: resetTokenHash
+      }
+    });
+
+    if (!user || user.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({ message: 'Token reset password tidak valid atau sudah kedaluwarsa' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.status(200).json({ message: 'Password berhasil direset' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error saat mereset password' });
+  }
+};
+
+module.exports = { login, refreshToken, logout, changePassword, uploadPhoto, forgotPassword, resetPassword };

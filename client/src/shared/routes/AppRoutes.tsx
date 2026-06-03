@@ -3,6 +3,8 @@ import ProtectedRoute from '../components/ProtectedRoute';
 
 // Features
 import LoginPage from '../../features/auth/pages/LoginPage';
+import ForgotPasswordPage from '../../features/auth/pages/ForgotPasswordPage';
+import ResetPasswordPage from '../../features/auth/pages/ResetPasswordPage';
 import GuruLayout from '../../features/teacher-attendance/components/GuruLayout';
 import GuruDashboard from '../../features/teacher-attendance/pages/GuruDashboard';
 import GuruSchedule from '../../features/teacher-attendance/pages/GuruSchedule';
@@ -36,6 +38,8 @@ const AppRoutes = () => {
       <GlobalConfirmModal />
       <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       
       {/* Guru Routes */}
       <Route 
