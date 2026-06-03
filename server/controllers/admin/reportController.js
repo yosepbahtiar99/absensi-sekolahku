@@ -13,7 +13,7 @@ const getAllActivities = async (req, res) => {
     if (teacherId) where.userId = teacherId;
     if (status) where.status = status;
     if (academicYearId) where.academicYearId = academicYearId;
-    
+
     if (startDate || endDate) {
       where.timestamp = {};
       if (startDate) where.timestamp[Op.gte] = new Date(startDate);
@@ -39,12 +39,12 @@ const getAllActivities = async (req, res) => {
       where,
       include: [
         { model: User, attributes: ['name'] },
-        { 
-          model: Schedule, 
+        {
+          model: Schedule,
           where: Object.keys(scheduleWhere).length ? scheduleWhere : null,
           include: [
-            { 
-              model: Class, 
+            {
+              model: Class,
               attributes: ['name'],
               include: [{ model: GradeLevel, attributes: ['name'] }]
             },
@@ -81,7 +81,7 @@ const exportReport = async (req, res) => {
     if (teacherId) where.userId = teacherId;
     if (status) where.status = status;
     if (academicYearId) where.academicYearId = academicYearId;
-    
+
     if (startDate || endDate) {
       where.timestamp = {};
       if (startDate) where.timestamp[Op.gte] = new Date(startDate);
@@ -100,7 +100,7 @@ const exportReport = async (req, res) => {
       where,
       include: [
         { model: User, attributes: ['name'] },
-        { 
+        {
           model: Schedule,
           where: Object.keys(scheduleWhere).length ? scheduleWhere : null,
           include: [
@@ -313,17 +313,17 @@ const getDailyAttendanceReport = async (req, res) => {
         const startTimeDate = new Date(`${dateStr}T${scheduleStartTime}+07:00`);
         const endTimeDate = new Date(`${dateStr}T${scheduleEndTime}+07:00`);
 
-        const activity = activities.find(a => 
-          a.scheduleId === s.id && 
-          new Date(a.timestamp) >= dayActStart && 
+        const activity = activities.find(a =>
+          a.scheduleId === s.id &&
+          new Date(a.timestamp) >= dayActStart &&
           new Date(a.timestamp) <= dayActEnd
         );
 
-        const hasGeneralLeave = activities.some(a => 
-          a.userId === s.teacherId && 
+        const hasGeneralLeave = activities.some(a =>
+          a.userId === s.teacherId &&
           a.status === 'tidak_hadir' &&
           !a.scheduleId &&
-          new Date(a.timestamp) >= dayActStart && 
+          new Date(a.timestamp) >= dayActStart &&
           new Date(a.timestamp) <= dayActEnd
         );
 
@@ -374,10 +374,10 @@ const getDailyAttendanceReport = async (req, res) => {
     if (classId) filteredDetails = filteredDetails.filter(d => d.classId === classId);
     if (lessonId) filteredDetails = filteredDetails.filter(d => d.lessonId === lessonId);
     if (filterStatus) filteredDetails = filteredDetails.filter(d => d.status === filterStatus);
-    
+
     if (search) {
       const q = search.toLowerCase();
-      filteredDetails = filteredDetails.filter(d => 
+      filteredDetails = filteredDetails.filter(d =>
         d.teacherName.toLowerCase().includes(q) ||
         d.className.toLowerCase().includes(q) ||
         d.lessonName.toLowerCase().includes(q)
@@ -445,7 +445,7 @@ const getTeacherScheduleReport = async (req, res) => {
 const exportDailyAttendanceExcel = async (req, res) => {
   try {
     const { date } = req.query; // YYYY-MM-DD
-    
+
     // 1. Resolve date & indonesian weekday
     let targetDateStr = date;
     if (!targetDateStr) {
@@ -476,7 +476,7 @@ const exportDailyAttendanceExcel = async (req, res) => {
       weekday: 'long'
     });
     const weekdayName = dayFormatter.formatToParts(dateObj).find(p => p.type === 'weekday').value.toLowerCase();
-    
+
     const dayMap = {
       sunday: 'minggu',
       monday: 'senin',
@@ -569,7 +569,7 @@ const exportDailyAttendanceExcel = async (req, res) => {
     // Legend Row at Row 4
     sheet.getRow(4).getCell(1).value = 'Ket. Status:';
     sheet.getRow(4).getCell(1).font = { bold: true, size: 9 };
-    
+
     const legendItems = [
       { text: 'H = Hadir (Tepat Waktu)', fg: '065F46', bg: 'A7F3D0' },
       { text: 'T = Terlambat', fg: '92400E', bg: 'FDE68A' },
@@ -695,7 +695,7 @@ const exportDailyAttendanceExcel = async (req, res) => {
               bgColor = 'BFDBFE';
             }
           }
-          
+
           const checkIn = activity.corporateCheckIn || activity.timestamp;
           if (!dailyAtt && (!firstCheckIn || new Date(checkIn) < new Date(firstCheckIn))) {
             firstCheckIn = checkIn;
@@ -734,49 +734,49 @@ const exportDailyAttendanceExcel = async (req, res) => {
         checkInCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
         checkInCell.alignment = { horizontal: 'center', vertical: 'middle' };
         if (firstCheckIn) {
-            checkInCell.value = new Date(firstCheckIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-            checkInCell.font = { size: 10, bold: true };
+          checkInCell.value = new Date(firstCheckIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+          checkInCell.font = { size: 10, bold: true };
         } else {
-            checkInCell.value = '-';
-            checkInCell.font = { color: { argb: 'FFCBD5E1' } };
+          checkInCell.value = '-';
+          checkInCell.font = { color: { argb: 'FFCBD5E1' } };
         }
 
         const checkOutCell = row.getCell(checkOutColIdx);
         checkOutCell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
         checkOutCell.alignment = { horizontal: 'center', vertical: 'middle' };
         if (clockOutTime) {
-            checkOutCell.value = new Date(clockOutTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-            checkOutCell.font = { size: 10, bold: true };
+          checkOutCell.value = new Date(clockOutTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+          checkOutCell.font = { size: 10, bold: true };
         } else {
-            // Default checkout to last schedule's endTime if past and they checked in
-            let defaultClockOut = null;
-            if (firstCheckIn) {
-              const teacherSchedules = schedules.filter(s => s.teacherId === teacher.id);
-              if (teacherSchedules.length > 0) {
-                teacherSchedules.sort((a, b) => {
-                  const aTime = a.TimeSlot?.endTime || a.endTime || '00:00:00';
-                  const bTime = b.TimeSlot?.endTime || b.endTime || '00:00:00';
-                  return aTime.localeCompare(bTime);
-                });
-                const lastSched = teacherSchedules[teacherSchedules.length - 1];
-                const lastEndTime = lastSched.TimeSlot?.endTime || lastSched.endTime;
-                if (lastEndTime) {
-                  const lastEndTimeDate = new Date(`${yearStr}-${monthStr}-${dayStr}T${lastEndTime}+07:00`);
-                  if (now >= lastEndTimeDate) {
-                    defaultClockOut = lastEndTimeDate;
-                  }
+          // Default checkout to last schedule's endTime if past and they checked in
+          let defaultClockOut = null;
+          if (firstCheckIn) {
+            const teacherSchedules = schedules.filter(s => s.teacherId === teacher.id);
+            if (teacherSchedules.length > 0) {
+              teacherSchedules.sort((a, b) => {
+                const aTime = a.TimeSlot?.endTime || a.endTime || '00:00:00';
+                const bTime = b.TimeSlot?.endTime || b.endTime || '00:00:00';
+                return aTime.localeCompare(bTime);
+              });
+              const lastSched = teacherSchedules[teacherSchedules.length - 1];
+              const lastEndTime = lastSched.TimeSlot?.endTime || lastSched.endTime;
+              if (lastEndTime) {
+                const lastEndTimeDate = new Date(`${yearStr}-${monthStr}-${dayStr}T${lastEndTime}+07:00`);
+                if (now >= lastEndTimeDate) {
+                  defaultClockOut = lastEndTimeDate;
                 }
               }
             }
+          }
 
-            if (defaultClockOut) {
-              const timeStr = defaultClockOut.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-              checkOutCell.value = `${timeStr} (Auto)`;
-              checkOutCell.font = { size: 10, bold: true, color: { argb: 'FF92400E' } };
-            } else {
-              checkOutCell.value = '-';
-              checkOutCell.font = { color: { argb: 'FFCBD5E1' } };
-            }
+          if (defaultClockOut) {
+            const timeStr = defaultClockOut.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            checkOutCell.value = `${timeStr} (Auto)`;
+            checkOutCell.font = { size: 10, bold: true, color: { argb: 'FF92400E' } };
+          } else {
+            checkOutCell.value = '-';
+            checkOutCell.font = { color: { argb: 'FFCBD5E1' } };
+          }
         }
       }
 
@@ -880,7 +880,7 @@ const exportTeacherScheduleExcel = async (req, res) => {
       emptyCell.value = `BELUM ADA PLOTTING JADWAL MENGAJAR GURU - ${teacher.name}`;
       emptyCell.font = { bold: true, size: 12 };
       emptyCell.alignment = { horizontal: 'center' };
-      
+
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', `attachment; filename=jadwal_${teacher.username}.xlsx`);
       await workbook.xlsx.write(res);
@@ -974,8 +974,8 @@ const exportTeacherScheduleExcel = async (req, res) => {
 
           // Find schedule matching day and time interval
           const daySlots = slotsPerDay[day];
-          const actualSlot = daySlots.find(ts => 
-            ts.startTime.substring(0, 5) === slot.startTime.substring(0, 5) && 
+          const actualSlot = daySlots.find(ts =>
+            ts.startTime.substring(0, 5) === slot.startTime.substring(0, 5) &&
             ts.endTime.substring(0, 5) === slot.endTime.substring(0, 5)
           );
 
@@ -1083,17 +1083,17 @@ const exportDailyAttendanceListExcel = async (req, res) => {
         const startTimeDate = new Date(`${dateStr}T${scheduleStartTime}+07:00`);
         const endTimeDate = new Date(`${dateStr}T${scheduleEndTime}+07:00`);
 
-        const activity = activities.find(a => 
-          a.scheduleId === s.id && 
-          new Date(a.timestamp) >= dayActStart && 
+        const activity = activities.find(a =>
+          a.scheduleId === s.id &&
+          new Date(a.timestamp) >= dayActStart &&
           new Date(a.timestamp) <= dayActEnd
         );
 
-        const hasGeneralLeave = activities.some(a => 
-          a.userId === s.teacherId && 
+        const hasGeneralLeave = activities.some(a =>
+          a.userId === s.teacherId &&
           a.status === 'tidak_hadir' &&
           !a.scheduleId &&
-          new Date(a.timestamp) >= dayActStart && 
+          new Date(a.timestamp) >= dayActStart &&
           new Date(a.timestamp) <= dayActEnd
         );
 
@@ -1143,10 +1143,10 @@ const exportDailyAttendanceListExcel = async (req, res) => {
     if (classId) filteredDetails = filteredDetails.filter(d => d.classId === classId);
     if (lessonId) filteredDetails = filteredDetails.filter(d => d.lessonId === lessonId);
     if (filterStatus) filteredDetails = filteredDetails.filter(d => d.status === filterStatus);
-    
+
     if (search) {
       const q = search.toLowerCase();
-      filteredDetails = filteredDetails.filter(d => 
+      filteredDetails = filteredDetails.filter(d =>
         d.teacherName.toLowerCase().includes(q) ||
         d.className.toLowerCase().includes(q) ||
         d.lessonName.toLowerCase().includes(q)
@@ -1186,16 +1186,16 @@ const exportDailyAttendanceListExcel = async (req, res) => {
       dataRow.getCell(4).value = row.lessonName;
       dataRow.getCell(5).value = row.className;
       dataRow.getCell(6).value = row.teacherName;
-      
+
       let waktuAbsen = '-';
       if (row.checkInTime) {
-         const dateObj = new Date(row.checkInTime);
-         const hrs = String(dateObj.getHours()).padStart(2, '0');
-         const mins = String(dateObj.getMinutes()).padStart(2, '0');
-         waktuAbsen = `${hrs}:${mins} WIB`;
+        const dateObj = new Date(row.checkInTime);
+        const hrs = String(dateObj.getHours()).padStart(2, '0');
+        const mins = String(dateObj.getMinutes()).padStart(2, '0');
+        waktuAbsen = `${hrs}:${mins} WIB`;
       }
       dataRow.getCell(7).value = waktuAbsen;
-      
+
       let statusStr = row.status;
       if (statusStr === 'hadir') statusStr = 'Hadir (Tepat)';
       if (statusStr === 'telat') statusStr = 'Terlambat';
@@ -1225,7 +1225,7 @@ const exportDailyAttendanceListExcel = async (req, res) => {
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=export_data_list_${startStr}.xlsx`);
-    
+
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
@@ -1267,7 +1267,7 @@ const getDailyAttendanceMatrixData = async (req, res) => {
       weekday: 'long'
     });
     const weekdayName = dayFormatter.formatToParts(dateObj).find(p => p.type === 'weekday').value.toLowerCase();
-    
+
     const dayMap = {
       sunday: 'minggu',
       monday: 'senin',
@@ -1340,7 +1340,7 @@ const getDailyAttendanceMatrixData = async (req, res) => {
     // Map the matrix row by row
     const matrix = scheduledTeachers.map(teacher => {
       const teacherSlots = {};
-      
+
       timeSlots.forEach(slot => {
         const schedule = schedules.find(s => s.teacherId === teacher.id && (s.timeSlotId === slot.id || s.TimeSlot?.id === slot.id));
         if (!schedule) {
@@ -1392,7 +1392,7 @@ const getDailyAttendanceMatrixData = async (req, res) => {
 
       let firstCheckIn = null;
       let lastCheckOut = null;
-      
+
       if (attendanceFlow === 'full_day') {
         const da = dailyAttendances.find(d => d.userId === teacher.id);
         if (da) {
@@ -1432,14 +1432,14 @@ const getDailyAttendanceMatrixData = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Gagal mengambil data matriks kehadiran harian' });
+    res.status(500).json({ message: 'Gagal mengambil data matriks kehadiran harian', error: error?.stack });
   }
 };
 
 const manualCorporateClockIn = async (req, res) => {
   try {
     const { teacherId, dateStr, checkInTimeStr } = req.body;
-    
+
     // dateStr: YYYY-MM-DD
     // checkInTimeStr: HH:mm (optional, default to 06:30)
 
@@ -1473,7 +1473,7 @@ const manualCorporateClockIn = async (req, res) => {
     const weekdayName = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Jakarta', weekday: 'long'
     }).format(dayObj).toLowerCase();
-    
+
     const dayMap = {
       sunday: 'minggu', monday: 'senin', tuesday: 'selasa', wednesday: 'rabu',
       thursday: 'kamis', friday: 'jumat', saturday: 'sabtu'
@@ -1566,7 +1566,7 @@ const manualCorporateClockIn = async (req, res) => {
 const manualCorporateClockOut = async (req, res) => {
   try {
     const { teacherId, dateStr, checkOutTimeStr } = req.body;
-    
+
     // dateStr: YYYY-MM-DD
     // checkOutTimeStr: HH:mm (optional, default to 16:00)
 
@@ -1618,10 +1618,10 @@ const manualCorporateClockOut = async (req, res) => {
             const checkInDate = dailyAttendance.checkInTime;
             const diffInMinutes = (checkInDate.getTime() - startTimeDate.getTime()) / (1000 * 60);
             let restoredStatus = 'masuk';
-            
+
             // Assume default late tolerance 15 since we don't have it here, or we can fetch it
             if (diffInMinutes > 15) restoredStatus = 'telat';
-            
+
             await act.update({
               status: restoredStatus,
               type: 'pembelajaran',

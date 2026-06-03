@@ -9,7 +9,8 @@ const scripts = [
   'alter-activity-final.js',
   'sync-daily-attendance.js',
   'update_admin_controller.js',
-  'update_admin_controller_v2.js'
+  'update_admin_controller_v2.js',
+  'migrate-photo.js'
 ];
 
 console.log('🏁 Memulai eksekusi semua script secara berurutan...\n');
