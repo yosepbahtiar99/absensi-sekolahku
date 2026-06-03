@@ -30,6 +30,7 @@ const GuruForm: React.FC<GuruFormProps> = ({ initialValues, onSubmit, isLoading,
   return (
     <Formik
       initialValues={{
+        id: initialValues?.id || '',
         name: initialValues?.name || '',
         username: initialValues?.username || '',
         email: initialValues?.email || '',
