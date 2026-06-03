@@ -13,15 +13,13 @@ interface GuruFormProps {
   onCancel: () => void;
 }
 
-const guruSchema = Yup.object().shape({
+const getGuruSchema = (isEdit: boolean) => Yup.object().shape({
   name: Yup.string().required('Nama wajib diisi'),
   username: Yup.string().required('Username wajib diisi'),
   email: Yup.string().email('Format email tidak valid').optional().nullable(),
-  password: Yup.string().when('id', {
-    is: (id: any) => !id,
-    then: (schema) => schema.required('Password wajib diisi untuk guru baru'),
-    otherwise: (schema) => schema.optional(),
-  }),
+  password: isEdit 
+    ? Yup.string().optional() 
+    : Yup.string().required('Password wajib diisi untuk guru baru'),
 });
 
 const GuruForm: React.FC<GuruFormProps> = ({ initialValues, onSubmit, isLoading, onCancel }) => {
@@ -37,7 +35,7 @@ const GuruForm: React.FC<GuruFormProps> = ({ initialValues, onSubmit, isLoading,
         password: '',
         isPhotoRequired: initialValues?.isPhotoRequired ?? true,
       }}
-      validationSchema={guruSchema}
+      validationSchema={getGuruSchema(isEdit)}
       onSubmit={onSubmit}
     >
       {({ errors, touched, values, handleChange, setFieldValue }) => (
