@@ -1,4 +1,6 @@
 import { Formik, Form } from 'formik';
+import { Navigate } from 'react-router-dom';
+import { useAuthStore } from '../../../shared/store/authStore';
 import { loginSchema } from '../validations/login.schema';
 import { useAuthMutation } from '../hooks/useAuthMutation';
 import { Button } from '../../../shared/components/Button';
@@ -8,7 +10,14 @@ import { LogIn, User, Lock, Loader2 } from 'lucide-react';
 import { cn } from '../../../shared/lib/utils';
 
 const LoginPage = () => {
+  const { user, token } = useAuthStore();
   const { mutate, isPending, error } = useAuthMutation();
+
+  if (user && token) {
+    if (user.role === 'admin') return <Navigate to="/admin" replace />;
+    if (user.role === 'guru') return <Navigate to="/home" replace />;
+    return <Navigate to="/" replace />;
+  }
 
   const errorMessage = (error as any)?.response?.data?.message || error?.message;
 
@@ -101,12 +110,8 @@ const LoginPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm px-1">
-                    <label className="flex items-center gap-2 cursor-pointer text-slate-500">
-                      <input type="checkbox" className="w-4 h-4 rounded-md border-slate-300 text-primary focus:ring-primary" />
-                      <span>Ingat saya</span>
-                    </label>
-                    <a href="#" className="text-primary font-bold hover:underline">Lupa password?</a>
+                  <div className="flex justify-end text-sm px-1">
+                    <a href={`https://wa.me/${import.meta.env.VITE_ADMIN_WHATSAPP}?text=Tolong%20reset%20password%20saya,%20saya%20lupa%20password`} target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">Lupa password?</a>
                   </div>
 
                   <Button
@@ -133,7 +138,7 @@ const LoginPage = () => {
         </div>
 
         <p className="text-center text-slate-400 text-sm">
-          Belum punya akun? <a href="#" className="text-primary font-bold hover:underline">Hubungi Admin</a>
+          Belum punya akun? <a href={`https://wa.me/${import.meta.env.VITE_ADMIN_WHATSAPP}?text=Tolong%20daftarkan%20akun%20saya`} target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">Hubungi Admin</a>
         </p>
       </div>
     </div>

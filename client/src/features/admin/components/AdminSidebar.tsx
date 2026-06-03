@@ -23,9 +23,11 @@ import {
   RefreshCw,
   FileText,
   Tv,
-  Settings
+  Settings,
+  KeyRound
 } from 'lucide-react';
 import { useLogout } from '../../auth/hooks/useLogout';
+import ChangePasswordModal from './ChangePasswordModal';
 import { useUIStore } from '../../../shared/store/uiStore';
 import { cn } from '../../../shared/lib/utils';
 import api from '../../../shared/lib/axios';
@@ -37,6 +39,7 @@ const AdminSidebar = () => {
   const [isMasterOpen, setIsMasterOpen] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isDevModalOpen, setIsDevModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -274,7 +277,19 @@ const AdminSidebar = () => {
         </button>
       </div>
 
-      <div className="p-4 border-t border-slate-200/60">
+      <div className="p-4 border-t border-slate-200/60 flex flex-col gap-2">
+        <button
+          onClick={() => setIsChangePasswordOpen(true)}
+          className={cn(
+            "flex items-center rounded-2xl text-slate-400 hover:bg-slate-200/50 hover:text-slate-900 transition-all font-bold text-sm group overflow-hidden",
+            isSidebarCollapsed ? "justify-center p-3.5" : "gap-3 px-4 py-4 w-full"
+          )}
+          title={isSidebarCollapsed ? "Ganti Password" : ""}
+        >
+          <KeyRound size={20} className="group-hover:-translate-x-1 transition-transform shrink-0" />
+          {!isSidebarCollapsed && <span className="transition-all duration-300 opacity-100">Ganti Password</span>}
+        </button>
+
         <button
           onClick={logout}
           className={cn(
@@ -379,6 +394,12 @@ const AdminSidebar = () => {
           </div>
         </div>
       )}
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+      />
     </div>
   );
 };
