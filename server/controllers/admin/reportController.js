@@ -1303,7 +1303,7 @@ const getDailyAttendanceMatrixData = async (req, res) => {
       include: [
         { model: Class, attributes: ['id', 'name'] },
         { model: Lesson, attributes: ['id', 'name'] },
-        { model: User, as: 'teacher', attributes: ['id', 'name'] },
+        { model: User, as: 'teacher', attributes: ['id', 'name', 'photoId'] },
         { model: TimeSlot, attributes: ['id', 'label', 'startTime', 'endTime'] }
       ]
     });
@@ -1329,10 +1329,10 @@ const getDailyAttendanceMatrixData = async (req, res) => {
     const teacherMap = new Map();
     schedules.forEach(s => {
       if (s.teacher && !teacherMap.has(s.teacher.id)) {
-        teacherMap.set(s.teacher.id, s.teacher.name);
+        teacherMap.set(s.teacher.id, s.teacher);
       }
     });
-    const scheduledTeachers = Array.from(teacherMap.entries()).map(([id, name]) => ({ id, name }));
+    const scheduledTeachers = Array.from(teacherMap.values()).map(t => ({ id: t.id, name: t.name, photoId: t.photoId }));
     scheduledTeachers.sort((a, b) => a.name.localeCompare(b.name));
 
     const now = new Date();
@@ -1416,6 +1416,7 @@ const getDailyAttendanceMatrixData = async (req, res) => {
       return {
         teacherId: teacher.id,
         teacherName: teacher.name,
+        photoId: teacher.photoId,
         firstCheckIn,
         lastCheckOut,
         slots: teacherSlots

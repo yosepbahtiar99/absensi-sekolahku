@@ -151,13 +151,7 @@ const AdminSidebar = () => {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar pb-10">
-        {!isSidebarCollapsed && (
-          <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 mt-2 transition-opacity duration-300 opacity-100">
-            Main Menu
-          </p>
-        )}
-        
+      <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar pb-10">        
         <MenuNavLink to="/admin" icon={LayoutDashboard} label="Dashboard" isCollapsed={isSidebarCollapsed} />
         <MenuNavLink to="/admin/wallboard" icon={Tv} label="Wallboard Guru" isCollapsed={isSidebarCollapsed} />
         <MenuNavLink to="/admin/activities" icon={CheckSquare} label="Riwayat Kehadiran" isCollapsed={isSidebarCollapsed} />

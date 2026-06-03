@@ -613,9 +613,13 @@ const AdminWallboard = () => {
                             <td className="sticky left-0 z-20 bg-white p-4 font-black text-sm text-slate-700 border-r border-slate-200 w-64 shadow-[2px_0_5px_rgba(0,0,0,0.02)] group/cell">
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-sm text-xs shrink-0 select-none">
-                                    {row.teacherName.charAt(0)}
-                                  </div>
+                                  {row.photoId ? (
+                                    <img src={`${import.meta.env.VITE_UPLOAD_URL}/profiles/${row.photoId}`} alt={row.teacherName} className="w-8 h-8 rounded-lg object-cover shadow-sm shrink-0" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-sm text-xs shrink-0 select-none">
+                                      {row.teacherName.charAt(0)}
+                                    </div>
+                                  )}
                                   <span className="truncate" title={row.teacherName}>{row.teacherName}</span>
                                 </div>
                                 {isCorporateFlow && (row.firstCheckIn || row.lastCheckOut) && (

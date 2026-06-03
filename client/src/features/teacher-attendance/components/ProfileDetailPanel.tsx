@@ -1,6 +1,6 @@
 import React from 'react';
 import SlideOver from '../../../shared/components/SlideOver';
-import { User, Mail, Phone, Camera, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { User, Camera, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 interface ProfileDetailPanelProps {
   isOpen: boolean;
