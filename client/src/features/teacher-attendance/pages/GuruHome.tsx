@@ -224,7 +224,7 @@ const GuruHome = () => {
             {user?.name?.charAt(0)}
           </div>
           <h3 className="text-2xl font-black text-slate-800 tracking-tight">{user?.name}</h3>
-          <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">NIP: {user?.username}</p>
+          <p className="text-slate-400 font-bold text-xs tracking-widest mt-1">Username: {user?.username}</p>
         </div>
       </div>
 
@@ -236,7 +236,7 @@ const GuruHome = () => {
             </div>
             <div className="text-left">
               <p className="text-sm font-bold text-slate-700">Detail Profil</p>
-              <p className="text-[10px] text-slate-400 font-medium">Lihat info lengkap lu</p>
+              <p className="text-[10px] text-slate-400 font-medium">Lihat info lengkap anda</p>
             </div>
           </div>
           <ChevronRight size={18} className="text-slate-300" />

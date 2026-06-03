@@ -9,4 +9,15 @@ export const authService = {
   logout: async (): Promise<void> => {
     await api.post('/auth/logout');
   },
+  changePassword: async (data: any): Promise<void> => {
+    await api.put('/auth/change-password', data);
+  },
+  uploadPhoto: async (formData: FormData): Promise<{ message: string; photoId: string }> => {
+    const response = await api.post('/auth/upload-photo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
 };

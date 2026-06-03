@@ -12,5 +12,6 @@ module.exports = (sequelize) => {
     password: { type: DataTypes.STRING, allowNull: false },
     role: { type: DataTypes.ENUM('admin', 'guru'), defaultValue: 'guru' },
     isPhotoRequired: { type: DataTypes.BOOLEAN, defaultValue: true },
+    photoId: { type: DataTypes.STRING, allowNull: true },
   });
 };

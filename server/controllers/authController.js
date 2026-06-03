@@ -1,6 +1,8 @@
 const { User } = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
 
 const login = async (req, res) => {
   try {
@@ -45,7 +47,8 @@ const login = async (req, res) => {
         id: user.id,
         name: user.name,
         username: user.username,
-        role: user.role
+        role: user.role,
+        photoId: user.photoId
       }
     });
   } catch (error) {
@@ -93,4 +96,70 @@ const logout = async (req, res) => {
   res.json({ message: 'Logout berhasil' });
 };
 
-module.exports = { login, refreshToken, logout };
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Password lama salah' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: 'Password berhasil diubah' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error saat mengubah password' });
+  }
+};
+
+const uploadPhoto = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Tidak ada file yang diunggah' });
+    }
+
+    const userId = req.user.id;
+    const user = await User.findByPk(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+
+    // Delete old photo if exists to prevent storage bloat
+    if (user.photoId) {
+      const oldPhotoPath = path.join(__dirname, '../uploads/profiles', user.photoId);
+      if (fs.existsSync(oldPhotoPath)) {
+        try {
+          fs.unlinkSync(oldPhotoPath);
+        } catch (err) {
+          console.error('Gagal menghapus foto lama:', err);
+        }
+      }
+    }
+    
+    user.photoId = req.file.filename;
+    await user.save();
+
+    res.json({ 
+      message: 'Foto profil berhasil diunggah',
+      photoId: user.photoId
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error saat mengunggah foto' });
+  }
+};
+
+module.exports = { login, refreshToken, logout, changePassword, uploadPhoto };
