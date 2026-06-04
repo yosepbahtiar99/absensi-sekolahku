@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTodaySchedules, useSystemSettings, useCorporateClockOut, useDailyAttendanceStatus } from '../hooks/useAttendanceData';
+import { useAuthStore } from '../../../shared/store/authStore';
+import { useTodaySchedules, useSystemSettings, useCorporateClockOut, useCorporateClockIn, useDailyAttendanceStatus } from '../hooks/useAttendanceData';
 import { useNotificationStore } from '../../../shared/store/notificationStore';
 import { useConfirmStore } from '../../../shared/store/confirmStore';
 import {
@@ -10,6 +11,7 @@ import { cn } from '../../../shared/lib/utils';
 
 const GuruDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   const [now, setNow] = useState(new Date());
 
@@ -23,6 +25,7 @@ const GuruDashboard = () => {
   // Main Data (Today)
   const { data: todaySchedules, isLoading: isTodayLoading } = useTodaySchedules();
   const { data: settings, isLoading: isSettingsLoading } = useSystemSettings();
+  const clockInMutation = useCorporateClockIn();
   const clockOutMutation = useCorporateClockOut();
   const { showNotification } = useNotificationStore();
   const { confirm: confirmAction } = useConfirmStore();
@@ -79,6 +82,34 @@ const GuruDashboard = () => {
     }
   };
 
+  const handleCorporateClockIn = async () => {
+    if (user?.isPhotoRequired) {
+      navigate('/corporate-attendance');
+      return;
+    }
+
+    const isConfirmed = await confirmAction({
+      title: 'Check-In Harian',
+      message: 'Apakah Anda yakin ingin memulai absen hari ini?',
+      confirmText: 'Ya, Masuk Sekolah',
+      cancelText: 'Batal',
+      variant: 'info'
+    });
+
+    if (isConfirmed) {
+      clockInMutation.mutate(
+        { photoSelfie: '', photoClass: '' },
+        {
+          onSuccess: () => showNotification('Berhasil Check-In / Masuk Sekolah', 'success'),
+          onError: (error: any) => {
+            const message = error.response?.data?.message || 'Gagal melakukan Check-In';
+            showNotification(`Error: ${message}`, 'error');
+          }
+        }
+      );
+    }
+  };
+
   const activeCardRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-scroll to active card on load
@@ -131,11 +162,11 @@ const GuruDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
               {/* Button Masuk */}
               <button
-                onClick={() => !hasCheckedIn && navigate('/corporate-attendance')}
-                disabled={hasCheckedIn}
+                onClick={() => !hasCheckedIn && handleCorporateClockIn()}
+                disabled={hasCheckedIn || clockInMutation.isPending}
                 className={cn(
                   "flex flex-col items-center justify-center gap-4 p-8 rounded-[2rem] transition-all duration-300",
-                  hasCheckedIn
+                  hasCheckedIn || clockInMutation.isPending
                     ? "bg-slate-50 border-2 border-slate-200 opacity-70 cursor-not-allowed"
                     : "bg-emerald-50 border-2 border-emerald-500 hover:bg-emerald-100 hover:-translate-y-1 shadow-lg shadow-emerald-500/20 active:scale-95"
                 )}
@@ -149,7 +180,7 @@ const GuruDashboard = () => {
                 <div className="text-center">
                   <h4 className={cn("font-black text-lg", hasCheckedIn ? "text-slate-600" : "text-emerald-700")}>Masuk Sekolah</h4>
                   <p className={cn("text-xs font-medium mt-1", hasCheckedIn ? "text-slate-500" : "text-emerald-600/80")}>
-                    {hasCheckedIn ? 'Sudah Hadir' : 'Ambil Foto Kehadiran'}
+                    {hasCheckedIn ? 'Sudah Hadir' : user?.isPhotoRequired ? 'Ambil Foto Kehadiran' : 'Konfirmasi Kehadiran'}
                   </p>
                 </div>
               </button>

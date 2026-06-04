@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Check, ArrowRight, X, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { useCorporateClockIn } from '../hooks/useAttendanceData';
+import { useCorporateClockIn, useDailyAttendanceStatus } from '../hooks/useAttendanceData';
 import { attendanceService } from '../services/attendance.service';
 import { useNotificationStore } from '../../../shared/store/notificationStore';
 import { cn } from '../../../shared/lib/utils';
@@ -10,6 +10,14 @@ const CorporateAttendancePage = () => {
   const navigate = useNavigate();
   const { mutate, isPending } = useCorporateClockIn();
   const { showNotification } = useNotificationStore();
+  const { data: dailyStatusRes, isLoading: isStatusLoading } = useDailyAttendanceStatus();
+
+  // Route Guard: Redirect back to home if already checked in
+  useEffect(() => {
+    if (!isStatusLoading && dailyStatusRes?.data) {
+      navigate('/home', { replace: true });
+    }
+  }, [dailyStatusRes, isStatusLoading, navigate]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);

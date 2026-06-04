@@ -2,6 +2,9 @@ const { Schedule, Class, Lesson, Activity, User, TimeSlot, SystemSetting, DailyA
 const { Op } = require('sequelize');
 const { getJakartaDayInfo } = require('./scheduleController');
 
+// In-memory lock to prevent concurrent double-clicks/race conditions
+const clockInLocks = new Set();
+
 const submitAttendance = async (req, res) => {
   try {
     const { scheduleId, photoSelfie, photoClass, type, isCustom } = req.body;
@@ -240,34 +243,35 @@ const getMyActivities = async (req, res) => {
 };
 
 const corporateClockIn = async (req, res) => {
+  const userId = req.user?.id;
+  
+  if (clockInLocks.has(userId)) {
+    return res.status(429).json({ message: 'Permintaan sedang diproses, harap tunggu sebentar...' });
+  }
+  clockInLocks.add(userId);
+
   try {
     const { photoSelfie, photoClass } = req.body;
-    const userId = req.user.id;
 
     const { year, month, day: dayStr, start, end } = getJakartaDayInfo();
     const todayDateOnly = `${year}-${month}-${dayStr}`;
+    const now = new Date();
     
-    // Cek apakah sudah absen harian hari ini
-    const existingDaily = await DailyAttendance.findOne({
+    // Gunakan findOrCreate untuk mencegah race condition (double check-in)
+    const [dailyAttendance, created] = await DailyAttendance.findOrCreate({
       where: {
         userId,
         date: todayDateOnly
+      },
+      defaults: {
+        checkInTime: now,
+        status: 'hadir'
       }
     });
 
-    if (existingDaily) {
+    if (!created) {
       return res.status(400).json({ message: 'Anda sudah check-in hari ini' });
     }
-
-    const now = new Date();
-
-    // Create DailyAttendance
-    const dailyAttendance = await DailyAttendance.create({
-      userId,
-      date: todayDateOnly,
-      checkInTime: now,
-      status: 'hadir'
-    });
 
     // Get today's indonesian day name
     const dayMap = {
@@ -340,6 +344,8 @@ const corporateClockIn = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Gagal melakukan check-in', error: error.message, stack: error.stack });
+  } finally {
+    clockInLocks.delete(userId);
   }
 };
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Formik, Form } from 'formik';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../../shared/store/authStore';
@@ -6,12 +7,13 @@ import { useAuthMutation } from '../hooks/useAuthMutation';
 import { Button } from '../../../shared/components/Button';
 import { Input } from '../../../shared/components/Input';
 import { Card } from '../../../shared/components/Card';
-import { LogIn, User, Lock, Loader2 } from 'lucide-react';
+import { LogIn, User, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../../../shared/lib/utils';
 
 const LoginPage = () => {
   const { user, token } = useAuthStore();
   const { mutate, isPending, error } = useAuthMutation();
+  const [showPassword, setShowPassword] = useState(false);
 
   if (user && token) {
     if (user.role === 'admin') return <Navigate to="/admin" replace />;
@@ -89,21 +91,30 @@ const LoginPage = () => {
                       )}
                     </div>
 
-                    <div className="group">
+                    <div className="group relative">
                       <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Password</label>
-                      <Input
-                        name="password"
-                        type="password"
-                        placeholder="••••••••"
-                        icon={<Lock size={18} />}
-                        value={values.password}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={cn(
-                          "border border-slate-300 bg-white/50 focus:bg-white transition-all",
-                          errors.password && touched.password ? "border-red-500 ring-4 ring-red-500/10" : "focus:border-primary/40 focus:border-primary"
-                        )}
-                      />
+                      <div className="relative">
+                        <Input
+                          name="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          icon={<Lock size={18} />}
+                          value={values.password}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          className={cn(
+                            "border border-slate-300 bg-white/50 focus:bg-white transition-all pr-12",
+                            errors.password && touched.password ? "border-red-500 ring-4 ring-red-500/10" : "focus:border-primary/40 focus:border-primary"
+                          )}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary focus:outline-none transition-colors"
+                        >
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
                       {errors.password && touched.password && (
                         <p className="mt-1.5 ml-1 text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.password}</p>
                       )}
