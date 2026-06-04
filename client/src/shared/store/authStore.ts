@@ -7,6 +7,8 @@ interface User {
   username: string;
   role: 'admin' | 'guru';
   photoId?: string | null;
+  email?: string | null;
+  isPhotoRequired?: boolean;
 }
 
 interface AuthState {

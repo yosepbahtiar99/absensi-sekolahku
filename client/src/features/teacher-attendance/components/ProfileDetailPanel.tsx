@@ -1,6 +1,6 @@
 import React from 'react';
 import SlideOver from '../../../shared/components/SlideOver';
-import { User, Camera, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { User, Camera, ShieldCheck, CheckCircle2, Mail, Image as ImageIcon } from 'lucide-react';
 
 interface ProfileDetailPanelProps {
   isOpen: boolean;
@@ -10,6 +10,8 @@ interface ProfileDetailPanelProps {
     username: string;
     role: string;
     photoId?: string | null;
+    email?: string | null;
+    isPhotoRequired?: boolean;
   } | null;
   onOpenPhotoUpload?: () => void;
 }
@@ -70,6 +72,24 @@ const ProfileDetailPanel: React.FC<ProfileDetailPanelProps> = ({ isOpen, onClose
                 <div>
                   <p className="text-xs font-bold text-slate-400">Role / Akses</p>
                   <p className="text-sm font-semibold text-slate-800 capitalize">{user.role}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors border-t border-slate-50">
+                <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
+                  <Mail size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400">Email</p>
+                  <p className="text-sm font-semibold text-slate-800">{user.email || '-'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors border-t border-slate-50">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <ImageIcon size={18} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400">Wajib Foto Absen</p>
+                  <p className="text-sm font-semibold text-slate-800">{user.isPhotoRequired ? 'Ya' : 'Tidak'}</p>
                 </div>
               </div>
             </div>
