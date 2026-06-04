@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 dotenv.config();
 
@@ -27,6 +28,18 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Setup Rate Limiter (Proteksi Anti-DDoS / Spam Request)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 menit
+  max: 1000, // Maksimal 1000 request per IP dalam 15 menit
+  message: { message: 'Terlalu banyak permintaan dari IP ini, harap coba lagi setelah 15 menit.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiter to all API routes
+app.use('/api', apiLimiter);
 
 // Static folder for uploads
 const fs = require('fs');
